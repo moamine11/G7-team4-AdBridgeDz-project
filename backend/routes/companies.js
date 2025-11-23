@@ -1,15 +1,15 @@
 const express = require('express');
-const router = express.Router(); 
+const router = express.Router();
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const Company = require('../models/company');
 const Booking = require('../models/booking');
-
+const { OAuth2Client } = require('google-auth-library');
+const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 const authMiddleware = async (req, res, next) => {
   try {
     const token = req.headers.authorization?.split(' ')[1];
     if (!token) return res.status(401).json({ error: 'Authentication required' });
-
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
     req.companyId = decoded.companyId;
     next();
@@ -35,7 +35,8 @@ router.post('/register', async (req, res) => {
       password: hashedPassword,
       websiteURL,
       location,
-      phonenumber
+      phonenumber,
+      signUpMethod: 'local'
     });
 
     await company.save();
@@ -58,15 +59,22 @@ router.post('/register', async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 });
+
 router.post('/login', async (req, res) => {
   try {
     const { email, password } = req.body;
-    const company = await Company.findOne({ email }).select('+password'); 
-
-    if (!company) return res.status(401).json({ error: 'Invalid email or password' });
+    const company = await Company.findOne({ email }).select('+password');
+    if (!company)
+      return res.status(401).json({ error: 'Invalid email or password' });
+    if (company.signUpMethod === 'google') {
+      return res.status(400).json({
+        error: 'This account uses Google Sign-In. Please login with Google.'
+      });
+    }
 
     const isValidPassword = await bcrypt.compare(password, company.password);
-    if (!isValidPassword) return res.status(401).json({ error: 'Invalid email or password' });
+    if (!isValidPassword)
+      return res.status(401).json({ error: 'Invalid email or password' });
 
     const token = jwt.sign({ companyId: company._id }, process.env.JWT_SECRET, { expiresIn: '30d' });
 
@@ -82,6 +90,49 @@ router.post('/login', async (req, res) => {
         phonenumber: company.phonenumber
       }
     });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+router.post('/google-auth', async (req, res) => {
+  try {
+    const { idToken } = req.body;
+    const ticket = await client.verifyIdToken({
+      idToken,
+      audience: process.env.GOOGLE_CLIENT_ID
+    });
+
+    const payload = ticket.getPayload();
+    const { email, name, sub: googleId } = payload;
+
+    let company = await Company.findOne({ email });
+
+    if (!company) {
+      company = new Company({
+        name,
+        email,
+        googleId,
+        password: null,
+        signUpMethod: 'google',
+        location: "Unknown",
+        phonenumber: 0
+      });
+
+      await company.save();
+    }
+
+    const token = jwt.sign({ companyId: company._id }, process.env.JWT_SECRET, { expiresIn: '30d' });
+
+    res.json({
+      message: "Google login successful",
+      token,
+      company: {
+        id: company._id,
+        name: company.name,
+        email: company.email
+      }
+    });
+
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
