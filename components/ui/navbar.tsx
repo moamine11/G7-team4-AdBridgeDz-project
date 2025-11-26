@@ -35,6 +35,11 @@ export default function Navbar() {
     return pathname?.startsWith(href)
   }
 
+  // Hide navbar on channels and agencies pages (they have their own headers)
+  if (pathname === '/channels' || pathname === '/agencies') {
+    return null
+  }
+
   return (
     <header
       className={cn(
