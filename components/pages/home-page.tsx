@@ -6,7 +6,7 @@
 // import { Input } from '@/components/ui/input'
 // import { Textarea } from '@/components/ui/textarea'
 // import Link from 'next/link'
-// import { motion } from 'motion/react'
+// import { motion } from 'framer-motion'
 // import { 
 //   Facebook, 
 //   Twitter, 
@@ -625,7 +625,7 @@
 //                     <h3 className="text-xl font-bold text-gray-900">{space.type}</h3>
 //                     <Heart className="w-5 h-5 text-gray-400 cursor-pointer hover:text-red-500" />
 //                   </div>
-                  
+
 //                   <div className="space-y-3 mb-4">
 //                     <div className="flex items-center gap-2">
 //                       <MapPin className="w-4 h-4 text-blue-600" />
@@ -714,7 +714,7 @@
 //               transition={{ duration: 0.8, delay: 0.3 }}
 //               className="hidden md:block absolute top-24 left-1/3 right-1/3 h-0.5 bg-gradient-to-r from-blue-500 to-teal-500 transform -translate-y-1/2 origin-left"
 //             />
-            
+
 //             {/* Step 1 */}
 //             <motion.div
 //               variants={itemVariants}
@@ -876,7 +876,7 @@
 //             >
 //               <div className="bg-white p-8 rounded-3xl shadow-lg border border-gray-200">
 //                 <h3 className="text-2xl font-bold text-gray-900 mb-6">Contact Information</h3>
-                
+
 //                 <div className="space-y-6">
 //                   {contactInfo.map((contact, index) => (
 //                     <motion.div
@@ -1077,14 +1077,14 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import Link from 'next/link'
-import { motion } from 'motion/react'
-import { 
-  Facebook, 
-  Twitter, 
-  Linkedin, 
-  Search, 
-  Calendar, 
-  CheckCircle2, 
+import { motion } from 'framer-motion'
+import {
+  Facebook,
+  Twitter,
+  Linkedin,
+  Search,
+  Calendar,
+  CheckCircle2,
   MapPin,
   Phone,
   Mail,
@@ -1232,36 +1232,36 @@ export default function HomePage() {
 
   // Feature data with explicit color classes
   const features = [
-    { 
-      icon: Eye, 
-      id: "visibility", 
+    {
+      icon: Eye,
+      id: "visibility",
       text: "High Visibility",
       bgColor: "bg-blue-50",
       borderColor: "border-blue-200",
       iconColor: "text-blue-600",
       hoverBgColor: "hover:bg-blue-100"
     },
-    { 
-      icon: Target, 
-      id: "targeting", 
+    {
+      icon: Target,
+      id: "targeting",
       text: "Precision Targeting",
       bgColor: "bg-teal-50",
       borderColor: "border-teal-200",
       iconColor: "text-teal-600",
       hoverBgColor: "hover:bg-teal-100"
     },
-    { 
-      icon: TrendingUp, 
-      id: "results", 
+    {
+      icon: TrendingUp,
+      id: "results",
       text: "Proven Results",
       bgColor: "bg-purple-50",
       borderColor: "border-purple-200",
       iconColor: "text-purple-600",
       hoverBgColor: "hover:bg-purple-100"
     },
-    { 
-      icon: Shield, 
-      id: "verified", 
+    {
+      icon: Shield,
+      id: "verified",
       text: "Verified Partners",
       bgColor: "bg-green-50",
       borderColor: "border-green-200",
@@ -1272,25 +1272,25 @@ export default function HomePage() {
 
   // Contact information data
   const contactInfo = [
-    { 
-      icon: Mail, 
-      text: "Email", 
+    {
+      icon: Mail,
+      text: "Email",
       value: "support@adbridgedz.dz",
       bgColor: "bg-blue-100",
       iconColor: "text-blue-600",
       hoverBgColor: "hover:bg-blue-50"
     },
-    { 
-      icon: Phone, 
-      text: "Phone", 
+    {
+      icon: Phone,
+      text: "Phone",
       value: "+213 555 123 456",
       bgColor: "bg-teal-100",
       iconColor: "text-teal-600",
       hoverBgColor: "hover:bg-teal-50"
     },
-    { 
-      icon: MapPin, 
-      text: "Address", 
+    {
+      icon: MapPin,
+      text: "Address",
       value: "Algiers, Algeria",
       bgColor: "bg-purple-100",
       iconColor: "text-purple-600",
@@ -1308,7 +1308,7 @@ export default function HomePage() {
   return (
     <div className="min-h-screen flex flex-col font-sans">
       {/* Hero Section */}
-      <motion.section 
+      <motion.section
         initial="hidden"
         animate="visible"
         variants={containerVariants}
@@ -1317,12 +1317,12 @@ export default function HomePage() {
         <div className="max-w-7xl mx-auto">
           <div className="grid md:grid-cols-2 gap-12 lg:gap-16 items-center">
             {/* Left Section */}
-            <motion.div 
+            <motion.div
               variants={slideInLeft}
               className="space-y-8"
             >
               <div className="space-y-4">
-                <motion.div 
+                <motion.div
                   variants={itemVariants}
                   className="inline-flex items-center gap-2 bg-white/80 backdrop-blur-sm rounded-full px-4 py-2 border border-blue-200 shadow-sm"
                 >
@@ -1331,7 +1331,7 @@ export default function HomePage() {
                     Algeria's #1 Outdoor Advertising Platform
                   </span>
                 </motion.div>
-                <motion.h1 
+                <motion.h1
                   variants={itemVariants}
                   className="text-5xl md:text-6xl lg:text-7xl font-bold text-gray-900 leading-tight tracking-tight"
                 >
@@ -1340,14 +1340,14 @@ export default function HomePage() {
                     Outdoor Ads
                   </span>
                 </motion.h1>
-                <motion.p 
+                <motion.p
                   variants={itemVariants}
                   className="text-xl md:text-2xl text-gray-700 leading-relaxed font-light"
                 >
                   Connect, discover, and book premium billboard spaces across Algeria with our digital marketplace.
                 </motion.p>
               </div>
-              <motion.div 
+              <motion.div
                 variants={itemVariants}
                 className="flex flex-col sm:flex-row gap-4 pt-4"
               >
@@ -1369,7 +1369,7 @@ export default function HomePage() {
                   </Button>
                 </Link>
               </motion.div>
-              <motion.div 
+              <motion.div
                 variants={itemVariants}
                 className="flex items-center gap-6 pt-4 text-sm text-gray-600"
               >
@@ -1385,7 +1385,7 @@ export default function HomePage() {
             </motion.div>
 
             {/* Right Section - Hero illustration */}
-            <motion.div 
+            <motion.div
               variants={scaleIn}
               className="relative flex justify-center items-center"
             >
@@ -1401,7 +1401,7 @@ export default function HomePage() {
       </motion.section>
 
       {/* Value Proposition Section */}
-      <motion.section 
+      <motion.section
         initial="hidden"
         whileInView="visible"
         viewport={{ once: true, margin: "-50px" }}
@@ -1411,7 +1411,7 @@ export default function HomePage() {
         <div className="max-w-7xl mx-auto">
           <div className="grid lg:grid-cols-2 gap-16 items-center">
             {/* Left Content */}
-            <motion.div 
+            <motion.div
               variants={slideInUp}
               className="space-y-8"
             >
@@ -1423,8 +1423,8 @@ export default function HomePage() {
                   </span>
                 </h2>
                 <p className="text-xl text-gray-700 leading-relaxed font-light">
-                  Discover premium advertising spaces across Algeria — from strategic billboards to high-traffic 
-                  indoor screens — all in one smart, modern platform designed to help your business grow and 
+                  Discover premium advertising spaces across Algeria — from strategic billboards to high-traffic
+                  indoor screens — all in one smart, modern platform designed to help your business grow and
                   connect with your target audience effectively.
                 </p>
               </div>
@@ -1451,7 +1451,7 @@ export default function HomePage() {
             </motion.div>
 
             {/* Right Content - Account Type Cards */}
-            <motion.div 
+            <motion.div
               variants={staggerContainer}
               className="space-y-6"
             >
@@ -1470,7 +1470,7 @@ export default function HomePage() {
                     <p className="text-gray-700 leading-relaxed mb-6 font-light">
                       List your advertising spaces, reach more clients, and grow your business. Manage your inventory and bookings efficiently with our powerful tools.
                     </p>
-                    <Button 
+                    <Button
                       onClick={() => router.push('/account-type?type=agency')}
                       className="bg-blue-600 hover:bg-blue-700 text-white rounded-2xl px-8 py-4 font-semibold transition-all duration-300 transform hover:scale-105 group"
                     >
@@ -1496,7 +1496,7 @@ export default function HomePage() {
                     <p className="text-gray-700 leading-relaxed mb-6 font-light">
                       Find the perfect advertising spaces for your brand. Compare locations, prices, and traffic data to make informed decisions that drive results.
                     </p>
-                    <Button 
+                    <Button
                       onClick={() => router.push('/account-type?type=company')}
                       className="bg-teal-600 hover:bg-teal-700 text-white rounded-2xl px-8 py-4 font-semibold transition-all duration-300 transform hover:scale-105 group"
                     >
@@ -1512,7 +1512,7 @@ export default function HomePage() {
       </motion.section>
 
       {/* Purpose/Description Section */}
-      <motion.section 
+      <motion.section
         initial="hidden"
         whileInView="visible"
         viewport={{ once: true, margin: "-50px" }}
@@ -1520,7 +1520,7 @@ export default function HomePage() {
         className="py-20 px-4 sm:px-6 lg:px-8 bg-gradient-to-br from-slate-50 to-gray-100"
       >
         <div className="max-w-7xl mx-auto">
-          <motion.div 
+          <motion.div
             variants={slideInUp}
             className="text-center mb-16"
           >
@@ -1528,12 +1528,12 @@ export default function HomePage() {
               Revolutionizing Outdoor Advertising
             </h2>
             <p className="text-xl text-gray-700 max-w-4xl mx-auto leading-relaxed font-light">
-              AdBridgeDZ is transforming Algeria's advertising landscape with a seamless digital marketplace 
+              AdBridgeDZ is transforming Algeria's advertising landscape with a seamless digital marketplace
               where businesses and agencies connect to discover and book premium billboard spaces effortlessly.
             </p>
           </motion.div>
 
-          <motion.div 
+          <motion.div
             variants={staggerContainer}
             className="grid md:grid-cols-3 gap-8 mt-16"
           >
@@ -1547,7 +1547,7 @@ export default function HomePage() {
               </div>
               <h3 className="text-2xl font-bold text-gray-900 mb-4">Discover Premium Spaces</h3>
               <p className="text-gray-700 leading-relaxed font-light">
-                Browse hundreds of verified outdoor advertising locations with detailed analytics, 
+                Browse hundreds of verified outdoor advertising locations with detailed analytics,
                 real-time availability, and competitive pricing.
               </p>
             </motion.div>
@@ -1562,7 +1562,7 @@ export default function HomePage() {
               </div>
               <h3 className="text-2xl font-bold text-gray-900 mb-4">Trusted Partners</h3>
               <p className="text-gray-700 leading-relaxed font-light">
-                Every agency and provider is thoroughly vetted for reliability, 
+                Every agency and provider is thoroughly vetted for reliability,
                 ensuring quality service and peace of mind for your campaigns.
               </p>
             </motion.div>
@@ -1577,7 +1577,7 @@ export default function HomePage() {
               </div>
               <h3 className="text-2xl font-bold text-gray-900 mb-4">Maximize ROI</h3>
               <p className="text-gray-700 leading-relaxed font-light">
-                Compare locations, traffic data, and pricing to make data-driven decisions 
+                Compare locations, traffic data, and pricing to make data-driven decisions
                 that maximize your advertising return on investment.
               </p>
             </motion.div>
@@ -1586,16 +1586,16 @@ export default function HomePage() {
       </motion.section>
 
       {/* Explore Spaces Section */}
-      <motion.section 
+      <motion.section
         initial="hidden"
         whileInView="visible"
         viewport={{ once: true, margin: "-50px" }}
         variants={containerVariants}
-        id="explore-spaces" 
+        id="explore-spaces"
         className="py-20 px-4 sm:px-6 lg:px-8 bg-gradient-to-br from-slate-50 to-gray-100"
       >
         <div className="max-w-7xl mx-auto">
-          <motion.div 
+          <motion.div
             variants={slideInUp}
             className="text-center mb-16"
           >
@@ -1608,7 +1608,7 @@ export default function HomePage() {
           </motion.div>
 
           {/* Quick Filter Buttons */}
-          <motion.div 
+          <motion.div
             variants={staggerContainer}
             className="flex flex-wrap justify-center gap-4 mb-12"
           >
@@ -1618,8 +1618,8 @@ export default function HomePage() {
                 variants={itemVariants}
                 whileHover={{ scale: 1.05, y: -2 }}
               >
-                <Button 
-                  variant="outline" 
+                <Button
+                  variant="outline"
                   className="rounded-full px-6 py-2 border-blue-200 text-blue-600 hover:bg-blue-50"
                 >
                   {filter}
@@ -1629,7 +1629,7 @@ export default function HomePage() {
           </motion.div>
 
           {/* Spaces Grid */}
-          <motion.div 
+          <motion.div
             variants={staggerContainer}
             className="grid md:grid-cols-2 lg:grid-cols-2 gap-8"
           >
@@ -1645,7 +1645,7 @@ export default function HomePage() {
                     <h3 className="text-xl font-bold text-gray-900">{space.type}</h3>
                     <Heart className="w-5 h-5 text-gray-400 cursor-pointer hover:text-red-500" />
                   </div>
-                  
+
                   <div className="space-y-3 mb-4">
                     <div className="flex items-center gap-2">
                       <MapPin className="w-4 h-4 text-blue-600" />
@@ -1688,11 +1688,11 @@ export default function HomePage() {
             ))}
           </motion.div>
 
-          <motion.div 
+          <motion.div
             variants={itemVariants}
             className="text-center mt-12"
           >
-            <Button 
+            <Button
               onClick={() => router.push('/explore-spaces')}
               className="bg-gradient-to-r from-blue-600 to-teal-600 hover:from-blue-700 hover:to-teal-700 text-white rounded-2xl px-8 py-4 font-semibold group"
             >
@@ -1704,16 +1704,16 @@ export default function HomePage() {
       </motion.section>
 
       {/* How It Works Section */}
-      <motion.section 
+      <motion.section
         initial="hidden"
         whileInView="visible"
         viewport={{ once: true, margin: "-50px" }}
         variants={containerVariants}
-        id="how-it-works" 
+        id="how-it-works"
         className="py-20 px-4 sm:px-6 lg:px-8 bg-white"
       >
         <div className="max-w-7xl mx-auto">
-          <motion.div 
+          <motion.div
             variants={slideInUp}
             className="text-center mb-16"
           >
@@ -1727,14 +1727,14 @@ export default function HomePage() {
 
           <div className="grid md:grid-cols-3 gap-8 relative">
             {/* Connecting Line */}
-            <motion.div 
+            <motion.div
               initial={{ scaleX: 0 }}
               whileInView={{ scaleX: 1 }}
               viewport={{ once: true }}
               transition={{ duration: 0.8, delay: 0.3 }}
               className="hidden md:block absolute top-24 left-1/3 right-1/3 h-0.5 bg-gradient-to-r from-blue-500 to-teal-500 transform -translate-y-1/2 origin-left"
             />
-            
+
             {/* Step 1 */}
             <motion.div
               variants={itemVariants}
@@ -1750,7 +1750,7 @@ export default function HomePage() {
                   <h3 className="text-xl font-bold text-gray-900">Create Account</h3>
                 </div>
                 <p className="text-gray-700 leading-relaxed font-light">
-                  Sign up as an advertiser looking for spaces or as an agency managing locations. 
+                  Sign up as an advertiser looking for spaces or as an agency managing locations.
                   Complete your profile in just a few minutes.
                 </p>
               </div>
@@ -1771,7 +1771,7 @@ export default function HomePage() {
                   <h3 className="text-xl font-bold text-gray-900">Find & Compare</h3>
                 </div>
                 <p className="text-gray-700 leading-relaxed font-light">
-                  Browse available spaces, use filters to find perfect matches, and compare 
+                  Browse available spaces, use filters to find perfect matches, and compare
                   options based on location, price, and features.
                 </p>
               </div>
@@ -1792,7 +1792,7 @@ export default function HomePage() {
                   <h3 className="text-xl font-bold text-gray-900">Book & Launch</h3>
                 </div>
                 <p className="text-gray-700 leading-relaxed font-light">
-                  Reserve your chosen space, upload your creative content, and launch your campaign. 
+                  Reserve your chosen space, upload your creative content, and launch your campaign.
                   Track performance in real-time.
                 </p>
               </div>
@@ -1800,7 +1800,7 @@ export default function HomePage() {
           </div>
 
           {/* Additional Features */}
-          <motion.div 
+          <motion.div
             variants={staggerContainer}
             className="grid md:grid-cols-3 gap-8 mt-16"
           >
@@ -1829,14 +1829,14 @@ export default function HomePage() {
       </motion.section>
 
       {/* CTA Section */}
-      <motion.section 
+      <motion.section
         initial="hidden"
         whileInView="visible"
         viewport={{ once: true }}
         variants={fadeIn}
         className="py-20 px-4 sm:px-6 lg:px-8 bg-gradient-to-r from-blue-600 to-teal-600"
       >
-        <motion.div 
+        <motion.div
           variants={scaleIn}
           className="max-w-4xl mx-auto text-center"
         >
@@ -1867,7 +1867,7 @@ export default function HomePage() {
       </motion.section>
 
       {/* Contact Section */}
-      <motion.section 
+      <motion.section
         initial="hidden"
         whileInView="visible"
         viewport={{ once: true, margin: "-50px" }}
@@ -1876,7 +1876,7 @@ export default function HomePage() {
         className="py-20 px-4 sm:px-6 lg:px-8 bg-gradient-to-br from-slate-50 to-blue-50"
       >
         <div className="max-w-7xl mx-auto">
-          <motion.div 
+          <motion.div
             variants={slideInUp}
             className="text-center mb-16"
           >
@@ -1890,13 +1890,13 @@ export default function HomePage() {
 
           <div className="grid lg:grid-cols-2 gap-12">
             {/* Contact Information */}
-            <motion.div 
+            <motion.div
               variants={slideInLeft}
               className="space-y-8"
             >
               <div className="bg-white p-8 rounded-3xl shadow-lg border border-gray-200">
                 <h3 className="text-2xl font-bold text-gray-900 mb-6">Contact Information</h3>
-                
+
                 <div className="space-y-6">
                   {contactInfo.map((contact, index) => (
                     <motion.div
@@ -1909,8 +1909,8 @@ export default function HomePage() {
                       </div>
                       <div>
                         <h4 className="font-semibold text-gray-900 mb-1">{contact.text}</h4>
-                        <a href={contact.text === "Email" ? `mailto:${contact.value}` : contact.text === "Phone" ? `tel:${contact.value}` : "#"} 
-                           className="text-blue-600 hover:text-blue-700 font-medium">
+                        <a href={contact.text === "Email" ? `mailto:${contact.value}` : contact.text === "Phone" ? `tel:${contact.value}` : "#"}
+                          className="text-blue-600 hover:text-blue-700 font-medium">
                           {contact.value}
                         </a>
                       </div>
@@ -1922,16 +1922,16 @@ export default function HomePage() {
                   <h4 className="font-semibold text-gray-900 mb-4">Follow Us</h4>
                   <div className="flex gap-4">
                     {socialMedia.map((social) => (
-                      <a 
+                      <a
                         key={social.name}
-                        href="#" 
+                        href="#"
                         className="text-gray-400 transition-colors duration-200 transform hover:scale-110"
                         onMouseEnter={() => setHoveredSocial(social.name)}
                         onMouseLeave={() => setHoveredSocial(null)}
-                        style={{ 
-                          color: hoveredSocial === social.name ? 
-                            (social.name === 'facebook' ? '#2563eb' : 
-                             social.name === 'twitter' ? '#60a5fa' : '#1d4ed8') : '#9ca3af'
+                        style={{
+                          color: hoveredSocial === social.name ?
+                            (social.name === 'facebook' ? '#2563eb' :
+                              social.name === 'twitter' ? '#60a5fa' : '#1d4ed8') : '#9ca3af'
                         }}
                       >
                         <social.icon className="w-6 h-6" />
@@ -1943,7 +1943,7 @@ export default function HomePage() {
             </motion.div>
 
             {/* Contact Form */}
-            <motion.div 
+            <motion.div
               variants={slideInLeft}
               className="bg-white p-8 rounded-3xl shadow-lg border border-gray-200"
             >
@@ -2006,7 +2006,7 @@ export default function HomePage() {
       </motion.section>
 
       {/* Footer */}
-      <motion.footer 
+      <motion.footer
         initial={{ opacity: 0 }}
         whileInView={{ opacity: 1 }}
         viewport={{ once: true }}
@@ -2065,16 +2065,16 @@ export default function HomePage() {
             <p className="font-light">&copy; 2025 AdBridgeDZ. All rights reserved.</p>
             <div className="flex gap-4 mt-4 md:mt-0">
               {socialMedia.map((social) => (
-                <a 
+                <a
                   key={social.name}
-                  href="#" 
+                  href="#"
                   className="text-gray-400 transition-colors duration-200 transform hover:scale-110"
                   onMouseEnter={() => setHoveredSocial(social.name)}
                   onMouseLeave={() => setHoveredSocial(null)}
-                  style={{ 
-                    color: hoveredSocial === social.name ? 
-                      (social.name === 'facebook' ? '#2563eb' : 
-                       social.name === 'twitter' ? '#60a5fa' : '#1d4ed8') : '#9ca3af'
+                  style={{
+                    color: hoveredSocial === social.name ?
+                      (social.name === 'facebook' ? '#2563eb' :
+                        social.name === 'twitter' ? '#60a5fa' : '#1d4ed8') : '#9ca3af'
                   }}
                 >
                   <social.icon className="w-5 h-5" />
