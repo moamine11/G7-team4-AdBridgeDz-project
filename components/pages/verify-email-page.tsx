@@ -1,17 +1,41 @@
 'use client'
 
 import { useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { MailCheck } from 'lucide-react'
 
 export default function VerifyEmailPage() {
   const router = useRouter()
-  const [email] = useState('user****@example.com')
+  const searchParams = useSearchParams()
 
-  const handleResend = () => {
-    console.log('Resend verification email')
-    // Handle resend logic
+  const emailFromQuery = searchParams.get('email') || ''
+  const [email, setEmail] = useState(emailFromQuery)
+  const [loading, setLoading] = useState(false)
+
+  const handleResend = async () => {
+    if (!email) return alert('Email not found.')
+
+    setLoading(true)
+    try {
+      const res = await fetch(`${process.env.BACKEND_URL}/resend-verification`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email })
+      })
+
+      const data = await res.json()
+      if (res.ok) {
+        alert(data.message || 'Verification email sent!')
+      } else {
+        alert(data.error || 'Failed to resend verification email.')
+      }
+    } catch (err) {
+      console.error(err)
+      alert('Error sending verification email.')
+    } finally {
+      setLoading(false)
+    }
   }
 
   const handleChangeEmail = () => {
@@ -34,14 +58,15 @@ export default function VerifyEmailPage() {
         </h1>
 
         {/* Email Display */}
-        <p className="text-lg text-gray-600 mb-8">{email}</p>
+        <p className="text-lg text-gray-600 mb-8">{email || 'your email'}</p>
 
         {/* Resend Button */}
         <Button
           onClick={handleResend}
           className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 rounded-full mb-4"
+          disabled={loading}
         >
-          Resend Verification
+          {loading ? 'Sending...' : 'Resend Verification'}
         </Button>
 
         {/* Change Email Link */}
