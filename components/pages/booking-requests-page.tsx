@@ -2,17 +2,41 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import Sidebar from '@/components/layout/sidebar'
-import Navbar from '@/components/layout/navbar'
+import { Sidebar } from '@/components/ui/sidebar'
+import Navbar from '@/components/ui/navbar'
 import { MoreVertical } from 'lucide-react'
 
 type TabType = 'in-progress' | 'completed' | 'canceled'
+
+type BookingBase = {
+  id: number
+  company: string
+  email: string
+  spaceTitle: string
+  dates: string
+  status: string
+  statusColor: string
+}
+
+type InProgressBooking = BookingBase & {
+  offer: string
+}
+
+type CompletedBooking = BookingBase & {
+  price: string
+}
+
+type CanceledBooking = BookingBase & {
+  price: string
+}
+
+type Booking = InProgressBooking | CompletedBooking | CanceledBooking
 
 export default function BookingRequestsPage() {
   const [activeTab, setActiveTab] = useState<TabType>('in-progress')
   const [showMenu, setShowMenu] = useState<number | null>(null)
 
-  const bookings = {
+  const bookings: Record<TabType, Booking[]> = {
     'in-progress': [
       {
         id: 1,
@@ -138,7 +162,7 @@ export default function BookingRequestsPage() {
                             {activeTab === 'in-progress' ? 'Proposed Offer' : 'Price'}
                           </p>
                           <p className="text-sm text-gray-900 font-semibold mb-4">
-                            {booking.offer || booking.price}
+                            {'offer' in booking ? booking.offer : booking.price}
                           </p>
                         </div>
 

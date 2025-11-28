@@ -2,8 +2,8 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import Sidebar from '@/components/layout/sidebar'
-import Navbar from '@/components/layout/navbar'
+import { Sidebar } from '@/components/ui/sidebar'
+import Navbar from '@/components/ui/navbar'
 import { Plus, MoreVertical } from 'lucide-react'
 
 export default function ManageSpacesPage() {

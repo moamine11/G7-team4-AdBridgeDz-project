@@ -1,7 +1,7 @@
 'use client'
 
-import Sidebar from '@/components/layout/sidebar'
-import Navbar from '@/components/layout/navbar'
+import { Sidebar } from '@/components/ui/sidebar'
+import Navbar from '@/components/ui/navbar'
 import { Building2, Calendar, Clock, CheckCircle2 } from 'lucide-react'
 
 export default function DashboardPage() {
