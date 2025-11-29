@@ -22,7 +22,6 @@ export default function Navbar() {
   const navLinks = [
     { href: '/', label: 'Home' },
     { href: '/channels', label: 'Explore' },
-    { href: '/dashboard', label: 'Dashboard' },
     { href: '/dashboard/bookings', label: 'Bookings' },
     { href: '/profile-company', label: 'Profile' },
   ]
