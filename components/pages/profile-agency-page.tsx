@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import { Sidebar } from '@/components/ui/sidebar'
+import { Sidebar, SidebarProvider } from '@/components/ui/sidebar'
 import Navbar from '@/components/ui/navbar'
 import { Upload } from 'lucide-react'
 
@@ -41,13 +41,14 @@ export default function ProfileAgencyPage() {
   }
 
   return (
-    <div className="flex min-h-screen bg-gray-50">
-      <Sidebar />
-      
-      <div className="flex-1 flex flex-col">
-        <Navbar />
+    <SidebarProvider>
+      <div className="flex min-h-screen bg-gray-50">
+        <Sidebar />
         
-        <main className="flex-1 p-8 overflow-y-auto">
+        <div className="flex-1 flex flex-col">
+          <Navbar />
+          
+          <main className="flex-1 p-8 overflow-y-auto">
           <div className="max-w-4xl mx-auto">
             {/* Breadcrumb */}
             <nav className="text-sm text-gray-500 mb-2">
@@ -432,8 +433,9 @@ export default function ProfileAgencyPage() {
               </div>
             </form>
           </div>
-        </main>
+          </main>
+        </div>
       </div>
-    </div>
+    </SidebarProvider>
   )
 }

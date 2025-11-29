@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import { Sidebar } from '@/components/ui/sidebar'
+import { Sidebar, SidebarProvider } from '@/components/ui/sidebar'
 import Navbar from '@/components/ui/navbar'
 import { Plus, MoreVertical } from 'lucide-react'
 
@@ -43,13 +43,14 @@ export default function ManageSpacesPage() {
   ]
 
   return (
-    <div className="flex min-h-screen bg-gray-50">
-      <Sidebar />
-      
-      <div className="flex-1 flex flex-col">
-        <Navbar />
+    <SidebarProvider>
+      <div className="flex min-h-screen bg-gray-50">
+        <Sidebar />
         
-        <main className="flex-1 p-8">
+        <div className="flex-1 flex flex-col">
+          <Navbar />
+          
+          <main className="flex-1 p-8">
           <div className="max-w-7xl mx-auto">
             {/* Page Header */}
             <div className="flex items-center justify-between mb-8">
@@ -122,8 +123,9 @@ export default function ManageSpacesPage() {
               ))}
             </div>
           </div>
-        </main>
+          </main>
+        </div>
       </div>
-    </div>
+    </SidebarProvider>
   )
 }

@@ -19,29 +19,32 @@ export default function AccountTypePage() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center p-4 py-12">
+    <div className="min-h-screen flex flex-col items-center justify-center p-4 py-12 pt-32 bg-[#020618]">
       {/* Header */}
       <div className="text-center mb-12 max-w-2xl">
-        <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold text-gray-900 mb-4 bg-gradient-to-r from-teal-600 to-blue-600 bg-clip-text text-transparent">
+        <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold mb-4 bg-gradient-to-r from-blue-400 via-teal-400 to-blue-400 bg-clip-text text-transparent drop-shadow">
           Create Your Account
         </h1>
-        <p className="text-lg md:text-xl text-gray-600 leading-relaxed">
+        <p className="text-lg md:text-xl text-slate-300 leading-relaxed">
           Choose the account type that best fits your needs and start your journey with us
         </p>
       </div>
 
       {/* Account Type Cards */}
-      <div className="grid md:grid-cols-2 gap-4 lg:gap-6 w-full max-w-3xl mb-10">
+      <div className="grid md:grid-cols-2 gap-6 w-full max-w-3xl mb-10">
         {/* Company/Advertiser Card */}
         <div
           onClick={() => setSelectedType('company')}
           className={cn(
-            "relative p-6 rounded-2xl border-2 cursor-pointer transition-all duration-300 transform hover:scale-[1.02] group overflow-hidden",
+            "relative p-8 rounded-[2.5rem_1.5rem_2.5rem_1.5rem] border-2 cursor-pointer transition-all duration-300 transform hover:scale-[1.04] group overflow-hidden backdrop-blur-xl shadow-2xl",
             selectedType === 'company'
-              ? 'border-blue-500 bg-gradient-to-br from-blue-50 via-blue-100 to-teal-50 shadow-xl shadow-blue-500/20 scale-[1.02]'
-              : 'border-gray-200 bg-white hover:border-blue-300 hover:shadow-lg shadow-md'
+              ? 'border-blue-500 bg-gradient-to-br from-blue-900/90 via-blue-800/80 to-teal-900/80 shadow-blue-500/30 scale-[1.04]'
+              : 'border-white/10 bg-white/10 hover:border-blue-400 hover:shadow-lg shadow-md'
           )}
         >
+          {/* Decorative Layered Gradients */}
+          <div className="absolute -top-10 -left-10 w-40 h-40 bg-gradient-to-br from-blue-500/30 to-teal-400/20 rounded-full blur-2xl opacity-60 z-0" />
+          <div className="absolute -bottom-10 -right-10 w-32 h-32 bg-gradient-to-tr from-blue-400/20 to-teal-500/30 rounded-full blur-2xl opacity-50 z-0" />
           {/* Selected Indicator */}
           {selectedType === 'company' && (
             <div className="absolute top-3 right-3 w-6 h-6 bg-blue-500 rounded-full flex items-center justify-center animate-in fade-in duration-300">
@@ -74,18 +77,18 @@ export default function AccountTypePage() {
             </div>
 
             {/* Title */}
-            <h3 className="text-xl lg:text-2xl font-bold text-gray-900 text-center mb-2">
-            Company / Advertiser
-          </h3>
+            <h3 className="text-xl lg:text-2xl font-bold text-slate-100 text-center mb-2">
+              Company / Advertiser
+            </h3>
 
             {/* Description */}
-            <p className="text-gray-600 text-center mb-4 text-base">
+            <p className="text-slate-300 text-center mb-4 text-base">
               Find & book premium ad spaces for your campaigns
             </p>
 
             {/* Features List */}
             <ul className="space-y-2">
-              <li className="flex items-center gap-2 text-xs text-gray-600">
+              <li className="flex items-center gap-2 text-xs text-slate-300">
                 <div className={cn(
                   "w-4 h-4 rounded-full flex items-center justify-center flex-shrink-0 transition-colors",
                   selectedType === 'company' ? 'bg-blue-500' : 'bg-gray-200'
@@ -94,7 +97,7 @@ export default function AccountTypePage() {
                 </div>
                 <span>Browse thousands of available billboard locations</span>
               </li>
-              <li className="flex items-center gap-2 text-xs text-gray-600">
+              <li className="flex items-center gap-2 text-xs text-slate-300">
                 <div className={cn(
                   "w-4 h-4 rounded-full flex items-center justify-center flex-shrink-0 transition-colors",
                   selectedType === 'company' ? 'bg-blue-500' : 'bg-gray-200'
@@ -103,7 +106,7 @@ export default function AccountTypePage() {
                 </div>
                 <span>Compare pricing and locations in real-time</span>
               </li>
-              <li className="flex items-center gap-2 text-xs text-gray-600">
+              <li className="flex items-center gap-2 text-xs text-slate-300">
                 <div className={cn(
                   "w-4 h-4 rounded-full flex items-center justify-center flex-shrink-0 transition-colors",
                   selectedType === 'company' ? 'bg-blue-500' : 'bg-gray-200'
@@ -130,12 +133,15 @@ export default function AccountTypePage() {
         <div
           onClick={() => setSelectedType('agency')}
           className={cn(
-            "relative p-6 rounded-2xl border-2 cursor-pointer transition-all duration-300 transform hover:scale-[1.02] group overflow-hidden",
+            "relative p-8 rounded-[1.5rem_2.5rem_1.5rem_2.5rem] border-2 cursor-pointer transition-all duration-300 transform hover:scale-[1.04] group overflow-hidden backdrop-blur-xl shadow-2xl",
             selectedType === 'agency'
-              ? 'border-teal-500 bg-gradient-to-br from-teal-50 via-green-50 to-emerald-50 shadow-xl shadow-teal-500/20 scale-[1.02]'
-              : 'border-gray-200 bg-white hover:border-teal-300 hover:shadow-lg shadow-md'
+              ? 'border-teal-500 bg-gradient-to-br from-teal-900/90 via-emerald-900/80 to-blue-900/80 shadow-teal-500/30 scale-[1.04]'
+              : 'border-white/10 bg-white/10 hover:border-teal-400 hover:shadow-lg shadow-md'
           )}
         >
+          {/* Decorative Layered Gradients */}
+          <div className="absolute -top-10 -right-10 w-40 h-40 bg-gradient-to-br from-teal-500/30 to-blue-400/20 rounded-full blur-2xl opacity-60 z-0" />
+          <div className="absolute -bottom-10 -left-10 w-32 h-32 bg-gradient-to-tr from-emerald-400/20 to-blue-500/30 rounded-full blur-2xl opacity-50 z-0" />
           {/* Selected Indicator */}
           {selectedType === 'agency' && (
             <div className="absolute top-3 right-3 w-6 h-6 bg-teal-500 rounded-full flex items-center justify-center animate-in fade-in duration-300">
@@ -168,18 +174,18 @@ export default function AccountTypePage() {
             </div>
 
             {/* Title */}
-            <h3 className="text-xl lg:text-2xl font-bold text-gray-900 text-center mb-2">
-            Agency / Billboard Provider
-          </h3>
+            <h3 className="text-xl lg:text-2xl font-bold text-slate-100 text-center mb-2">
+              Agency / Billboard Provider
+            </h3>
 
             {/* Description */}
-            <p className="text-gray-600 text-center mb-4 text-base">
+            <p className="text-slate-300 text-center mb-4 text-base">
               List & manage your advertising spaces efficiently
             </p>
 
             {/* Features List */}
             <ul className="space-y-2">
-              <li className="flex items-center gap-2 text-xs text-gray-600">
+              <li className="flex items-center gap-2 text-xs text-slate-300">
                 <div className={cn(
                   "w-4 h-4 rounded-full flex items-center justify-center flex-shrink-0 transition-colors",
                   selectedType === 'agency' ? 'bg-teal-500' : 'bg-gray-200'
@@ -188,7 +194,7 @@ export default function AccountTypePage() {
                 </div>
                 <span>List your billboard spaces and reach more advertisers</span>
               </li>
-              <li className="flex items-center gap-2 text-xs text-gray-600">
+              <li className="flex items-center gap-2 text-xs text-slate-300">
                 <div className={cn(
                   "w-4 h-4 rounded-full flex items-center justify-center flex-shrink-0 transition-colors",
                   selectedType === 'agency' ? 'bg-teal-500' : 'bg-gray-200'
@@ -197,7 +203,7 @@ export default function AccountTypePage() {
                 </div>
                 <span>Manage bookings and availability in real-time</span>
               </li>
-              <li className="flex items-center gap-2 text-xs text-gray-600">
+              <li className="flex items-center gap-2 text-xs text-slate-300">
                 <div className={cn(
                   "w-4 h-4 rounded-full flex items-center justify-center flex-shrink-0 transition-colors",
                   selectedType === 'agency' ? 'bg-teal-500' : 'bg-gray-200'
@@ -226,10 +232,10 @@ export default function AccountTypePage() {
         onClick={handleNext}
         disabled={!selectedType}
         className={cn(
-          "relative px-8 py-5 text-base font-semibold rounded-full transition-all duration-300 transform",
+          "relative px-8 py-5 text-base font-semibold rounded-full transition-all duration-300 transform mt-6",
           selectedType
-            ? "bg-gradient-to-r from-teal-500 to-blue-500 hover:from-teal-600 hover:to-blue-600 text-white shadow-lg shadow-teal-500/25 hover:shadow-xl hover:shadow-teal-500/30 hover:scale-105"
-            : "bg-gray-300 text-gray-500 cursor-not-allowed"
+            ? "bg-gradient-to-r from-blue-500 via-teal-500 to-blue-400 hover:from-blue-700 hover:to-teal-600 text-white shadow-lg shadow-blue-500/20 hover:shadow-xl hover:shadow-blue-500/30 hover:scale-105"
+            : "bg-slate-800 text-slate-500 cursor-not-allowed"
         )}
       >
         Continue

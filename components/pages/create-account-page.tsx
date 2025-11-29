@@ -308,641 +308,103 @@ export default function CreateAccountPage() {
   ]
 
   return (
-    <div className="min-h-screen py-8 px-4">
-      {/* Navbar provided by RootLayout */}
+    <div className="min-h-screen pt-32 pb-12 px-2 bg-[#020618] flex items-center justify-center">
+      <div className="w-full max-w-4xl mx-auto">
+        <div className="bg-gradient-to-br from-[#10182a]/80 via-[#1a223a]/70 to-[#0a0f1c]/90 backdrop-blur-2xl rounded-3xl shadow-2xl border border-blue-400/20 overflow-hidden p-10" style={{ boxShadow: '0 8px 32px 0 rgba(31, 38, 135, 0.37)' }}>
+          <h1 className="text-3xl md:text-4xl font-bold mb-6 bg-gradient-to-r from-blue-400 via-teal-400 to-blue-400 bg-clip-text text-transparent text-center">Create Your Account</h1>
+          <form onSubmit={handleCreateAccount} className="space-y-8">
+            {/* Account Info */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-blue-200 mb-1">Company Name <span className="text-red-400">*</span></label>
+                <Input name="companyName" value={formData.companyName} onChange={handleInputChange} placeholder="Enter your company name" className="w-full bg-white/5 border border-blue-400/30 focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400/30 text-blue-100 placeholder:text-blue-300 rounded-xl transition-all duration-200 shadow-inner shadow-blue-900/10" required />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-blue-200 mb-1">Email <span className="text-red-400">*</span></label>
+                <Input name="email" type="email" value={formData.email} onChange={handleInputChange} placeholder="name@example.com" className="w-full bg-white/5 border border-blue-400/30 focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400/30 text-blue-100 placeholder:text-blue-300 rounded-xl transition-all duration-200 shadow-inner shadow-blue-900/10" required />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-blue-200 mb-1">Password <span className="text-red-400">*</span></label>
+                <Input name="password" type="password" value={formData.password} onChange={handleInputChange} placeholder="Create a password" className="w-full bg-white/5 border border-blue-400/30 focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400/30 text-blue-100 placeholder:text-blue-300 rounded-xl transition-all duration-200 shadow-inner shadow-blue-900/10" required />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-blue-200 mb-1">Confirm Password <span className="text-red-400">*</span></label>
+                <Input name="confirmPassword" type="password" value={formData.confirmPassword} onChange={handleInputChange} placeholder="Confirm your password" className="w-full bg-white/5 border border-blue-400/30 focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400/30 text-blue-100 placeholder:text-blue-300 rounded-xl transition-all duration-200 shadow-inner shadow-blue-900/10" required />
+              </div>
+            </div>
 
-      <div className="max-w-4xl mx-auto">
-        {/* Progress Bar */}
-        <div className="mb-8">
-          <div className="flex items-center justify-between mb-4">
-            {steps.map((step, index) => (
-              <div key={step.number} className="flex items-center flex-1">
-                <div 
-                  className="flex flex-col items-center flex-1 cursor-pointer"
-                  onClick={() => setCurrentStep(step.number)}
-                >
-                  <div
-                    className={cn(
-                      "w-10 h-10 rounded-full flex items-center justify-center font-semibold text-sm transition-all duration-300",
-                      currentStep > step.number
-                        ? "bg-gradient-to-r from-teal-500 to-blue-500 text-white hover:scale-110"
-                        : currentStep === step.number
-                        ? "bg-gradient-to-r from-teal-500 to-blue-500 text-white ring-4 ring-teal-500/20 scale-110"
-                        : "bg-gray-200 text-gray-500 hover:bg-gray-300 hover:scale-105"
-                    )}
-                  >
-                    {currentStep > step.number ? (
-                      <CheckCircle2 className="w-5 h-5" />
-                    ) : (
-                      step.number
-                    )}
-                  </div>
-                  <span
-                    className={cn(
-                      "mt-2 text-xs font-medium transition-colors",
-                      currentStep >= step.number
-                        ? "text-gray-900"
-                        : "text-gray-400"
-                    )}
-                  >
-                    {step.title}
-                  </span>
+            {/* Contact Info */}
+            <div>
+              <h2 className="text-xl font-semibold text-blue-300 mb-4">Contact Information</h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-blue-200 mb-1">Phone Number</label>
+                  <Input name="phoneNumber" value={formData.phoneNumber} onChange={handleInputChange} placeholder="e.g. +213 555 123 456" className="w-full bg-white/5 border border-blue-400/30 focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400/30 text-blue-100 placeholder:text-blue-300 rounded-xl transition-all duration-200 shadow-inner shadow-blue-900/10" />
                 </div>
-                {index < steps.length - 1 && (
-                  <div className="flex-1 h-0.5 mx-2 -mt-6">
-                    <div
-                      className={cn(
-                        "h-full transition-all duration-300",
-                        currentStep > step.number
-                          ? "bg-gradient-to-r from-teal-500 to-blue-500"
-                          : "bg-gray-200"
-                      )}
-                    />
-                  </div>
-                )}
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Form Container */}
-        <div className="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden">
-          <form onSubmit={handleCreateAccount}>
-            {/* Step 1: Basic Account Information */}
-            <div
-              className={cn(
-                "transition-all duration-500 ease-in-out",
-                currentStep === 1
-                  ? "opacity-100 translate-x-0 block"
-                  : "opacity-0 translate-x-[-100%] hidden"
-              )}
-            >
-              <div className="p-8">
-                <div className="mb-6">
-                  <h2 className="text-2xl font-bold text-gray-900 mb-2">Basic Account Information</h2>
-                  <p className="text-gray-600">Create your account credentials</p>
+                <div>
+                  <label className="block text-sm font-medium text-blue-200 mb-1">Website</label>
+                  <Input name="websiteUrl" value={formData.websiteUrl} onChange={handleInputChange} placeholder="https://yourcompany.com" className="w-full bg-white/5 border border-blue-400/30 focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400/30 text-blue-100 placeholder:text-blue-300 rounded-xl transition-all duration-200 shadow-inner shadow-blue-900/10" />
                 </div>
-
-                <div className="space-y-5">
-                  {/* Company Name */}
-              <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Company Name <span className="text-red-500">*</span>
-                    </label>
-                <Input
-                  name="companyName"
-                  value={formData.companyName}
-                  onChange={handleInputChange}
-                      placeholder="Enter your company name"
-                  className="w-full"
-                  required
-                />
-              </div>
-
-                  {/* Email */}
-              <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Email Address <span className="text-red-500">*</span>
-                    </label>
-                    <div className="relative">
-                <Input
-                  type="email"
-                  name="email"
-                  value={formData.email}
-                  onChange={handleInputChange}
-                        placeholder="company@example.com"
-                        className={cn(
-                          "w-full pr-10",
-                          validation.email.touched &&
-                            (validation.email.valid
-                              ? "border-green-500 focus:border-green-500"
-                              : "border-red-500 focus:border-red-500")
-                        )}
-                  required
-                />
-                      {validation.email.touched && (
-                        <div className="absolute right-3 top-1/2 -translate-y-1/2">
-                          {validation.email.valid ? (
-                            <CheckCircle2 className="w-5 h-5 text-green-500" />
-                          ) : (
-                            <XCircle className="w-5 h-5 text-red-500" />
-                          )}
-                        </div>
-                      )}
-                    </div>
-                    {validation.email.touched && (
-                      <p
-                        className={cn(
-                          "text-xs mt-1 flex items-center gap-1",
-                          validation.email.valid ? "text-green-600" : "text-red-500"
-                        )}
-                      >
-                        {validation.email.valid ? (
-                          <>
-                            <CheckCircle2 className="w-3 h-3" />
-                            Valid email
-                          </>
-                        ) : (
-                          <>
-                            <XCircle className="w-3 h-3" />
-                            {validation.email.message}
-                          </>
-                        )}
-                      </p>
-                    )}
-              </div>
-
-                  {/* Password */}
-              <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Password <span className="text-red-500">*</span>
-                    </label>
-                    <div className="relative">
-                <Input
-                        type={showPassword ? 'text' : 'password'}
-                  name="password"
-                  value={formData.password}
-                  onChange={handleInputChange}
-                        placeholder="Create a secure password"
-                        className={cn(
-                          "w-full pr-10",
-                          validation.password.touched &&
-                            (validation.password.valid
-                              ? "border-green-500 focus:border-green-500"
-                              : "border-red-500 focus:border-red-500")
-                        )}
-                  required
-                />
-                      <button
-                        type="button"
-                        onClick={() => setShowPassword(!showPassword)}
-                        className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
-                      >
-                        {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-                      </button>
-                    </div>
-                    {validation.password.touched && formData.password && (
-                      <div className="mt-2">
-                        <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
-                  <div
-                            className={cn(
-                              "h-full transition-all duration-300",
-                              getPasswordStrength().color
-                            )}
-                            style={{
-                              width: `${
-                                (Object.values(passwordCriteria).filter(Boolean).length / 5) * 100
-                              }%`,
-                            }}
-                          />
-                        </div>
-                        <p className="text-xs text-gray-600 mt-1">
-                          Password strength: <span className="font-medium">{getPasswordStrength().text}</span>
-                        </p>
-                        <div className="mt-2 space-y-1">
-                          <div className="flex items-center gap-2 text-xs">
-                            {passwordCriteria.length ? (
-                              <Check className="w-3 h-3 text-green-500" />
-                            ) : (
-                              <X className="w-3 h-3 text-gray-400" />
-                            )}
-                            <span className={passwordCriteria.length ? 'text-gray-700' : 'text-gray-400'}>
-                              At least 12 characters
-                            </span>
-                          </div>
-                          <div className="flex items-center gap-2 text-xs">
-                            {passwordCriteria.uppercase ? (
-                              <Check className="w-3 h-3 text-green-500" />
-                            ) : (
-                              <X className="w-3 h-3 text-gray-400" />
-                            )}
-                            <span className={passwordCriteria.uppercase ? 'text-gray-700' : 'text-gray-400'}>
-                              One uppercase letter
-                            </span>
-                          </div>
-                          <div className="flex items-center gap-2 text-xs">
-                            {passwordCriteria.lowercase ? (
-                              <Check className="w-3 h-3 text-green-500" />
-                            ) : (
-                              <X className="w-3 h-3 text-gray-400" />
-                            )}
-                            <span className={passwordCriteria.lowercase ? 'text-gray-700' : 'text-gray-400'}>
-                              One lowercase letter
-                            </span>
-                          </div>
-                          <div className="flex items-center gap-2 text-xs">
-                            {passwordCriteria.number ? (
-                              <Check className="w-3 h-3 text-green-500" />
-                            ) : (
-                              <X className="w-3 h-3 text-gray-400" />
-                            )}
-                            <span className={passwordCriteria.number ? 'text-gray-700' : 'text-gray-400'}>
-                              One number
-                            </span>
-                          </div>
-                          <div className="flex items-center gap-2 text-xs">
-                            {passwordCriteria.special ? (
-                              <Check className="w-3 h-3 text-green-500" />
-                            ) : (
-                              <X className="w-3 h-3 text-gray-400" />
-                            )}
-                            <span className={passwordCriteria.special ? 'text-gray-700' : 'text-gray-400'}>
-                              One special character (!@#$%^&*)
-                            </span>
-                          </div>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Confirm Password */}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Confirm Password <span className="text-red-500">*</span>
-                    </label>
-                    <div className="relative">
-                      <Input
-                        type={showConfirmPassword ? 'text' : 'password'}
-                        name="confirmPassword"
-                        value={formData.confirmPassword}
-                        onChange={handleInputChange}
-                        placeholder="Confirm your password"
-                        className={cn(
-                          "w-full pr-10",
-                          validation.confirmPassword.touched &&
-                            (validation.confirmPassword.valid
-                              ? "border-green-500 focus:border-green-500"
-                              : "border-red-500 focus:border-red-500")
-                        )}
-                        required
-                      />
-                      <button
-                        type="button"
-                        onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                        className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
-                      >
-                        {showConfirmPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-                      </button>
-                    </div>
-                    {validation.confirmPassword.touched && (
-                      <p
-                        className={cn(
-                          "text-xs mt-1 flex items-center gap-1",
-                          validation.confirmPassword.valid ? "text-green-600" : "text-red-500"
-                        )}
-                      >
-                        {validation.confirmPassword.valid ? (
-                          <>
-                            <CheckCircle2 className="w-3 h-3" />
-                            Passwords match
-                          </>
-                        ) : (
-                          <>
-                            <XCircle className="w-3 h-3" />
-                            {validation.confirmPassword.message}
-                          </>
-                        )}
-                      </p>
-                    )}
-                  </div>
+                <div className="md:col-span-2">
+                  <label className="block text-sm font-medium text-blue-200 mb-1">Physical Address</label>
+                  <Input name="physicalAddress" value={formData.physicalAddress} onChange={handleInputChange} placeholder="Enter your address" className="w-full bg-white/5 border border-blue-400/30 focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400/30 text-blue-100 placeholder:text-blue-300 rounded-xl transition-all duration-200 shadow-inner shadow-blue-900/10" />
                 </div>
               </div>
             </div>
 
-            {/* Step 2: Contact Information */}
-            <div
-              className={cn(
-                "transition-all duration-500 ease-in-out",
-                currentStep === 2
-                  ? "opacity-100 translate-x-0 block"
-                  : currentStep < 2
-                  ? "opacity-0 translate-x-[100%] hidden"
-                  : "opacity-0 translate-x-[-100%] hidden"
-              )}
-            >
-              <div className="p-8">
-                <div className="mb-6">
-                  <h2 className="text-2xl font-bold text-gray-900 mb-2">Contact Information</h2>
-                  <p className="text-gray-600">How can we reach you?</p>
-              </div>
-
-                <div className="space-y-5">
-                  {/* Phone Number */}
-              <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Phone Number <span className="text-red-500">*</span>
-                    </label>
-                <div className="flex gap-2">
-                      <Select
-                        value={formData.countryCode}
-                        onValueChange={(value) => handleSelectChange('countryCode', value)}
-                      >
-                        <SelectTrigger className="w-24">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="+213">🇩🇿 +213</SelectItem>
-                          <SelectItem value="+33">🇫🇷 +33</SelectItem>
-                          <SelectItem value="+1">🇺🇸 +1</SelectItem>
-                          <SelectItem value="+44">🇬🇧 +44</SelectItem>
-                        </SelectContent>
-                      </Select>
-                      <div className="flex-1 relative">
-                        <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-                  <Input
-                    name="phoneNumber"
-                    value={formData.phoneNumber}
-                    onChange={handleInputChange}
-                          placeholder="555 123 456"
-                          className="w-full pl-10"
-                          required
-                  />
-                </div>
-              </div>
-                    <p className="text-xs text-gray-500 mt-1">
-                      We'll use this to contact you about your account
-                    </p>
-          </div>
-
-                  {/* Website URL */}
-              <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Website URL <span className="text-gray-400 text-xs">(optional)</span>
-                    </label>
-                    <div className="relative">
-                      <Globe className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-                <Input
-                  name="websiteUrl"
-                  value={formData.websiteUrl}
-                  onChange={handleInputChange}
-                        placeholder="https://www.yourcompany.com"
-                        className="w-full pl-10"
-                />
-                    </div>
-                    <p className="text-xs text-gray-500 mt-1">Your company website (optional)</p>
-              </div>
-
-                  {/* Physical Address */}
-              <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Physical Address <span className="text-gray-400 text-xs">(optional)</span>
-                    </label>
-                    <div className="relative">
-                      <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-                <Input
-                  name="physicalAddress"
-                  value={formData.physicalAddress}
-                  onChange={handleInputChange}
-                        placeholder="Street address, City, Algeria"
-                        className="w-full pl-10"
-                />
-              </div>
-                    <p className="text-xs text-gray-500 mt-1">Your business location (optional)</p>
-                </div>
-                </div>
-                </div>
-              </div>
-
-            {/* Step 3: Company Profile */}
-            <div
-              className={cn(
-                "transition-all duration-500 ease-in-out",
-                currentStep === 3
-                  ? "opacity-100 translate-x-0 block"
-                  : currentStep < 3
-                  ? "opacity-0 translate-x-[100%] hidden"
-                  : "opacity-0 translate-x-[-100%] hidden"
-              )}
-            >
-              <div className="p-8">
-                <div className="mb-6">
-                  <h2 className="text-2xl font-bold text-gray-900 mb-2">Company Profile</h2>
-                  <p className="text-gray-600">Tell us about your company</p>
-                </div>
-
-                <div className="space-y-5">
-                  {/* Company Logo */}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Company Logo <span className="text-gray-400 text-xs">(optional)</span>
-                    </label>
-                    {logoPreview ? (
-                      <div className="relative inline-block">
-                        <img
-                          src={logoPreview}
-                          alt="Company logo preview"
-                          className="w-32 h-32 object-cover rounded-lg border-2 border-gray-200"
-                        />
-                        <button
-                          type="button"
-                          onClick={removeLogo}
-                          className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center hover:bg-red-600 transition-colors"
-                        >
-                          <X className="w-4 h-4" />
-                        </button>
-                      </div>
-                    ) : (
-                      <div
-                        onClick={() => fileInputRef.current?.click()}
-                        className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center cursor-pointer hover:border-teal-500 hover:bg-teal-50/50 transition-all"
-                      >
-                        <Upload className="w-10 h-10 text-gray-400 mx-auto mb-2" />
-                        <p className="text-sm font-medium text-gray-700 mb-1">
-                          Click to upload or drag and drop
-                        </p>
-                        <p className="text-xs text-gray-500">
-                          JPG, PNG, or SVG (max 5MB)
-                        </p>
-                        <p className="text-xs text-gray-400 mt-2">
-                          Upload your company logo to build trust with advertisers
-                        </p>
-                      </div>
-                    )}
-                    <input
-                      ref={fileInputRef}
-                      type="file"
-                      accept="image/jpeg,image/jpg,image/png,image/svg+xml"
-                      onChange={handleFileUpload}
-                      className="hidden"
-                    />
-                  </div>
-
-                  {/* Industry */}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Industry/Sector <span className="text-red-500">*</span>
-                    </label>
-                    <Select
-                      value={formData.industry}
-                      onValueChange={(value) => handleSelectChange('industry', value)}
-                    >
-                      <SelectTrigger className="w-full">
-                        <SelectValue placeholder="Select your industry" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {industryOptions.map((industry) => (
-                          <SelectItem key={industry} value={industry}>
-                            {industry}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  {/* Company Size */}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Company Size <span className="text-red-500">*</span>
-                    </label>
-                    <Select
-                      value={formData.companySize}
-                      onValueChange={(value) => handleSelectChange('companySize', value)}
-                    >
-                      <SelectTrigger className="w-full">
-                        <SelectValue placeholder="Select company size" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {companySizeOptions.map((size) => (
-                          <SelectItem key={size.value} value={size.value}>
-                            {size.label}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  {/* Year Established */}
+            {/* Company Profile */}
+            <div>
+              <h2 className="text-xl font-semibold text-blue-300 mb-4">Company Profile</h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Year Established <span className="text-gray-400 text-xs">(optional)</span>
-                    </label>
-                  <Input
-                    type="number"
-                      name="yearEstablished"
-                      value={formData.yearEstablished}
-                    onChange={handleInputChange}
-                      placeholder="e.g., 2020"
-                      min="1900"
-                      max={new Date().getFullYear()}
-                    className="w-full"
-                  />
-                    <p className="text-xs text-gray-500 mt-1">When was your company founded? (optional)</p>
-                  </div>
+                  <label className="block text-sm font-medium text-blue-200 mb-1">Industry</label>
+                  <Input name="industry" value={formData.industry} onChange={handleInputChange} placeholder="e.g. Technology" className="w-full bg-white/5 border border-blue-400/30 focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400/30 text-blue-100 placeholder:text-blue-300 rounded-xl transition-all duration-200 shadow-inner shadow-blue-900/10" />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-blue-200 mb-1">Company Size</label>
+                  <Input name="companySize" value={formData.companySize} onChange={handleInputChange} placeholder="e.g. 11-50" className="w-full bg-white/5 border border-blue-400/30 focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400/30 text-blue-100 placeholder:text-blue-300 rounded-xl transition-all duration-200 shadow-inner shadow-blue-900/10" />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-blue-200 mb-1">Year Established</label>
+                  <Input name="yearEstablished" value={formData.yearEstablished} onChange={handleInputChange} placeholder="e.g. 2015" className="w-full bg-white/5 border border-blue-400/30 focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400/30 text-blue-100 placeholder:text-blue-300 rounded-xl transition-all duration-200 shadow-inner shadow-blue-900/10" />
+                </div>
+                <div className="md:col-span-2">
+                  <label className="block text-sm font-medium text-blue-200 mb-1">Logo</label>
+                  <input ref={fileInputRef} type="file" accept="image/*" onChange={handleFileUpload} className="block w-full text-sm text-blue-200 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 bg-white/5 border border-blue-400/30 rounded-xl" />
+                  {logoPreview && (
+                    <div className="mt-2 flex items-center gap-2">
+                      <img src={logoPreview} alt="Logo Preview" className="w-16 h-16 rounded-xl object-cover border border-white/20" />
+                      <Button type="button" variant="ghost" onClick={removeLogo} className="text-red-400 hover:text-red-600">Remove</Button>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
 
-            {/* Step 4: Services & Social Media */}
-            <div
-              className={cn(
-                "transition-all duration-500 ease-in-out",
-                currentStep === 4
-                  ? "opacity-100 translate-x-0 block"
-                  : "opacity-0 translate-x-[100%] hidden"
-              )}
-            >
-              <div className="p-8">
-                <div className="mb-6">
-                  <h2 className="text-2xl font-bold text-gray-900 mb-2">Services & Social Media</h2>
-                  <p className="text-gray-600">Tell us more about what you offer (optional)</p>
-                </div>
-
-                <div className="space-y-5">
-                  {/* Services Offered */}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Services You Offer <span className="text-gray-400 text-xs">(optional)</span>
-                    </label>
-                    <div className="space-y-2 border border-gray-200 rounded-lg p-4">
-                      {servicesOptions.map((service) => (
-                        <div key={service} className="flex items-center gap-2">
-                          <Checkbox
-                            checked={formData.servicesOffered.includes(service)}
-                            onCheckedChange={(checked) =>
-                              handleCheckboxChange(service, checked as boolean)
-                            }
-                          />
-                          <label className="text-sm text-gray-700 cursor-pointer flex-1">
-                            {service}
-                          </label>
-                        </div>
-                      ))}
-                    </div>
-                    <p className="text-xs text-gray-500 mt-1">
-                      Select services your company provides (optional)
-                    </p>
-              </div>
-
-                  {/* Social Media */}
-                  <div className="grid md:grid-cols-2 gap-4">
+            {/* Services & Social */}
+            <div>
+              <h2 className="text-xl font-semibold text-blue-300 mb-4">Services & Social</h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Facebook <span className="text-gray-400 text-xs">(optional)</span>
-                      </label>
-                  <div className="flex items-center gap-2">
-                        <Facebook className="w-5 h-5 text-blue-600 flex-shrink-0" />
-                    <Input
-                      name="facebookUrl"
-                      value={formData.facebookUrl}
-                      onChange={handleInputChange}
-                          placeholder="https://facebook.com/yourcompany"
-                      className="flex-1"
-                    />
-                  </div>
+                  <label className="block text-sm font-medium text-blue-200 mb-1">Services Offered</label>
+                  <Textarea name="servicesOffered" value={formData.servicesOffered.join(', ')} onChange={e => setFormData(prev => ({ ...prev, servicesOffered: e.target.value.split(',').map(s => s.trim()) }))} placeholder="e.g. Outdoor Advertising, Digital Marketing" className="w-full bg-white/5 border border-blue-400/30 focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400/30 text-blue-100 placeholder:text-blue-300 rounded-xl transition-all duration-200 shadow-inner shadow-blue-900/10" />
                 </div>
                 <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        LinkedIn <span className="text-gray-400 text-xs">(optional)</span>
-                      </label>
-                  <div className="flex items-center gap-2">
-                        <Linkedin className="w-5 h-5 text-blue-700 flex-shrink-0" />
-                    <Input
-                      name="linkedinUrl"
-                      value={formData.linkedinUrl}
-                      onChange={handleInputChange}
-                          placeholder="https://linkedin.com/company/yourcompany"
-                      className="flex-1"
-                    />
-                  </div>
+                  <label className="block text-sm font-medium text-blue-200 mb-1">Facebook URL</label>
+                  <Input name="facebookUrl" value={formData.facebookUrl} onChange={handleInputChange} placeholder="https://facebook.com/yourcompany" className="w-full bg-white/5 border border-blue-400/30 focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400/30 text-blue-100 placeholder:text-blue-300 rounded-xl transition-all duration-200 shadow-inner shadow-blue-900/10" />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-blue-200 mb-1">LinkedIn URL</label>
+                  <Input name="linkedinUrl" value={formData.linkedinUrl} onChange={handleInputChange} placeholder="https://linkedin.com/company/yourcompany" className="w-full bg-white/5 border border-blue-400/30 focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400/30 text-blue-100 placeholder:text-blue-300 rounded-xl transition-all duration-200 shadow-inner shadow-blue-900/10" />
                 </div>
               </div>
             </div>
-          </div>
-        </div>
 
-            {/* Navigation Buttons */}
-            <div className="border-t border-gray-200 p-6 bg-gray-50/50 flex items-center justify-between">
-          <Button
-                type="button"
-            variant="outline"
-                onClick={() => {
-                  if (currentStep === 1) {
-                    router.back()
-                  } else {
-                    prevStep()
-                  }
-                }}
-                className="px-6 py-2 rounded-full"
-          >
-                {currentStep === 1 ? 'Cancel' : 'Back'}
+            {/* Sticky Submit Button */}
+            <div className="sticky bottom-0 left-0 w-full bg-transparent pt-6 flex justify-center z-20">
+              <Button type="submit" className="w-full max-w-xs bg-gradient-to-r from-blue-500 via-teal-500 to-blue-400 hover:from-blue-700 hover:to-teal-600 text-white font-bold py-3 rounded-full shadow-lg shadow-blue-500/20 hover:shadow-xl hover:shadow-blue-500/30 transition-all duration-200 text-lg">
+                Create Account
               </Button>
-
-              {currentStep < TOTAL_STEPS ? (
-                <Button
-                  type="button"
-                  onClick={nextStep}
-                  className="bg-gradient-to-r from-teal-500 to-blue-500 hover:from-teal-600 hover:to-blue-600 text-white px-8 py-2 rounded-full font-semibold"
-                >
-                  Continue
-          </Button>
-              ) : (
-          <Button
-                  type="submit"
-                  className="bg-gradient-to-r from-teal-500 to-blue-500 hover:from-teal-600 hover:to-blue-600 text-white px-8 py-2 rounded-full font-semibold"
-          >
-            Create Account
-          </Button>
-              )}
             </div>
           </form>
         </div>

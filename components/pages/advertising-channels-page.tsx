@@ -3,7 +3,19 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { Search, Bell, Settings, ArrowRight } from 'lucide-react'
+import {
+  Search,
+  Bell,
+  Settings,
+  ArrowRight,
+  Sparkles,
+  Filter,
+  MapPin,
+  Building2,
+  Megaphone,
+  Layers,
+  Globe2
+} from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { cn } from '@/lib/utils'
@@ -106,6 +118,8 @@ export default function AdvertisingChannelsPage() {
   const router = useRouter()
   const [selectedCategory, setSelectedCategory] = useState('all')
   const [searchQuery, setSearchQuery] = useState('')
+  const [sortOption, setSortOption] = useState<'featured' | 'agencies' | 'alpha'>('featured')
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid')
 
   const filteredChannels = channels.filter((channel) => {
     const matchesCategory = selectedCategory === 'all' || channel.category === selectedCategory
@@ -115,136 +129,326 @@ export default function AdvertisingChannelsPage() {
     return matchesCategory && matchesSearch
   })
 
+  const sortedChannels = [...filteredChannels].sort((a, b) => {
+    if (sortOption === 'agencies') {
+      return b.agenciesCount - a.agenciesCount
+    }
+    if (sortOption === 'alpha') {
+      return a.title.localeCompare(b.title)
+    }
+
+    const channelOrder = new Map(channels.map((channel, index) => [channel.id, index]))
+    return (channelOrder.get(a.id) ?? 0) - (channelOrder.get(b.id) ?? 0)
+  })
+
   const handleChannelClick = (channelId: string) => {
     router.push(`/agencies?channel=${channelId}`)
   }
 
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-teal-50 to-white">
-      {/* Header with Search */}
-      <header className="sticky top-0 z-40 w-full border-b border-blue-100/80 bg-white/80 backdrop-blur-sm shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16 md:h-20 gap-4">
-            {/* Logo */}
-            <Link href="/" className="flex items-center group -ml-2 flex-shrink-0">
-              <div className="relative">
-                <img
-                  src="/Adbridgelogo.png"
-                  alt="AdBridgeDZ"
-                  className="h-8 md:h-10 w-auto transition-transform duration-300 group-hover:scale-105"
-                  style={{ transform: 'scale(2)', transformOrigin: 'left center' }}
-                />
-              </div>
-            </Link>
+  const stats = [
+    { label: 'Verified Agencies', value: '90+', detail: 'Across 12 major cities' },
+    { label: 'Premium Spaces', value: '450+', detail: 'Billboards, DOOH & more' },
+    { label: 'Avg. Approval Time', value: '24h', detail: 'Fast campaign kick-off' }
+  ]
 
-            {/* Search Bar */}
-            <div className="flex-1 max-w-2xl relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
+  const experienceHighlights = [
+    {
+      icon: Building2,
+      title: 'Outdoor Inventory',
+      description: 'Access highway, city-center, and high-footfall assets with verified occupancy data.'
+    },
+    {
+      icon: Megaphone,
+      title: 'Campaign Services',
+      description: 'From creative to maintenance, collaborate with agencies that cover the full lifecycle.'
+    },
+    {
+      icon: Globe2,
+      title: 'National Coverage',
+      description: 'Activate impactful campaigns across the Algerian territory with localized support.'
+    }
+  ]
+
+  return (
+    <div className="relative min-h-screen bg-slate-950 text-slate-50">
+      <div
+        className="pointer-events-none absolute inset-0 opacity-60"
+        style={{
+          backgroundImage:
+            'radial-gradient(circle at 20% 20%, rgba(59,130,246,0.25), transparent 45%), radial-gradient(circle at 80% 0%, rgba(45,212,191,0.2), transparent 40%), radial-gradient(circle at 50% 100%, rgba(147,51,234,0.15), transparent 35%)'
+        }}
+      />
+
+      <main className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-36 pb-24 space-y-12">
+        {/* Hero */}
+        <section className="relative overflow-hidden rounded-[36px] border border-white/10 bg-gradient-to-r from-slate-900/80 via-slate-900/60 to-blue-900/70 backdrop-blur-xl">
+          <div className="absolute inset-0 opacity-70">
+            <img
+              src="/times_square.jpg"
+              alt="City skyline"
+              className="w-full h-full object-cover"
+            />
+            <div className="absolute inset-0 bg-gradient-to-r from-slate-950/90 via-slate-950/80 to-slate-900/70" />
+          </div>
+
+          <div className="relative z-10 grid gap-10 lg:grid-cols-2 p-8 sm:p-10 lg:p-16">
+            <div className="space-y-8">
+              <div className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/10 px-4 py-1.5 text-sm font-medium text-blue-200">
+                <Sparkles className="w-4 h-4 text-blue-400" />
+                Curated Channels • 2025 Edition
+              </div>
+              <div>
+                <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight text-white">
+                  Choose the Perfect Advertising Channel
+                </h1>
+                <p className="mt-4 text-lg text-slate-300 max-w-xl">
+                  Filter by objective, inventory type, and availability to craft campaigns that truly dominate Algeria&apos;s most strategic locations.
+                </p>
+              </div>
+
+              <div className="flex flex-col sm:flex-row gap-3">
+                <Button
+                  size="lg"
+                  className="h-14 rounded-2xl bg-gradient-to-r from-blue-500 via-teal-500 to-blue-400 text-white text-base"
+                  onClick={() => router.push('/agencies')}
+                >
+                  Explore Agencies
+                </Button>
+                <Button
+                  size="lg"
+                  variant="secondary"
+                  className="h-14 rounded-2xl bg-white/10 text-slate-50 border border-white/20 hover:bg-white/20"
+                  onClick={() => router.push('/create-agency-account')}
+                >
+                  Become a Partner
+                </Button>
+              </div>
+
+              <div className="flex items-center gap-4 text-sm text-slate-300">
+                <div className="flex items-center gap-2">
+                  <MapPin className="w-4 h-4 text-teal-300" />
+                  Nationwide placements
+                </div>
+                <div className="flex items-center gap-2">
+                  <Filter className="w-4 h-4 text-blue-300" />
+                  Real-time availability
+                </div>
+              </div>
+            </div>
+
+            <div className="rounded-3xl border border-white/10 bg-slate-900/70 p-6 shadow-2xl">
+              <div className="flex items-center justify-between mb-6">
+                <p className="text-sm uppercase tracking-[0.2em] text-slate-400">Live Search</p>
+                <span className="text-xs text-blue-300 bg-blue-500/10 px-3 py-1 rounded-full">Synced</span>
+              </div>
+              <div className="space-y-4">
+                <div className="relative">
+                  <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 w-5 h-5" />
+                  <Input
+                    type="text"
+                    placeholder="Search spaces or verticals"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="w-full bg-white/5 border-white/10 text-slate-50 placeholder:text-slate-400 pl-12 pr-4 py-3 rounded-2xl focus-visible:ring-blue-500"
+                  />
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <button className="rounded-2xl border border-white/10 bg-white/5 p-4 text-left hover:border-blue-400/60 transition-colors">
+                    <p className="text-xs uppercase text-slate-400">Quick Pick</p>
+                    <p className="text-lg font-semibold text-white">DOOH Screens</p>
+                  </button>
+                  <button className="rounded-2xl border border-white/10 bg-white/5 p-4 text-left hover:border-teal-400/60 transition-colors">
+                    <p className="text-xs uppercase text-slate-400">Location</p>
+                    <p className="text-lg font-semibold text-white">Grand Algiers</p>
+                  </button>
+                </div>
+
+                <div className="flex items-center justify-between rounded-2xl bg-white/5 border border-white/10 px-4 py-3">
+                  <div>
+                    <p className="text-xs uppercase text-slate-400">Next Campaign Start</p>
+                    <p className="text-base font-semibold text-white">Within 5 days</p>
+                  </div>
+                  <ArrowRight className="w-5 h-5 text-teal-300" />
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* Stats */}
+        <section className="grid gap-4 md:grid-cols-3">
+          {stats.map((stat) => (
+            <div
+              key={stat.label}
+              className="rounded-2xl border border-white/10 bg-white/5 p-6 shadow-lg shadow-blue-500/5"
+            >
+              <p className="text-sm uppercase tracking-[0.2em] text-slate-400">{stat.label}</p>
+              <p className="mt-2 text-3xl font-bold text-white">{stat.value}</p>
+              <p className="mt-1 text-sm text-slate-300">{stat.detail}</p>
+            </div>
+          ))}
+        </section>
+
+        {/* Filters */}
+        <section className="rounded-[32px] border border-white/10 bg-white/5 p-6 md:p-8 space-y-6">
+          <div className="flex flex-col gap-4 lg:flex-row lg:items-center">
+            <div className="flex-1 relative">
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 w-5 h-5" />
               <Input
                 type="text"
                 placeholder="Search advertising spaces or agencies..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition-all duration-200"
+                className="w-full bg-slate-900/40 border-white/10 text-slate-50 placeholder:text-slate-400 pl-12 pr-4 py-3 rounded-2xl focus-visible:ring-blue-500"
               />
             </div>
-
-            {/* Right Actions */}
-            <div className="flex items-center space-x-2 flex-shrink-0">
-              <button className="relative p-2 rounded-full text-gray-500 hover:bg-gray-100 hover:text-gray-700 transition-colors">
+            <div className="flex items-center gap-3">
+              <select
+                value={sortOption}
+                onChange={(event) => setSortOption(event.target.value as typeof sortOption)}
+                className="rounded-2xl bg-slate-900/40 border border-white/10 px-4 py-3 text-sm text-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500/50"
+              >
+                <option value="featured">Featured Order</option>
+                <option value="agencies">Agencies Count</option>
+                <option value="alpha">Alphabetical</option>
+              </select>
+              <div className="flex rounded-2xl border border-white/10 overflow-hidden">
+                <button
+                  onClick={() => setViewMode('grid')}
+                  className={cn(
+                    'px-4 py-2 text-sm font-medium transition-colors',
+                    viewMode === 'grid' ? 'bg-white/10 text-white' : 'text-slate-400'
+                  )}
+                >
+                  Grid
+                </button>
+                <button
+                  onClick={() => setViewMode('list')}
+                  className={cn(
+                    'px-4 py-2 text-sm font-medium transition-colors',
+                    viewMode === 'list' ? 'bg-white/10 text-white' : 'text-slate-400'
+                  )}
+                >
+                  List
+                </button>
+              </div>
+              <button className="relative p-3 rounded-2xl bg-slate-900/40 border border-white/10 text-slate-300 hover:text-white">
                 <Bell className="w-5 h-5" />
-                <span className="absolute top-1.5 right-1.5 block h-2 w-2 rounded-full bg-red-500 ring-2 ring-white"></span>
+                <span className="absolute top-1 right-1 block h-2 w-2 rounded-full bg-teal-400"></span>
               </button>
-              <button className="p-2 rounded-full text-gray-500 hover:bg-gray-100 hover:text-gray-700 transition-colors">
+              <button className="p-3 rounded-2xl bg-slate-900/40 border border-white/10 text-slate-300 hover:text-white">
                 <Settings className="w-5 h-5" />
               </button>
-              <Link href="/login">
-                <button className="w-10 h-10 rounded-full overflow-hidden border-2 border-gray-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-teal-500">
-                  <img
-                    alt="User profile avatar"
-                    className="w-full h-full object-cover"
-                    src="https://lh3.googleusercontent.com/aida-public/AB6AXuAVp1IbSrlohcNvo4Z_znB1Dl1Nf84t93pIIkn8B-CsCQW4jdWABgiEjFgOLlF-C36AXH5FH52ZP46dRSeEnkX_6DjFhnjI0pkXTVqbtiWkgB0VCCreCj4jtwRen5pl0035J2glUMZ2Vy0pRgzseHtdyn2oThUnIcDwp5V7C-zToF-JlJcBwrGcPanXgO6V92lRcuvB_W8dOTciQ9_RS3t4dE79y1IRDmYQ2ru_0hR25GTYjK-W_kezQMOuoVZCWk8d8YrZtCvZDOA"
-                  />
-                </button>
+              <Link href="/dashboard/profile" className="rounded-2xl border border-white/10 overflow-hidden">
+                <img
+                  alt="User profile avatar"
+                  className="w-12 h-12 object-cover"
+                  src="https://lh3.googleusercontent.com/aida-public/AB6AXuAVp1IbSrlohcNvo4Z_znB1Dl1Nf84t93pIIkn8B-CsCQW4jdWABgiEjFgOLlF-C36AXH5FH52ZP46dRSeEnkX_6DjFhnjI0pkXTVqbtiWkgB0VCCreCj4jtwRen5pl0035J2glUMZ2Vy0pRgzseHtdyn2oThUnIcDwp5V7C-zToF-JlJcBwrGcPanXgO6V92lRcuvB_W8dOTciQ9_RS3t4dE79y1IRDmYQ2ru_0hR25GTYjK-W_kezQMOuoVZCWk8d8YrZtCvZDOA"
+                />
               </Link>
             </div>
           </div>
-        </div>
-      </header>
 
-      {/* Main Content */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12 lg:py-16">
-        {/* Page Header */}
-        <section className="text-center mb-10 lg:mb-12">
-          <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-gray-900 mb-4 bg-gradient-to-r from-teal-600 to-blue-600 bg-clip-text text-transparent">
-            Choose Your Advertising Channel
-          </h1>
-          <p className="text-lg text-gray-600 max-w-3xl mx-auto">
-            Select the type of advertising space you need. Explore categories and connect with verified Algerian agencies.
-          </p>
-        </section>
-
-        {/* Category Filters */}
-        <section className="mb-10 lg:mb-12">
-          <div className="relative">
-            <div className="flex space-x-2 overflow-x-auto pb-4 justify-center scrollbar-hide">
-              {categories.map((category) => (
-                <button
-                  key={category.id}
-                  onClick={() => setSelectedCategory(category.id)}
-                  className={cn(
-                    "flex-shrink-0 px-5 py-2.5 text-sm font-semibold rounded-full transition-all duration-200",
-                    selectedCategory === category.id
-                      ? "bg-gradient-to-r from-teal-500 to-blue-500 text-white shadow-lg shadow-teal-500/25"
-                      : "text-gray-700 bg-white border border-gray-200 hover:bg-gray-50 hover:border-teal-300"
-                  )}
-                >
-                  {category.label}
-                </button>
-              ))}
-            </div>
+          <div className="flex flex-wrap gap-3">
+            {categories.map((category) => (
+              <button
+                key={category.id}
+                onClick={() => setSelectedCategory(category.id)}
+                className={cn(
+                  'px-5 py-2.5 text-sm font-medium rounded-full transition-all border',
+                  selectedCategory === category.id
+                    ? 'bg-gradient-to-r from-blue-500 to-teal-500 text-white border-transparent shadow-lg shadow-blue-500/25'
+                    : 'border-white/10 text-slate-300 hover:text-white hover:border-blue-400/60'
+                )}
+              >
+                {category.label}
+              </button>
+            ))}
           </div>
         </section>
 
-        {/* Channels Grid */}
-        <section>
-          {filteredChannels.length === 0 ? (
-            <div className="text-center py-16">
-              <p className="text-gray-600 text-lg">No channels found matching your criteria.</p>
+        {/* Experience Highlights */}
+        <section className="grid gap-6 md:grid-cols-3">
+          {experienceHighlights.map((highlight) => (
+            <div
+              key={highlight.title}
+              className="rounded-3xl border border-white/10 bg-gradient-to-br from-white/5 to-transparent p-6 flex flex-col gap-4"
+            >
+              <div className="flex items-center gap-3">
+                <div className="rounded-2xl bg-white/10 p-3 text-blue-300">
+                  <highlight.icon className="w-6 h-6" />
+                </div>
+                <p className="text-lg font-semibold text-white">{highlight.title}</p>
+              </div>
+              <p className="text-sm text-slate-300">{highlight.description}</p>
+            </div>
+          ))}
+        </section>
+
+        {/* Channels */}
+        <section className="space-y-6">
+          <div className="flex flex-col gap-2">
+            <h2 className="text-2xl font-bold text-white">Discover Channels</h2>
+            <p className="text-slate-400">Select a category to reveal agencies specialized in that medium.</p>
+          </div>
+
+          {sortedChannels.length === 0 ? (
+            <div className="rounded-3xl border border-dashed border-white/20 bg-white/5 py-16 text-center">
+              <p className="text-slate-300 text-lg">No channels found matching your criteria.</p>
             </div>
           ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8">
-              {filteredChannels.map((channel) => (
+            <div
+              className={cn(
+                viewMode === 'grid'
+                  ? 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6'
+                  : 'space-y-4'
+              )}
+            >
+              {sortedChannels.map((channel) => (
                 <div
                   key={channel.id}
                   onClick={() => handleChannelClick(channel.id)}
-                  className="bg-white border border-gray-200 rounded-xl shadow-lg shadow-gray-200/40 overflow-hidden flex flex-col transition-all duration-300 hover:-translate-y-1 hover:shadow-xl cursor-pointer group"
+                  className={cn(
+                    'group cursor-pointer rounded-3xl border border-white/10 bg-white/5 overflow-hidden backdrop-blur-sm transition-all duration-300 hover:border-blue-400/60 hover:-translate-y-1',
+                    viewMode === 'list' && 'md:flex md:items-stretch'
+                  )}
                 >
-                  <div className="relative overflow-hidden">
+                  <div className={cn('relative overflow-hidden', viewMode === 'list' ? 'md:w-1/2' : 'h-48')}> 
                     <img
                       alt={channel.title}
                       src={channel.image}
-                      className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-300"
+                      className={cn(
+                        'object-cover transition-transform duration-500 group-hover:scale-105',
+                        viewMode === 'list' ? 'h-full w-full' : 'w-full h-full'
+                      )}
                       onError={(e) => {
                         (e.currentTarget as HTMLImageElement).src = '/Adbridgelogo.png'
                       }}
                     />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                    <div className="absolute inset-0 bg-gradient-to-t from-slate-950/70 via-slate-900/10 to-transparent" />
+                    <div className="absolute bottom-4 left-4 inline-flex items-center gap-2 rounded-full bg-black/50 px-3 py-1 text-xs font-semibold text-white">
+                      <Layers className="w-4 h-4" />
+                      {channel.category}
+                    </div>
                   </div>
-                  
-                  <div className="p-6 flex flex-col flex-grow">
-                    <h3 className="text-xl font-bold text-gray-900 mb-2 group-hover:text-teal-600 transition-colors">
-                      {channel.title}
-                    </h3>
-                    <p className="text-sm text-gray-600 mb-4 line-clamp-2">
-                      {channel.description}
-                    </p>
-                    
-                    <div className="mt-auto flex justify-between items-center">
-                      <span className="text-sm text-gray-500">
-                        {channel.agenciesCount} {channel.agenciesCount === 1 ? 'Agency' : 'Agencies'}
-                      </span>
-                      <span className="font-semibold text-teal-600 group-hover:text-teal-700 flex items-center gap-1 group-hover:gap-2 transition-all">
+
+                  <div className="p-6 flex flex-col gap-4 md:flex-1">
+                    <div>
+                      <div className="flex items-center justify-between gap-3">
+                        <h3 className="text-xl font-semibold text-white group-hover:text-blue-300">{channel.title}</h3>
+                        <span className="rounded-full bg-blue-500/10 px-3 py-1 text-xs text-blue-200">
+                          {channel.agenciesCount} {channel.agenciesCount === 1 ? 'Agency' : 'Agencies'}
+                        </span>
+                      </div>
+                      <p className="mt-2 text-sm text-slate-300 line-clamp-2">{channel.description}</p>
+                    </div>
+
+                    <div className="flex items-center justify-between text-sm text-slate-400">
+                      <div className="flex items-center gap-2">
+                        <Sparkles className="w-4 h-4 text-teal-300" />
+                        Featured placements available
+                      </div>
+                      <span className="flex items-center gap-2 font-semibold text-teal-300">
                         Explore
                         <ArrowRight className="w-4 h-4" />
                       </span>
@@ -254,6 +458,34 @@ export default function AdvertisingChannelsPage() {
               ))}
             </div>
           )}
+        </section>
+
+        {/* CTA */}
+        <section className="rounded-[32px] border border-white/10 bg-gradient-to-r from-blue-500/20 to-teal-500/20 p-10" role="region" aria-label="cta">
+          <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+            <div>
+              <p className="text-sm uppercase tracking-[0.3em] text-blue-200">Need a custom mix?</p>
+              <h3 className="mt-3 text-3xl font-bold text-white">Brief us, and get a tailored channel plan in 24h.</h3>
+              <p className="mt-2 text-slate-200">
+                Share your objectives and we&apos;ll match you with the right blend of inventory, pricing, and agencies.
+              </p>
+            </div>
+            <div className="flex flex-col sm:flex-row gap-3">
+              <Button
+                className="h-12 rounded-2xl bg-white text-slate-900 font-semibold hover:bg-white/90 hover:text-slate-900"
+                onClick={() => router.push('/contact')}
+              >
+                Talk to AdBridgeDZ
+              </Button>
+              <Button
+                variant="secondary"
+                className="h-12 rounded-2xl border border-white/40 text-slate-900 hover:text-slate-900 hover:bg-white/20"
+                onClick={() => router.push('/create-account')}
+              >
+                Create Advertiser Account
+              </Button>
+            </div>
+          </div>
         </section>
       </main>
     </div>
