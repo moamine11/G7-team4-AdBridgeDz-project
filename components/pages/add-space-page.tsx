@@ -7,33 +7,75 @@ import Navbar from '@/components/ui/navbar'
 import { Upload, X } from 'lucide-react'
 
 export default function AddSpacePage() {
+  const router = useRouter()
+  const { toast } = useToast()
   const [selectedImages, setSelectedImages] = useState<string[]>([])
+  const [imageFiles, setImageFiles] = useState<File[]>([])
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  
   const [formData, setFormData] = useState({
     title: '',
+    description: '',
     type: 'Billboard',
     width: '',
     height: '',
     price: '',
     availability: 'Available',
-    city: 'New York',
+    city: 'Algiers',
     address: '',
   })
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files
     if (files) {
-      const newImages = Array.from(files).map(file => URL.createObjectURL(file))
+      const newFiles = Array.from(files)
+      setImageFiles([...imageFiles, ...newFiles])
+      const newImages = newFiles.map(file => URL.createObjectURL(file))
       setSelectedImages([...selectedImages, ...newImages])
     }
   }
 
   const removeImage = (index: number) => {
     setSelectedImages(selectedImages.filter((_, i) => i !== index))
+    setImageFiles(imageFiles.filter((_, i) => i !== index))
   }
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    console.log('Form submitted:', formData)
+    setIsSubmitting(true)
+
+    try {
+      const postData = new FormData()
+      postData.append('title', formData.title)
+      postData.append('description', formData.description)
+      postData.append('category', formData.type)
+      postData.append('price', formData.price)
+      postData.append('location', `${formData.address}, ${formData.city}`)
+      postData.append('dimensions', `${formData.width}x${formData.height}`)
+      // postData.append('availability', formData.availability) // If backend supports it
+
+      imageFiles.forEach((file) => {
+        postData.append('images', file)
+      })
+
+      await postsService.createPost(postData)
+      
+      toast({
+        title: "Success",
+        description: "Advertising space created successfully.",
+      })
+      
+      router.push('/manage-spaces')
+    } catch (error) {
+      console.error('Failed to create space:', error)
+      toast({
+        title: "Error",
+        description: "Failed to create advertising space.",
+        variant: "destructive",
+      })
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
   return (
@@ -76,6 +118,19 @@ export default function AddSpacePage() {
                       value={formData.title}
                       onChange={(e) => setFormData({...formData, title: e.target.value})}
                       className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition-colors"
+                      required
+                    />
+                  </div>
+
+                  {/* Description */}
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">Description</label>
+                    <textarea
+                      placeholder="Describe the location, visibility, and audience..."
+                      value={formData.description}
+                      onChange={(e) => setFormData({...formData, description: e.target.value})}
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition-colors h-32"
+                      required
                     />
                   </div>
 
@@ -92,13 +147,16 @@ export default function AddSpacePage() {
                         <option>Digital Screen</option>
                         <option>Bus Shelter</option>
                         <option>Transit Ad</option>
+                        <option>Street Furniture</option>
+                        <option>Airport</option>
+                        <option>Stadium</option>
                       </select>
                     </div>
 
                     {/* Size */}
                     <div className="grid grid-cols-2 gap-2">
                       <div>
-                        <label className="block text-sm font-semibold text-gray-700 mb-2">Size (in feet)</label>
+                        <label className="block text-sm font-semibold text-gray-700 mb-2">Width (ft)</label>
                         <input
                           type="text"
                           placeholder="Width"
@@ -108,7 +166,7 @@ export default function AddSpacePage() {
                         />
                       </div>
                       <div>
-                        <label className="block text-sm font-semibold text-gray-700 mb-2 opacity-0">Height</label>
+                        <label className="block text-sm font-semibold text-gray-700 mb-2">Height (ft)</label>
                         <input
                           type="text"
                           placeholder="Height"
@@ -123,15 +181,16 @@ export default function AddSpacePage() {
                   <div className="grid grid-cols-2 gap-4">
                     {/* Price */}
                     <div>
-                      <label className="block text-sm font-semibold text-gray-700 mb-2">Price (per day)</label>
+                      <label className="block text-sm font-semibold text-gray-700 mb-2">Price (DZD per day)</label>
                       <div className="relative">
-                        <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500">$</span>
+                        <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500">DZD</span>
                         <input
-                          type="text"
-                          placeholder="250.00"
+                          type="number"
+                          placeholder="25000"
                           value={formData.price}
                           onChange={(e) => setFormData({...formData, price: e.target.value})}
-                          className="w-full pl-8 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition-colors"
+                          className="w-full pl-14 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition-colors"
+                          required
                         />
                       </div>
                     </div>
@@ -162,17 +221,6 @@ export default function AddSpacePage() {
                           />
                           <span className="text-sm text-gray-700">Booked</span>
                         </label>
-                        <label className="flex items-center gap-2 cursor-pointer">
-                          <input
-                            type="radio"
-                            name="availability"
-                            value="Under Maintenance"
-                            checked={formData.availability === 'Under Maintenance'}
-                            onChange={(e) => setFormData({...formData, availability: e.target.value})}
-                            className="w-4 h-4 text-teal-600 focus:ring-teal-500"
-                          />
-                          <span className="text-sm text-gray-700">Under Maintenance</span>
-                        </label>
                       </div>
                     </div>
                   </div>
@@ -192,10 +240,12 @@ export default function AddSpacePage() {
                       onChange={(e) => setFormData({...formData, city: e.target.value})}
                       className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition-colors"
                     >
-                      <option>New York</option>
-                      <option>Los Angeles</option>
-                      <option>Chicago</option>
-                      <option>Houston</option>
+                      <option>Algiers</option>
+                      <option>Oran</option>
+                      <option>Constantine</option>
+                      <option>Annaba</option>
+                      <option>Blida</option>
+                      <option>Setif</option>
                     </select>
                   </div>
 
@@ -208,6 +258,7 @@ export default function AddSpacePage() {
                       value={formData.address}
                       onChange={(e) => setFormData({...formData, address: e.target.value})}
                       className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition-colors"
+                      required
                     />
                   </div>
                 </div>
@@ -276,9 +327,10 @@ export default function AddSpacePage() {
                 </Link>
                 <button
                   type="submit"
-                  className="px-8 py-3 bg-teal-500 hover:bg-teal-600 text-white font-semibold rounded-lg shadow-lg shadow-teal-500/25 hover:shadow-xl hover:shadow-teal-500/30 transition-all duration-200"
+                  disabled={isSubmitting}
+                  className="px-8 py-3 bg-teal-500 hover:bg-teal-600 text-white font-semibold rounded-lg shadow-lg shadow-teal-500/25 hover:shadow-xl hover:shadow-teal-500/30 transition-all duration-200 disabled:opacity-50"
                 >
-                  Submit
+                  {isSubmitting ? 'Creating...' : 'Submit'}
                 </button>
               </div>
             </form>

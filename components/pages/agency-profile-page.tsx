@@ -1,5 +1,6 @@
 'use client'
 
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import {
@@ -11,33 +12,24 @@ import {
   MapPin,
   PhoneCall,
   Star,
-  Users2
+  Users2,
+  Globe
 } from 'lucide-react'
+import { agenciesService } from '@/lib/services/agencies-service'
+import { postsService } from '@/lib/services/posts-service'
 
 interface ShowcaseSpace {
+  id: string
   name: string
   type: string
   reach: string
   occupancy: string
   image: string
-}
-
-interface Testimonial {
-  author: string
-  role: string
-  quote: string
-  rating: number
-}
-
-interface ServicePackage {
-  title: string
   price: string
-  features: string[]
 }
 
 interface AgencyProfile {
-  id: string
-  slug: string
+  _id: string
   name: string
   location: string
   tagline: string
@@ -45,83 +37,12 @@ interface AgencyProfile {
   summary: string
   specialties: string[]
   stats: { label: string; value: string; detail: string }[]
-  contact: { phone: string; email: string; response: string }
+  contact: { phone: string; email: string; response: string; website: string }
   spaces: ShowcaseSpace[]
-  testimonials: Testimonial[]
-  packages: ServicePackage[]
-}
-
-const agencies: Record<string, AgencyProfile> = {
-  '1': {
-    id: '1',
-    slug: 'digital-media-solutions',
-    name: 'Digital Media Solutions',
-    location: 'Algiers · Algeria',
-    tagline: 'Premium urban digital experiences across DOOH and experiential activations.',
-    heroImage: '/downtown.jpg',
-    summary:
-      'Partnering with nationwide brands to orchestrate data-driven outdoor storytelling across transit, lifestyle, and retail destinations.',
-    specialties: ['Digital OOH Strategy', 'Experiential Production', 'Transit Wraps', 'Real-time Analytics'],
-    stats: [
-      { label: 'Verified spaces', value: '120+', detail: 'Screens & large-format surfaces' },
-      { label: 'Avg. approval', value: '24h', detail: 'Service-level commitment' },
-      { label: 'Audience reach', value: '14M', detail: 'Monthly urban impressions' }
-    ],
-    contact: {
-      phone: '+213 770 123 456',
-      email: 'hello@digitalmedia.dz',
-      response: 'Replies in under 2 hours'
-    },
-    spaces: [
-      {
-        name: 'City Center Digital MegaScreen',
-        type: 'Large-format LED',
-        reach: '1.8M monthly',
-        occupancy: 'Booked 76% of Q1',
-        image: '/times_square.jpg'
-      },
-      {
-        name: 'Skybridge Panorama Network',
-        type: 'Transit wrap bundle',
-        reach: '850K commuters',
-        occupancy: 'Available for Q2',
-        image: '/skyline.jpg'
-      },
-      {
-        name: 'Mall Atrium Halo Cube',
-        type: 'Indoor experiential',
-        reach: '640K shoppers',
-        occupancy: 'Premium weeks left',
-        image: '/office.jpg'
-      }
-    ],
-    testimonials: [
-      {
-        author: 'Salima H.',
-        role: 'VP Brand · Atlas Beverages',
-        quote: 'Their live ops dashboard removed so much friction. We green-lit a 6-week takeover in 36 hours.',
-        rating: 5
-      },
-      {
-        author: 'Yacine M.',
-        role: 'Head of Media · Horizon Motors',
-        quote: 'DMS delivered coverage across 4 cities with unified creative QC and weekly reporting.',
-        rating: 5
-      }
-    ],
-    packages: [
-      {
-        title: 'Launch Sprint',
-        price: 'DZD 900K',
-        features: ['2 hero placements', 'Creative QC + trafficking', 'Flight monitoring', 'Post-flight recap']
-      },
-      {
-        title: 'National Impact',
-        price: 'DZD 3.6M',
-        features: ['City cluster strategy', 'Live dashboards', 'Production management', 'Weekly optimization']
-      }
-    ]
-  }
+  testimonials: any[]
+  packages: any[]
+  verified: boolean
+  logo: string
 }
 
 interface AgencyProfilePageProps {
@@ -129,7 +50,85 @@ interface AgencyProfilePageProps {
 }
 
 export default function AgencyProfilePage({ agencyId }: AgencyProfilePageProps) {
-  const agency = agencies[agencyId ?? '1'] ?? agencies['1']
+  const [agency, setAgency] = useState<AgencyProfile | null>(null)
+  const [isLoading, setIsLoading] = useState(true)
+
+  useEffect(() => {
+    const fetchData = async () => {
+      if (!agencyId) return
+
+      try {
+        setIsLoading(true)
+        // Fetch agency details
+        const agencyData = await agenciesService.getAgencyById(agencyId)
+        
+        // Fetch agency spaces
+        const allPosts = await postsService.getAllPosts()
+        const agencySpaces = allPosts.filter((post: any) => 
+          post.agency === agencyId || post.agency?._id === agencyId
+        )
+
+        // Map data to component structure
+        const mappedAgency: AgencyProfile = {
+          _id: agencyData._id,
+          name: agencyData.name,
+          location: agencyData.location || agencyData.address || 'Algiers, Algeria',
+          tagline: agencyData.tagline || 'Premium Advertising Partner',
+          heroImage: agencyData.serviceImage || '/downtown.jpg',
+          summary: agencyData.profileDescription || 'No description available.',
+          specialties: agencyData.services || [],
+          stats: [
+            { label: 'Verified spaces', value: `${agencySpaces.length}+`, detail: 'Active listings' },
+            { label: 'Avg. approval', value: '24h', detail: 'Service-level commitment' },
+            { label: 'Rating', value: `${(agencyData.rating || 5).toFixed(1)}`, detail: `From ${agencyData.reviewCount || 0} reviews` }
+          ],
+          contact: {
+            phone: agencyData.phone || '',
+            email: agencyData.email || '',
+            response: 'Replies in under 24 hours',
+            website: agencyData.website || ''
+          },
+          spaces: agencySpaces.map((space: any) => ({
+            id: space._id,
+            name: space.title,
+            type: space.type || 'Billboard',
+            reach: 'High Traffic', // Placeholder as backend might not have this yet
+            occupancy: 'Available',
+            image: space.images && space.images.length > 0 ? space.images[0] : '/placeholder-space.jpg',
+            price: space.price
+          })),
+          testimonials: [], // Placeholder
+          packages: [], // Placeholder
+          verified: agencyData.verified,
+          logo: agencyData.logo
+        }
+
+        setAgency(mappedAgency)
+      } catch (error) {
+        console.error('Failed to fetch agency profile:', error)
+      } finally {
+        setIsLoading(false)
+      }
+    }
+
+    fetchData()
+  }, [agencyId])
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-slate-950 flex items-center justify-center">
+        <span className="loading loading-spinner loading-lg text-blue-500"></span>
+      </div>
+    )
+  }
+
+  if (!agency) {
+    return (
+      <div className="min-h-screen bg-slate-950 flex items-center justify-center text-white">
+        Agency not found.
+      </div>
+    )
+  }
 
   return (
     <div className="relative min-h-screen bg-slate-950 text-slate-50">
@@ -145,7 +144,14 @@ export default function AgencyProfilePage({ agencyId }: AgencyProfilePageProps) 
         {/* Hero */}
         <section className="relative overflow-hidden rounded-[36px] border border-white/10 bg-gradient-to-br from-slate-900/90 via-slate-900/70 to-blue-900/70">
           <div className="absolute inset-0">
-            <img src={agency.heroImage} alt={agency.name} className="w-full h-full object-cover" />
+            <img 
+              src={agency.heroImage} 
+              alt={agency.name} 
+              className="w-full h-full object-cover"
+              onError={(e) => {
+                (e.currentTarget as HTMLImageElement).src = '/downtown.jpg'
+              }}
+            />
             <div className="absolute inset-0 bg-gradient-to-r from-slate-950/95 via-slate-950/85 to-blue-900/80" />
           </div>
           <div className="relative z-10 grid gap-10 lg:grid-cols-[3fr,2fr] p-8 sm:p-12">
@@ -153,6 +159,12 @@ export default function AgencyProfilePage({ agencyId }: AgencyProfilePageProps) 
               <div className="flex flex-wrap items-center gap-3 text-sm text-blue-200">
                 <MapPin className="w-4 h-4" />
                 {agency.location}
+                {agency.verified && (
+                  <span className="flex items-center gap-1 text-teal-300 ml-2">
+                    <CheckCircle2 className="w-4 h-4" />
+                    Verified Partner
+                  </span>
+                )}
               </div>
               <h1 className="text-4xl md:text-5xl font-bold text-white">{agency.name}</h1>
               <p className="text-lg text-slate-200 max-w-2xl">{agency.tagline}</p>
@@ -165,7 +177,7 @@ export default function AgencyProfilePage({ agencyId }: AgencyProfilePageProps) 
                 ))}
               </div>
               <div className="flex flex-col gap-4 sm:flex-row">
-                <Link href={`/dashboard/bookings?agency=${agency.slug}`}>
+                <Link href={`/contact?agency=${agency._id}`}>
                   <Button className="h-12 rounded-2xl bg-gradient-to-r from-blue-500 via-teal-500 to-blue-400 flex items-center gap-2">
                     Request booking
                     <ArrowRight className="w-4 h-4" />
@@ -206,6 +218,14 @@ export default function AgencyProfilePage({ agencyId }: AgencyProfilePageProps) 
                 <Mail className="w-5 h-5 text-blue-300" />
                 <span>{agency.contact.email}</span>
               </div>
+              {agency.contact.website && (
+                <div className="flex items-center gap-3 text-slate-200">
+                  <Globe className="w-5 h-5 text-blue-300" />
+                  <a href={agency.contact.website} target="_blank" rel="noopener noreferrer" className="hover:text-blue-300 transition-colors">
+                    Visit Website
+                  </a>
+                </div>
+              )}
               <p className="text-sm text-slate-400">{agency.contact.response}</p>
             </div>
             <div className="rounded-2xl border border-white/10 bg-slate-900/50 p-5 space-y-3">
@@ -229,24 +249,42 @@ export default function AgencyProfilePage({ agencyId }: AgencyProfilePageProps) 
           <div className="rounded-[32px] border border-white/10 bg-white/5 p-8 space-y-6">
             <p className="text-xs uppercase tracking-[0.4em] text-blue-200">Verified inventory</p>
             <h2 className="text-2xl font-semibold text-white">Highlighted networks</h2>
-            <div className="grid gap-4 md:grid-cols-2">
-              {agency.spaces.map((space) => (
-                <div key={space.name} className="rounded-3xl border border-white/10 bg-slate-900/40 overflow-hidden">
-                  <div className="h-32 w-full overflow-hidden">
-                    <img src={space.image} alt={space.name} className="w-full h-full object-cover" />
+            {agency.spaces.length === 0 ? (
+              <div className="text-center py-12 text-slate-400">
+                No advertising spaces listed yet.
+              </div>
+            ) : (
+              <div className="grid gap-4 md:grid-cols-2">
+                {agency.spaces.map((space) => (
+                  <div key={space.id} className="rounded-3xl border border-white/10 bg-slate-900/40 overflow-hidden group hover:border-blue-500/30 transition-colors">
+                    <div className="h-32 w-full overflow-hidden relative">
+                      <img 
+                        src={space.image} 
+                        alt={space.name} 
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                        onError={(e) => {
+                          (e.currentTarget as HTMLImageElement).src = '/placeholder-space.jpg'
+                        }}
+                      />
+                      <div className="absolute top-2 right-2 bg-black/60 backdrop-blur-sm px-2 py-1 rounded-lg text-xs font-semibold text-white">
+                        {space.price} DZD
+                      </div>
+                    </div>
+                    <div className="p-5 space-y-2">
+                      <p className="text-sm font-semibold text-white line-clamp-1">{space.name}</p>
+                      <p className="text-xs uppercase tracking-[0.3em] text-slate-400">{space.type}</p>
+                      <p className="text-xs text-slate-400">Reach: {space.reach}</p>
+                      <p className="text-xs text-slate-400">Status: {space.occupancy}</p>
+                      <Link href={`/book/${space.id}`}>
+                        <Button className="w-full rounded-2xl bg-white/10 text-white hover:bg-white/20 mt-2">
+                          Book Now
+                        </Button>
+                      </Link>
+                    </div>
                   </div>
-                  <div className="p-5 space-y-2">
-                    <p className="text-sm font-semibold text-white">{space.name}</p>
-                    <p className="text-xs uppercase tracking-[0.3em] text-slate-400">{space.type}</p>
-                    <p className="text-xs text-slate-400">Reach: {space.reach}</p>
-                    <p className="text-xs text-slate-400">Status: {space.occupancy}</p>
-                    <Button className="w-full rounded-2xl bg-white/10 text-white hover:bg-white/20 mt-2">
-                      Add to brief
-                    </Button>
-                  </div>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            )}
           </div>
         </section>
 
@@ -255,48 +293,16 @@ export default function AgencyProfilePage({ agencyId }: AgencyProfilePageProps) 
           <div className="rounded-[32px] border border-white/10 bg-white/5 p-8 space-y-6">
             <p className="text-xs uppercase tracking-[0.4em] text-blue-200">Service menu</p>
             <h2 className="text-2xl font-semibold text-white">Studio packages</h2>
-            <div className="grid gap-4 md:grid-cols-2">
-              {agency.packages.map((pkg) => (
-                <div key={pkg.title} className="rounded-3xl border border-white/10 bg-slate-900/50 p-5 space-y-3">
-                  <div className="flex items-center gap-2 text-sm text-blue-200">
-                    <BadgeDollarSign className="w-4 h-4" />
-                    {pkg.title}
-                  </div>
-                  <p className="text-3xl font-bold text-white">{pkg.price}</p>
-                  <ul className="space-y-2 text-sm text-slate-300">
-                    {pkg.features.map((feature) => (
-                      <li key={feature} className="flex items-start gap-2">
-                        <CheckCircle2 className="mt-1 w-4 h-4 text-teal-300" />
-                        <span>{feature}</span>
-                      </li>
-                    ))}
-                  </ul>
-                  <Button className="w-full rounded-2xl bg-gradient-to-r from-blue-500 to-teal-500">
-                    Discuss package
-                  </Button>
-                </div>
-              ))}
+            <div className="text-center py-12 text-slate-400 border border-dashed border-white/10 rounded-3xl">
+              Custom packages available upon request.
             </div>
           </div>
 
           <div className="rounded-[32px] border border-white/10 bg-white/5 p-8 space-y-6">
             <p className="text-xs uppercase tracking-[0.4em] text-blue-200">Client voice</p>
             <h2 className="text-2xl font-semibold text-white">Testimonials</h2>
-            <div className="space-y-4">
-              {agency.testimonials.map((review) => (
-                <div key={review.author} className="rounded-3xl border border-white/10 bg-slate-900/40 p-5 space-y-3">
-                  <div className="flex items-center gap-1 text-amber-300">
-                    {Array.from({ length: review.rating }).map((_, index) => (
-                      <Star key={`${review.author}-star-${index}`} className="w-4 h-4 fill-current" />
-                    ))}
-                  </div>
-                  <p className="text-sm text-slate-200">“{review.quote}”</p>
-                  <div>
-                    <p className="text-sm font-semibold text-white">{review.author}</p>
-                    <p className="text-xs text-slate-400">{review.role}</p>
-                  </div>
-                </div>
-              ))}
+            <div className="text-center py-12 text-slate-400 border border-dashed border-white/10 rounded-3xl">
+              No testimonials yet.
             </div>
           </div>
         </section>
@@ -310,7 +316,7 @@ export default function AgencyProfilePage({ agencyId }: AgencyProfilePageProps) 
               <p className="mt-2 text-slate-200">Sync with AdBridgeDZ operations to align deliverables, KPIs, and reporting cadence.</p>
             </div>
             <div className="flex flex-col sm:flex-row gap-3">
-              <Link href={`/dashboard/bookings?agency=${agency.slug}`}>
+              <Link href={`/contact?agency=${agency._id}`}>
                 <Button className="h-12 rounded-2xl bg-white text-slate-900 font-semibold hover:bg-white/90 flex items-center gap-2">
                   Open booking request
                   <ArrowRight className="w-4 h-4" />

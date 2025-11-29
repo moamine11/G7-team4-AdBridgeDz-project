@@ -1,6 +1,6 @@
 'use client'
 
-import { useMemo, useState } from 'react'
+import { useMemo, useState, useEffect } from 'react'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -14,82 +14,29 @@ import {
   Search,
   Sparkles
 } from 'lucide-react'
+import { useAuth } from '@/contexts/auth-context'
+import { bookingsService } from '@/lib/services/bookings-service'
+import { useToast } from '@/components/ui/use-toast'
 
 type TabType = 'in-progress' | 'completed' | 'canceled'
 
 type Booking = {
-  id: number
+  id: string
   company: string
   email: string
   spaceTitle: string
   dates: string
-  status: 'Awaiting approval' | 'Confirmed' | 'Canceled'
+  status: string
   offer: string
   agency: string
   channel: string
   location: string
-}
-
-const bookingData: Record<TabType, Booking[]> = {
-  'in-progress': [
-    {
-      id: 1,
-      company: 'Atlas Beverages',
-      email: 'marketing@atlasbev.dz',
-      spaceTitle: 'City Center Digital MegaScreen',
-      dates: 'Mar 10 – Apr 15, 2025',
-      status: 'Awaiting approval',
-      offer: 'DZD 2.5M',
-      agency: 'Digital Media Solutions',
-      channel: 'Digital Outdoor Screens',
-      location: 'Algiers, Downtown'
-    },
-    {
-      id: 2,
-      company: 'Tassili Airways',
-      email: 'brand@tassiliair.com',
-      spaceTitle: 'Highway Premium Billboard Cluster',
-      dates: 'May 01 – Jun 30, 2025',
-      status: 'Awaiting approval',
-      offer: 'DZD 3.8M',
-      agency: 'Alpha Communications',
-      channel: 'Billboards & Roadside',
-      location: 'Autoroute Est-Ouest'
-    }
-  ],
-  completed: [
-    {
-      id: 3,
-      company: 'NOVA Retail Group',
-      email: 'agency@novaretail.com',
-      spaceTitle: 'Mall Atrium LED Cube',
-      dates: 'Jan 05 – Feb 29, 2025',
-      status: 'Confirmed',
-      offer: 'DZD 1.4M',
-      agency: 'Mall Media Network',
-      channel: 'Indoor Commercial',
-      location: 'Bab Ezzouar Mall'
-    }
-  ],
-  canceled: [
-    {
-      id: 4,
-      company: 'Horizon Motors',
-      email: 'media@horizonmotors.dz',
-      spaceTitle: 'Tram Exterior Takeover',
-      dates: 'Feb 01 – Mar 01, 2025',
-      status: 'Canceled',
-      offer: 'DZD 900K',
-      agency: 'Transit Ads Algeria',
-      channel: 'Transit Media',
-      location: 'Constantine'
-    }
-  ]
+  agencyId?: string
 }
 
 const stats = [
-  { label: 'Active Briefs', value: '03', detail: 'Requests awaiting action' },
-  { label: 'Confirmed Campaigns', value: '07', detail: 'Delivering this quarter' },
+  { label: 'Active Briefs', value: '0', detail: 'Requests awaiting action' },
+  { label: 'Confirmed Campaigns', value: '0', detail: 'Delivering this quarter' },
   { label: 'Avg. Approval Time', value: '36h', detail: 'Across verified agencies' }
 ]
 
@@ -100,11 +47,76 @@ const tabs = [
 ]
 
 export default function BookingRequestsPage() {
+  const { user } = useAuth()
+  const { toast } = useToast()
   const [activeTab, setActiveTab] = useState<TabType>('in-progress')
   const [searchTerm, setSearchTerm] = useState('')
+  const [bookings, setBookings] = useState<Booking[]>([])
+  const [isLoading, setIsLoading] = useState(true)
+  const [statsData, setStatsData] = useState(stats)
+
+  useEffect(() => {
+    const fetchBookings = async () => {
+      if (!user) return
+
+      try {
+        let data = []
+        if (user.role === 'company') {
+          data = await bookingsService.getCompanyBookings()
+        } else if (user.role === 'agency') {
+          data = await bookingsService.getAgencyBookings()
+        }
+
+        const formattedBookings = data.map((b: any) => ({
+          id: b._id,
+          company: b.company?.name || 'Unknown Company',
+          email: b.company?.email || '',
+          spaceTitle: b.post?.title || 'Unknown Space',
+          dates: `${new Date(b.startDate).toLocaleDateString()} – ${new Date(b.endDate).toLocaleDateString()}`,
+          status: b.status, // 'pending', 'approved', 'rejected', 'completed'
+          offer: `DZD ${b.totalPrice || 'N/A'}`,
+          agency: b.post?.agency?.name || 'Unknown Agency',
+          agencyId: b.post?.agency?._id,
+          channel: b.post?.category || 'Outdoor',
+          location: b.post?.location || 'Algeria'
+        }))
+        setBookings(formattedBookings)
+
+        // Update stats
+        const active = formattedBookings.filter((b: any) => b.status === 'pending' || b.status === 'in-progress').length
+        const confirmed = formattedBookings.filter((b: any) => b.status === 'approved' || b.status === 'completed').length
+        
+        setStatsData([
+          { label: 'Active Briefs', value: active.toString().padStart(2, '0'), detail: 'Requests awaiting action' },
+          { label: 'Confirmed Campaigns', value: confirmed.toString().padStart(2, '0'), detail: 'Delivering this quarter' },
+          { label: 'Avg. Approval Time', value: '36h', detail: 'Across verified agencies' }
+        ])
+
+      } catch (error) {
+        console.error('Failed to fetch bookings:', error)
+        toast({
+          title: "Error",
+          description: "Failed to load bookings.",
+          variant: "destructive",
+        })
+      } finally {
+        setIsLoading(false)
+      }
+    }
+
+    fetchBookings()
+  }, [user, toast])
 
   const filteredBookings = useMemo(() => {
-    const list = bookingData[activeTab]
+    let list = []
+    if (activeTab === 'in-progress') {
+      list = bookings.filter(b => b.status === 'pending' || b.status === 'in-progress')
+    } else if (activeTab === 'completed') {
+      list = bookings.filter(b => b.status === 'approved' || b.status === 'completed')
+    } else {
+      list = bookings.filter(b => b.status === 'rejected' || b.status === 'canceled')
+    }
+
     if (!searchTerm.trim()) return list
     return list.filter((booking) =>
       [booking.company, booking.agency, booking.spaceTitle, booking.channel, booking.location]
@@ -112,12 +124,39 @@ export default function BookingRequestsPage() {
         .toLowerCase()
         .includes(searchTerm.toLowerCase())
     )
-  }, [activeTab, searchTerm])
+  }, [activeTab, searchTerm, bookings])
 
-  const statusColor = (status: Booking['status']) => {
-    if (status === 'Confirmed') return 'text-emerald-300'
-    if (status === 'Canceled') return 'text-rose-300'
+  const handleStatusUpdate = async (id: string, status: string) => {
+    try {
+      await bookingsService.updateBookingStatus(id, status)
+      // Refresh bookings locally
+      setBookings(bookings.map(b => b.id === id ? { ...b, status } : b))
+      toast({
+        title: "Success",
+        description: `Booking ${status} successfully.`,
+      })
+    } catch (error) {
+      console.error('Failed to update booking:', error)
+      toast({
+        title: "Error",
+        description: "Failed to update booking status.",
+        variant: "destructive",
+      })
+    }
+  }
+
+  const statusColor = (status: string) => {
+    if (status === 'approved' || status === 'completed') return 'text-emerald-300'
+    if (status === 'rejected' || status === 'canceled') return 'text-rose-300'
     return 'text-amber-300'
+  }
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-slate-950 flex items-center justify-center">
+        <span className="loading loading-spinner loading-lg text-teal-500"></span>
+      </div>
+    )
   }
 
   return (
@@ -173,7 +212,7 @@ export default function BookingRequestsPage() {
                 <span className="text-xs text-blue-300 bg-blue-500/10 px-3 py-1 rounded-full">Live sync</span>
               </div>
               <div className="space-y-4">
-                {stats.map((stat) => (
+                {statsData.map((stat) => (
                   <div key={stat.label} className="rounded-2xl border border-white/10 bg-black/20 p-4">
                     <p className="text-xs uppercase tracking-[0.3em] text-slate-400">{stat.label}</p>
                     <p className="mt-2 text-3xl font-bold text-white">{stat.value}</p>
@@ -286,36 +325,51 @@ export default function BookingRequestsPage() {
                     </div>
                     <div className="mt-4 flex items-center justify-between text-sm">
                       <span className={cn('font-semibold', statusColor(booking.status))}>{booking.status}</span>
-                      <Link
-                        href={`/agencies/${booking.id}`}
-                        className="text-teal-200 hover:text-teal-100 flex items-center gap-1"
-                      >
-                        View agency
-                        <ArrowRight className="w-4 h-4" />
-                      </Link>
+                      {booking.agencyId && (
+                        <Link
+                          href={`/agencies/${booking.agencyId}`}
+                          className="text-teal-200 hover:text-teal-100 flex items-center gap-1"
+                        >
+                          View agency
+                          <ArrowRight className="w-4 h-4" />
+                        </Link>
+                      )}
                     </div>
                   </div>
 
                   <div className="flex gap-3">
-                    {activeTab === 'in-progress' && (
+                    {activeTab === 'in-progress' && user?.role === 'agency' && (
                       <>
-                        <Button className="flex-1 rounded-2xl bg-gradient-to-r from-blue-500 to-teal-500">
-                          Approve proposal
+                        <Button 
+                          onClick={() => handleStatusUpdate(booking.id, 'approved')}
+                          className="flex-1 rounded-2xl bg-gradient-to-r from-blue-500 to-teal-500"
+                        >
+                          Approve
                         </Button>
                         <Button
+                          onClick={() => handleStatusUpdate(booking.id, 'rejected')}
                           variant="secondary"
                           className="rounded-2xl border border-white/20 text-white"
                         >
-                          Request edit
+                          Reject
                         </Button>
                       </>
+                    )}
+                    {activeTab === 'in-progress' && user?.role === 'company' && (
+                      <Button
+                        onClick={() => handleStatusUpdate(booking.id, 'canceled')}
+                        variant="secondary"
+                        className="flex-1 rounded-2xl border border-white/20 text-white hover:bg-red-500/20 hover:border-red-500/50"
+                      >
+                        Cancel Request
+                      </Button>
                     )}
                     {activeTab === 'completed' && (
                       <Button className="flex-1 rounded-2xl bg-gradient-to-r from-blue-500 to-teal-500">
                         View performance
                       </Button>
                     )}
-                    {activeTab === 'canceled' && (
+                    {activeTab === 'canceled' && user?.role === 'company' && (
                       <Button className="flex-1 rounded-2xl bg-gradient-to-r from-rose-500 to-amber-400">
                         Reopen brief
                       </Button>

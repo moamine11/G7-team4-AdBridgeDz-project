@@ -1,5 +1,5 @@
-import { redirect } from 'next/navigation'
+import DashboardPage from '@/components/pages/dashboard-page'
 
 export default function DashboardRoute() {
-  redirect('/dashboard/bookings')
+  return <DashboardPage />
 }

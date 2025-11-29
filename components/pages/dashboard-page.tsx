@@ -1,48 +1,153 @@
 'use client'
 
+import { useState, useEffect } from 'react'
 import { Sidebar, SidebarProvider } from '@/components/ui/sidebar'
 import Navbar from '@/components/ui/navbar'
 import { Building2, Calendar, Clock, CheckCircle2 } from 'lucide-react'
+import { useAuth } from '@/contexts/auth-context'
+import { bookingsService } from '@/lib/services/bookings-service'
+import { postsService } from '@/lib/services/posts-service'
+import { useToast } from '@/components/ui/use-toast'
 
 export default function DashboardPage() {
-  const stats = [
+  const { user } = useAuth()
+  const { toast } = useToast()
+  const [isLoading, setIsLoading] = useState(true)
+  const [stats, setStats] = useState([
     {
       icon: Building2,
       label: 'Total Advertising Spaces',
-      value: '48',
+      value: '0',
       bgColor: 'bg-blue-50',
       iconColor: 'text-blue-600'
     },
     {
       icon: Calendar,
       label: 'Total Booking Requests',
-      value: '256',
+      value: '0',
       bgColor: 'bg-purple-50',
       iconColor: 'text-purple-600'
     },
     {
       icon: Clock,
       label: 'Requests In Progress',
-      value: '12',
+      value: '0',
       bgColor: 'bg-yellow-50',
       iconColor: 'text-yellow-600'
     },
     {
       icon: CheckCircle2,
       label: 'Completed Bookings',
-      value: '198',
+      value: '0',
       bgColor: 'bg-green-50',
       iconColor: 'text-green-600'
     },
-  ]
+  ])
 
-  const recentBookings = [
-    { advertiser: 'Innovate Corp', space: 'Downtown Billboard', status: 'Completed', date: 'Oct 12, 2024', statusColor: 'bg-green-100 text-green-700' },
-    { advertiser: 'Market Pro', space: 'City Center Display', status: 'In Progress', date: 'Oct 15, 2024', statusColor: 'bg-yellow-100 text-yellow-700' },
-    { advertiser: 'Brandify', space: 'Central Station Ad', status: 'Completed', date: 'Oct 08, 2024', statusColor: 'bg-green-100 text-green-700' },
-    { advertiser: 'Future Ads', space: 'Mall Entrance Screen', status: 'Canceled', date: 'Oct 05, 2024', statusColor: 'bg-red-100 text-red-700' },
-    { advertiser: 'Tech Solutions', space: 'Airport Digital Board', status: 'In Progress', date: 'Oct 18, 2024', statusColor: 'bg-yellow-100 text-yellow-700' },
-  ]
+  const [recentBookings, setRecentBookings] = useState<any[]>([])
+
+  useEffect(() => {
+    const fetchData = async () => {
+      if (!user) return
+
+      try {
+        let bookings = []
+        let posts = []
+
+        if (user.role === 'agency') {
+          bookings = await bookingsService.getAgencyBookings()
+          // Ideally we should have an endpoint for my posts, but for now we might need to fetch all and filter
+          // or assume the backend handles it. Let's try to fetch all posts and see if we can filter.
+          // Since we don't want to fetch ALL posts in the system, this is suboptimal.
+          // But for the sake of "linking to frontend", we will try to use what we have.
+          // If postsService.getAllPosts() returns everything, we might want to skip it or filter it.
+          // Let's assume for now we just count bookings for stats.
+          // Actually, let's try to fetch posts and filter by agency ID if possible.
+          const allPosts = await postsService.getAllPosts()
+          posts = allPosts.filter((post: any) => post.agency === user.id || post.agency?._id === user.id)
+        } else {
+          bookings = await bookingsService.getCompanyBookings()
+        }
+
+        // Calculate stats
+        const totalBookings = bookings.length
+        const inProgress = bookings.filter((b: any) => b.status === 'pending' || b.status === 'in-progress').length
+        const completed = bookings.filter((b: any) => b.status === 'completed' || b.status === 'approved').length
+        const totalSpaces = posts.length
+
+        setStats([
+          {
+            icon: Building2,
+            label: user.role === 'agency' ? 'Total Advertising Spaces' : 'Active Campaigns',
+            value: user.role === 'agency' ? totalSpaces.toString() : totalBookings.toString(), // For company, maybe active bookings?
+            bgColor: 'bg-blue-50',
+            iconColor: 'text-blue-600'
+          },
+          {
+            icon: Calendar,
+            label: 'Total Booking Requests',
+            value: totalBookings.toString(),
+            bgColor: 'bg-purple-50',
+            iconColor: 'text-purple-600'
+          },
+          {
+            icon: Clock,
+            label: 'Requests In Progress',
+            value: inProgress.toString(),
+            bgColor: 'bg-yellow-50',
+            iconColor: 'text-yellow-600'
+          },
+          {
+            icon: CheckCircle2,
+            label: 'Completed Bookings',
+            value: completed.toString(),
+            bgColor: 'bg-green-50',
+            iconColor: 'text-green-600'
+          },
+        ])
+
+        // Format recent bookings
+        const formattedBookings = bookings.slice(0, 5).map((booking: any) => ({
+          advertiser: booking.company?.name || 'Unknown Company', // Adjust based on actual response structure
+          space: booking.post?.title || 'Unknown Space',
+          status: booking.status,
+          date: new Date(booking.createdAt).toLocaleDateString(),
+          statusColor: booking.status === 'approved' || booking.status === 'completed' ? 'bg-green-100 text-green-700' :
+                       booking.status === 'pending' || booking.status === 'in-progress' ? 'bg-yellow-100 text-yellow-700' :
+                       'bg-red-100 text-red-700'
+        }))
+        setRecentBookings(formattedBookings)
+
+      } catch (error) {
+        console.error('Failed to fetch dashboard data:', error)
+        toast({
+          title: "Error",
+          description: "Failed to load dashboard data.",
+          variant: "destructive",
+        })
+      } finally {
+        setIsLoading(false)
+      }
+    }
+
+    fetchData()
+  }, [user, toast])
+
+  if (isLoading) {
+    return (
+      <SidebarProvider>
+        <div className="flex min-h-screen bg-gray-50">
+          <Sidebar />
+          <div className="flex-1 flex flex-col">
+            <Navbar />
+            <main className="flex-1 p-8 flex justify-center items-center">
+              <span className="loading loading-spinner loading-lg text-teal-500"></span>
+            </main>
+          </div>
+        </div>
+      </SidebarProvider>
+    )
+  }
 
   return (
     <SidebarProvider>

@@ -34,17 +34,21 @@ import {
   Check
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { authService } from '@/lib/services/auth-service'
+import { useToast } from '@/components/ui/use-toast'
 
 const STORAGE_KEY = 'company_signup_progress'
 const TOTAL_STEPS = 4
 
 export default function CreateAccountPage() {
   const router = useRouter()
+  const { toast } = useToast()
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [currentStep, setCurrentStep] = useState(1)
   const [logoPreview, setLogoPreview] = useState<string | null>(null)
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
+  const [isLoading, setIsLoading] = useState(false)
   
   const [formData, setFormData] = useState({
     companyName: '',
@@ -264,11 +268,45 @@ export default function CreateAccountPage() {
     }
   }
 
-  const handleCreateAccount = (e: React.FormEvent) => {
+  const handleCreateAccount = async (e: React.FormEvent) => {
     e.preventDefault()
-    console.log('Create account:', formData)
-    localStorage.removeItem(STORAGE_KEY) // Clear saved progress
-    router.push('/verify-email')
+    setIsLoading(true)
+    
+    try {
+      const data = {
+        name: formData.companyName,
+        email: formData.email,
+        password: formData.password,
+        phone: formData.phoneNumber,
+        website: formData.websiteUrl,
+        address: formData.physicalAddress,
+        industry: formData.industry,
+        companySize: formData.companySize,
+        yearEstablished: formData.yearEstablished,
+        services: formData.servicesOffered,
+        socialMedia: {
+          facebook: formData.facebookUrl,
+          linkedin: formData.linkedinUrl,
+        }
+      }
+
+      await authService.registerCompany(data);
+      
+      localStorage.removeItem(STORAGE_KEY) // Clear saved progress
+      toast({
+        title: "Success",
+        description: "Account created successfully. Please login.",
+      });
+      router.push('/login')
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.response?.data?.message || "Failed to create account. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   const steps = [
@@ -402,8 +440,12 @@ export default function CreateAccountPage() {
 
             {/* Sticky Submit Button */}
             <div className="sticky bottom-0 left-0 w-full bg-transparent pt-6 flex justify-center z-20">
-              <Button type="submit" className="w-full max-w-xs bg-gradient-to-r from-blue-500 via-teal-500 to-blue-400 hover:from-blue-700 hover:to-teal-600 text-white font-bold py-3 rounded-full shadow-lg shadow-blue-500/20 hover:shadow-xl hover:shadow-blue-500/30 transition-all duration-200 text-lg">
-                Create Account
+              <Button type="submit" disabled={isLoading} className="w-full max-w-xs bg-gradient-to-r from-blue-500 via-teal-500 to-blue-400 hover:from-blue-700 hover:to-teal-600 text-white font-bold py-3 rounded-full shadow-lg shadow-blue-500/20 hover:shadow-xl hover:shadow-blue-500/30 transition-all duration-200 text-lg">
+                {isLoading ? (
+                  <span className="loading loading-spinner loading-sm"></span>
+                ) : (
+                  'Create Account'
+                )}
               </Button>
             </div>
           </form>

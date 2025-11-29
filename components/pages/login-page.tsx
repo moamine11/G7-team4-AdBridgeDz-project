@@ -6,18 +6,58 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import Link from 'next/link'
 import { Eye, EyeOff, Mail, Lock, LogIn } from 'lucide-react'
+import { authService } from '@/lib/services/auth-service'
+import { useAuth } from '@/contexts/auth-context'
+import { useToast } from '@/components/ui/use-toast'
 
 export default function LoginPage() {
   const router = useRouter()
+  const { login } = useAuth()
+  const { toast } = useToast()
   const loginPicture = '/login_picture.png'
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
+  const [isLoading, setIsLoading] = useState(false)
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
-    console.log('Login attempt:', { email, password })
-    router.push('/channels')
+    setIsLoading(true)
+    
+    try {
+      // Try logging in as a company first
+      try {
+        const data = await authService.loginCompany({ email, password });
+        login(data.token, data.company, 'company');
+        toast({
+          title: "Success",
+          description: "Logged in successfully as Company",
+        });
+        return;
+      } catch (companyError) {
+        // If company login fails, try agency login
+        try {
+          const data = await authService.loginAgency({ email, password });
+          login(data.token, data.agency, 'agency');
+          toast({
+            title: "Success",
+            description: "Logged in successfully as Agency",
+          });
+          return;
+        } catch (agencyError) {
+           // If both fail, throw an error
+           throw new Error('Invalid credentials');
+        }
+      }
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to login. Please check your credentials.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   return (
@@ -110,10 +150,17 @@ export default function LoginPage() {
                 {/* Login Button */}
                 <Button
                   type="submit"
+                  disabled={isLoading}
                   className="w-full bg-gradient-to-r from-blue-500 via-teal-500 to-blue-400 hover:from-blue-700 hover:to-teal-600 text-white font-semibold py-2.5 lg:py-3 rounded-xl text-base shadow-lg shadow-blue-500/20 hover:shadow-xl hover:shadow-blue-500/30 transition-all duration-200 flex items-center justify-center gap-2 group"
                 >
-                  <LogIn className="w-4 h-4 lg:w-5 lg:h-5 group-hover:translate-x-1 transition-transform duration-200" />
-                  Sign In
+                  {isLoading ? (
+                    <span className="loading loading-spinner loading-sm"></span>
+                  ) : (
+                    <>
+                      <LogIn className="w-4 h-4 lg:w-5 lg:h-5 group-hover:translate-x-1 transition-transform duration-200" />
+                      Sign In
+                    </>
+                  )}
                 </Button>
 
                 {/* Register Link */}

@@ -3,6 +3,8 @@ import { Geist, Geist_Mono } from 'next/font/google'
 import './globals.css'
 import Navbar from '@/components/ui/navbar'
 import { StorageProvider } from '@/components/providers/storage-provider'
+import { AuthProvider } from '@/contexts/auth-context'
+import { Toaster } from '@/components/ui/toaster'
 
 const _geist = Geist({ subsets: ["latin"] });
 const _geistMono = Geist_Mono({ subsets: ["latin"] });
@@ -38,10 +40,13 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={`font-sans antialiased`}>
-        <StorageProvider>
-          <Navbar />
-          {children}
-        </StorageProvider>
+        <AuthProvider>
+          <StorageProvider>
+            <Navbar />
+            {children}
+            <Toaster />
+          </StorageProvider>
+        </AuthProvider>
       </body>
     </html>
   )

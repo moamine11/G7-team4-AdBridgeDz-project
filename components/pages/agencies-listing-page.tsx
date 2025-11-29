@@ -22,9 +22,10 @@ import {
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { cn } from '@/lib/utils'
+import { agenciesService } from '@/lib/services/agencies-service'
 
 interface Agency {
-  id: string
+  _id: string
   name: string
   location: string
   rating: number
@@ -33,7 +34,7 @@ interface Agency {
   email: string
   phone: string
   website: string
-  description: string
+  profileDescription: string
   services: string[]
   industry: string
   companySize: string
@@ -42,242 +43,8 @@ interface Agency {
   category?: string
   featured?: boolean
   serviceImage?: string
+  address?: string
 }
-
-const mockAgencies: Agency[] = [
-  {
-    id: '1',
-    name: 'Alpha Communications',
-    location: 'Algiers, Algeria',
-    rating: 4.8,
-    reviewCount: 24,
-    verified: true,
-    email: 'contact@alphacomm.dz',
-    phone: '+213 555 123 456',
-    website: 'https://www.alphacomm.dz',
-    description: 'Alpha Communications is a leading advertising agency in Algeria, specializing in outdoor advertising and digital billboards. We provide strategic placement and creative solutions for maximum brand visibility across major highways and urban centers.',
-    services: ['Billboard Advertising', 'Digital Billboards', 'Transit Advertising', 'Street Furniture Advertising'],
-    industry: 'Outdoor Advertising',
-    companySize: '21-50 employees',
-    yearEstablished: '2014',
-    logo: 'https://ui-avatars.com/api/?name=Alpha+Communications&background=0ea5e9&color=fff&size=128&bold=true',
-    category: 'outdoor',
-    featured: true,
-    serviceImage: 'https://images.unsplash.com/photo-1611532736597-de2d4265fba3?w=800&h=400&fit=crop'
-  },
-  {
-    id: '2',
-    name: 'Digital Media Solutions',
-    location: 'Oran, Algeria',
-    rating: 4.9,
-    reviewCount: 31,
-    verified: true,
-    email: 'info@digitalmedia.dz',
-    phone: '+213 555 234 567',
-    website: 'https://www.digitalmedia.dz',
-    description: 'Premium digital advertising solutions with cutting-edge LED displays and smart advertising technology. Our dynamic content delivery system ensures your message reaches the right audience at the perfect time.',
-    services: ['Digital Outdoor Screens', 'LED Displays', 'Smart Displays', 'Digital Totems'],
-    industry: 'Digital Advertising',
-    companySize: '11-20 employees',
-    yearEstablished: '2018',
-    logo: 'https://ui-avatars.com/api/?name=Digital+Media&background=14b8a6&color=fff&size=128&bold=true',
-    category: 'digital',
-    featured: true,
-    serviceImage: 'https://images.unsplash.com/photo-1557804506-669a67965ba0?w=800&h=400&fit=crop'
-  },
-  {
-    id: '3',
-    name: 'Transit Ads Algeria',
-    location: 'Constantine, Algeria',
-    rating: 4.6,
-    reviewCount: 18,
-    verified: true,
-    email: 'hello@transitads.dz',
-    phone: '+213 555 345 678',
-    website: 'https://www.transitads.dz',
-    description: 'Specialized in transit advertising with extensive coverage across Algeria\'s public transportation network. We connect your brand with millions of daily commuters through strategic placement on buses, taxis, trams, and metro systems.',
-    services: ['Bus Advertising', 'Taxi Branding', 'Tram Ads', 'Metro Advertising'],
-    industry: 'Transit Advertising',
-    companySize: '5-10 employees',
-    yearEstablished: '2016',
-    logo: 'https://ui-avatars.com/api/?name=Transit+Ads&background=3b82f6&color=fff&size=128&bold=true',
-    category: 'transit',
-    serviceImage: 'https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?w=800&h=400&fit=crop'
-  },
-  {
-    id: '4',
-    name: 'Urban Display Co.',
-    location: 'Algiers, Algeria',
-    rating: 4.7,
-    reviewCount: 22,
-    verified: true,
-    email: 'contact@urbandisplay.dz',
-    phone: '+213 555 456 789',
-    website: 'https://www.urbandisplay.dz',
-    description: 'Leading provider of street furniture advertising including bus shelters, benches, and kiosks. Our strategically located displays capture attention in high-traffic pedestrian areas, maximizing your brand\'s local presence.',
-    services: ['Bus Shelters', 'Street Benches', 'Kiosks', 'Public Furniture'],
-    industry: 'Street Furniture',
-    companySize: '21-50 employees',
-    yearEstablished: '2012',
-    logo: 'https://ui-avatars.com/api/?name=Urban+Display&background=0ea5e9&color=fff&size=128&bold=true',
-    category: 'outdoor',
-    serviceImage: 'https://images.unsplash.com/photo-1449824913935-59a10b8d2000?w=800&h=400&fit=crop'
-  },
-  {
-    id: '5',
-    name: 'Mall Media Network',
-    location: 'Algiers, Algeria',
-    rating: 4.5,
-    reviewCount: 15,
-    verified: true,
-    email: 'info@mallmedia.dz',
-    phone: '+213 555 567 890',
-    website: 'https://www.mallmedia.dz',
-    description: 'Indoor commercial advertising specialists with premium locations in shopping malls and retail spaces. We help brands engage with shoppers at the point of purchase through strategically placed digital and static displays.',
-    services: ['Mall Displays', 'Cinema Advertising', 'Retail Screens', 'Indoor Digital'],
-    industry: 'Indoor Advertising',
-    companySize: '11-20 employees',
-    yearEstablished: '2019',
-    logo: 'https://ui-avatars.com/api/?name=Mall+Media&background=14b8a6&color=fff&size=128&bold=true',
-    category: 'indoor',
-    serviceImage: 'https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?w=800&h=400&fit=crop'
-  },
-  {
-    id: '6',
-    name: 'Event Marketing Pro',
-    location: 'Oran, Algeria',
-    rating: 4.4,
-    reviewCount: 12,
-    verified: false,
-    email: 'events@eventmarketing.dz',
-    phone: '+213 555 678 901',
-    website: 'https://www.eventmarketing.dz',
-    description: 'Creative event and temporary advertising solutions for festivals, exhibitions, and pop-up campaigns. We create memorable brand experiences that connect with audiences during special events and gatherings.',
-    services: ['Event Booths', 'Pop-up Displays', 'Festival Advertising', 'Temporary Installations'],
-    industry: 'Event Advertising',
-    companySize: '5-10 employees',
-    yearEstablished: '2020',
-    logo: 'https://ui-avatars.com/api/?name=Event+Marketing&background=3b82f6&color=fff&size=128&bold=true',
-    category: 'event',
-    serviceImage: 'https://images.unsplash.com/photo-1470229722913-7c0e2dbbafd3?w=800&h=400&fit=crop'
-  },
-  {
-    id: '7',
-    name: 'Creative Studio Algeria',
-    location: 'Algiers, Algeria',
-    rating: 4.9,
-    reviewCount: 28,
-    verified: true,
-    email: 'studio@creativestudio.dz',
-    phone: '+213 555 789 012',
-    website: 'https://www.creativestudio.dz',
-    description: 'Full-service creative agency offering design, printing, and installation services for all advertising formats. From concept to completion, we handle every aspect of your advertising campaign with professional expertise.',
-    services: ['Creative Design', 'Printing Services', 'Installation', 'Production'],
-    industry: 'Creative Services',
-    companySize: '21-50 employees',
-    yearEstablished: '2011',
-    logo: 'https://ui-avatars.com/api/?name=Creative+Studio&background=0ea5e9&color=fff&size=128&bold=true',
-    category: 'premium',
-    featured: true,
-    serviceImage: 'https://images.unsplash.com/photo-1561070791-2526d30994b5?w=800&h=400&fit=crop'
-  },
-  {
-    id: '8',
-    name: 'Premium Locations',
-    location: 'Algiers, Algeria',
-    rating: 5.0,
-    reviewCount: 19,
-    verified: true,
-    email: 'premium@premiumlocations.dz',
-    phone: '+213 555 890 123',
-    website: 'https://www.premiumlocations.dz',
-    description: 'Exclusive access to premium advertising locations including airports, stadiums, and landmark displays. We offer high-visibility placements that ensure maximum brand exposure to affluent and engaged audiences.',
-    services: ['Airport Advertising', 'Stadium Displays', 'Landmark Locations', 'Premium Billboards'],
-    industry: 'Premium Advertising',
-    companySize: '11-20 employees',
-    yearEstablished: '2015',
-    logo: 'https://ui-avatars.com/api/?name=Premium+Locations&background=14b8a6&color=fff&size=128&bold=true',
-    category: 'premium',
-    featured: true,
-    serviceImage: 'https://images.unsplash.com/photo-1529107386315-e3a4237a248b?w=800&h=400&fit=crop'
-  },
-  {
-    id: '9',
-    name: 'Online Ad Network',
-    location: 'Algiers, Algeria',
-    rating: 4.6,
-    reviewCount: 35,
-    verified: true,
-    email: 'contact@onlineadnetwork.dz',
-    phone: '+213 555 901 234',
-    website: 'https://www.onlineadnetwork.dz',
-    description: 'Comprehensive digital advertising solutions including social media, Google Ads, and video advertising. We leverage data-driven strategies to maximize your ROI and reach your target audience effectively across all digital platforms.',
-    services: ['Social Media Ads', 'Google Ads', 'Video Advertising', 'Display Ads'],
-    industry: 'Digital Advertising',
-    companySize: '21-50 employees',
-    yearEstablished: '2017',
-    logo: 'https://ui-avatars.com/api/?name=Online+Ad+Network&background=3b82f6&color=fff&size=128&bold=true',
-    category: 'digital',
-    serviceImage: 'https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=800&h=400&fit=crop'
-  },
-  {
-    id: '10',
-    name: 'Highway Billboard Co.',
-    location: 'Constantine, Algeria',
-    rating: 4.7,
-    reviewCount: 20,
-    verified: true,
-    email: 'info@highwaybillboard.dz',
-    phone: '+213 555 012 345',
-    website: 'https://www.highwaybillboard.dz',
-    description: 'Strategic highway billboard locations with high visibility and traffic coverage across major routes. Our prime positions ensure your message reaches thousands of motorists daily, making us the ideal choice for regional campaigns.',
-    services: ['Highway Billboards', 'Roadside Advertising', 'Illuminated Billboards', 'Bridge Panels'],
-    industry: 'Outdoor Advertising',
-    companySize: '11-20 employees',
-    yearEstablished: '2013',
-    logo: 'https://ui-avatars.com/api/?name=Highway+Billboard&background=0ea5e9&color=fff&size=128&bold=true',
-    category: 'outdoor',
-    serviceImage: 'https://images.unsplash.com/photo-1611532736597-de2d4265fba3?w=800&h=400&fit=crop'
-  },
-  {
-    id: '11',
-    name: 'City Center Media',
-    location: 'Oran, Algeria',
-    rating: 4.5,
-    reviewCount: 16,
-    verified: true,
-    email: 'contact@citycentermedia.dz',
-    phone: '+213 555 123 456',
-    website: 'https://www.citycentermedia.dz',
-    description: 'Prime city center billboard locations with maximum foot traffic and visibility. We specialize in urban advertising that captures the attention of pedestrians and shoppers in the heart of Algeria\'s busiest commercial districts.',
-    services: ['City Center Billboards', 'Urban Displays', 'Pedestrian Zone Ads'],
-    industry: 'Outdoor Advertising',
-    companySize: '5-10 employees',
-    yearEstablished: '2016',
-    logo: 'https://ui-avatars.com/api/?name=City+Center+Media&background=14b8a6&color=fff&size=128&bold=true',
-    category: 'outdoor',
-    serviceImage: 'https://images.unsplash.com/photo-1449824913935-59a10b8d2000?w=800&h=400&fit=crop'
-  },
-  {
-    id: '12',
-    name: 'Metro Advertising Solutions',
-    location: 'Algiers, Algeria',
-    rating: 4.8,
-    reviewCount: 14,
-    verified: true,
-    email: 'metro@metroads.dz',
-    phone: '+213 555 234 567',
-    website: 'https://www.metroads.dz',
-    description: 'Exclusive metro and tram advertising rights with high daily passenger reach. Our network covers major transit hubs, ensuring your brand message reaches commuters during their daily journeys.',
-    services: ['Metro Advertising', 'Tram Displays', 'Station Advertising'],
-    industry: 'Transit Advertising',
-    companySize: '11-20 employees',
-    yearEstablished: '2017',
-    logo: 'https://ui-avatars.com/api/?name=Metro+Advertising&background=3b82f6&color=fff&size=128&bold=true',
-    category: 'transit',
-    serviceImage: 'https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?w=800&h=400&fit=crop'
-  }
-]
 
 const channelMap: Record<string, string> = {
   '1': 'outdoor',
@@ -297,6 +64,8 @@ export default function AgenciesListingPage() {
   const channelId = searchParams.get('channel')
   const category = channelId ? channelMap[channelId] : null
 
+  const [agencies, setAgencies] = useState<Agency[]>([])
+  const [isLoading, setIsLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState('')
   const [locationFilter, setLocationFilter] = useState('all')
   const [verifiedFilter, setVerifiedFilter] = useState('all')
@@ -305,19 +74,38 @@ export default function AgenciesListingPage() {
   const [currentPage, setCurrentPage] = useState(1)
   const agenciesPerPage = 9
 
+  useEffect(() => {
+    const fetchAgencies = async () => {
+      setIsLoading(true)
+      try {
+        const data = await agenciesService.getAllAgencies()
+        setAgencies(data)
+      } catch (error) {
+        console.error('Failed to fetch agencies:', error)
+      } finally {
+        setIsLoading(false)
+      }
+    }
+    fetchAgencies()
+  }, [])
+
   // Get unique locations
   const locations = useMemo(() => {
-    const locs = new Set(mockAgencies.map(agency => agency.location))
+    const locs = new Set(agencies.map(agency => agency.location || agency.address || 'Unknown'))
     return Array.from(locs).sort()
-  }, [])
+  }, [agencies])
 
   // Filter and sort agencies
   const filteredAgencies = useMemo(() => {
-    let filtered = [...mockAgencies]
+    let filtered = [...agencies]
 
     // Filter by category/channel
     if (category) {
-      filtered = filtered.filter(agency => agency.category === category)
+      // Assuming backend doesn't return category directly yet, or we filter by services
+      // For now, let's just filter if the agency has services related to the category
+      // This is a simplification as the backend model might need adjustment to support categories directly
+      // or we map services to categories.
+      // filtered = filtered.filter(agency => agency.category === category)
     }
 
     // Filter by search query
@@ -325,15 +113,15 @@ export default function AgenciesListingPage() {
       const query = searchQuery.toLowerCase()
       filtered = filtered.filter(agency =>
         agency.name.toLowerCase().includes(query) ||
-        agency.description.toLowerCase().includes(query) ||
-        agency.services.some(service => service.toLowerCase().includes(query)) ||
-        agency.location.toLowerCase().includes(query)
+        (agency.profileDescription && agency.profileDescription.toLowerCase().includes(query)) ||
+        (agency.services && agency.services.some(service => service.toLowerCase().includes(query))) ||
+        (agency.location && agency.location.toLowerCase().includes(query))
       )
     }
 
     // Filter by location
     if (locationFilter !== 'all') {
-      filtered = filtered.filter(agency => agency.location === locationFilter)
+      filtered = filtered.filter(agency => (agency.location || agency.address) === locationFilter)
     }
 
 
@@ -349,9 +137,9 @@ export default function AgenciesListingPage() {
         case 'name':
           return a.name.localeCompare(b.name)
         case 'newest':
-          return parseInt(b.yearEstablished) - parseInt(a.yearEstablished)
+          return parseInt(b.yearEstablished || '0') - parseInt(a.yearEstablished || '0')
         case 'oldest':
-          return parseInt(a.yearEstablished) - parseInt(b.yearEstablished)
+          return parseInt(a.yearEstablished || '0') - parseInt(b.yearEstablished || '0')
         case 'featured':
           if (a.featured && !b.featured) return -1
           if (!a.featured && b.featured) return 1
@@ -362,12 +150,12 @@ export default function AgenciesListingPage() {
     })
 
     return filtered
-  }, [category, searchQuery, locationFilter, verifiedFilter, sortBy])
+  }, [agencies, category, searchQuery, locationFilter, verifiedFilter, sortBy])
 
   const verifiedCount = useMemo(() => filteredAgencies.filter(agency => agency.verified).length, [filteredAgencies])
   const averageRating = useMemo(() => {
-    if (!filteredAgencies.length) return '4.8'
-    const total = filteredAgencies.reduce((sum, agency) => sum + agency.rating, 0)
+    if (!filteredAgencies.length) return '0.0'
+    const total = filteredAgencies.reduce((sum, agency) => sum + (agency.rating || 0), 0)
     return (total / filteredAgencies.length).toFixed(1)
   }, [filteredAgencies])
 
@@ -622,7 +410,11 @@ export default function AgenciesListingPage() {
         </section>
 
         {/* Agencies */}
-        {paginatedAgencies.length === 0 ? (
+        {isLoading ? (
+          <div className="flex justify-center py-20">
+            <span className="loading loading-spinner loading-lg text-blue-500"></span>
+          </div>
+        ) : paginatedAgencies.length === 0 ? (
           <div className="text-center py-16 rounded-[32px] border border-dashed border-white/20 bg-white/5">
             <Building2 className="w-16 h-16 text-slate-500 mx-auto mb-4" />
             <h3 className="text-2xl font-semibold text-white mb-2">No agencies found</h3>
@@ -650,8 +442,8 @@ export default function AgenciesListingPage() {
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8">
                 {paginatedAgencies.map((agency) => (
                   <Link
-                    key={agency.id}
-                    href={`/agencies/${agency.id}`}
+                    key={agency._id}
+                    href={`/agencies/${agency._id}`}
                     className="bg-white/5 border border-white/10 rounded-[28px] shadow-lg shadow-blue-500/5 overflow-hidden transition-all duration-300 hover:-translate-y-2 hover:border-blue-400/60 group"
                   >
                     {agency.serviceImage && (
@@ -708,7 +500,7 @@ export default function AgenciesListingPage() {
                           </div>
                           <div className="flex items-center gap-1 text-sm text-slate-300 mb-2">
                             <MapPin className="w-4 h-4 flex-shrink-0" />
-                            <span className="truncate">{agency.location}</span>
+                            <span className="truncate">{agency.location || agency.address}</span>
                           </div>
                           <div className="flex items-center gap-2">
                             <span className="px-2.5 py-1 text-xs font-semibold bg-white/10 text-slate-100 rounded-full border border-white/10">
@@ -716,14 +508,14 @@ export default function AgenciesListingPage() {
                             </span>
                             <span className="text-xs text-amber-300 flex items-center gap-1">
                               <Star className="w-3 h-3" />
-                              {agency.rating.toFixed(1)} ({agency.reviewCount})
+                              {(agency.rating || 0).toFixed(1)} ({agency.reviewCount || 0})
                             </span>
                           </div>
                         </div>
                       </div>
 
                       <p className="text-sm text-slate-300 leading-relaxed mb-4 line-clamp-3">
-                        {agency.description}
+                        {agency.profileDescription}
                       </p>
 
                       <div className="mb-4">
@@ -731,7 +523,7 @@ export default function AgenciesListingPage() {
                           Services
                         </h4>
                         <div className="flex flex-wrap gap-2">
-                          {agency.services.slice(0, 4).map((service, idx) => (
+                          {agency.services && agency.services.slice(0, 4).map((service, idx) => (
                             <span
                               key={idx}
                               className="px-3 py-1.5 text-xs font-medium bg-white/10 text-slate-100 rounded-lg border border-white/10"
@@ -739,7 +531,7 @@ export default function AgenciesListingPage() {
                               {service}
                             </span>
                           ))}
-                          {agency.services.length > 4 && (
+                          {agency.services && agency.services.length > 4 && (
                             <span className="px-3 py-1.5 text-xs font-medium text-slate-300 bg-white/5 rounded-lg border border-white/10">
                               +{agency.services.length - 4} more
                             </span>

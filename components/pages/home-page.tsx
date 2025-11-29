@@ -1,5 +1,6 @@
 'use client'
 
+import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import Link from 'next/link'
@@ -28,6 +29,11 @@ import {
 
 export default function HomePage() {
   const router = useRouter()
+  const [faqReady, setFaqReady] = useState(false)
+
+  useEffect(() => {
+    setFaqReady(true)
+  }, [])
 
   const fadeInUp = {
     hidden: { opacity: 0, y: 20 },
@@ -260,18 +266,20 @@ export default function HomePage() {
       <section className="py-10 px-2 sm:px-4 lg:px-8 bg-slate-950 border-t border-white/5">
         <div className="max-w-2xl mx-auto">
           <h2 className="text-2xl font-bold mb-6 text-center">Common Questions</h2>
-          <Accordion type="single" collapsible className="w-full space-y-2">
-            {faqs.map((faq, idx) => (
-              <AccordionItem key={idx} value={`item-${idx}`} className="border-white/10 px-2 md:px-4 rounded-xl bg-white/5">
-                <AccordionTrigger className="text-base md:text-lg hover:no-underline hover:text-blue-400">
-                  {faq.question}
-                </AccordionTrigger>
-                <AccordionContent className="text-slate-400 text-sm md:text-base">
-                  {faq.answer}
-                </AccordionContent>
-              </AccordionItem>
-            ))}
-          </Accordion>
+          {faqReady && (
+            <Accordion type="single" collapsible className="w-full space-y-2">
+              {faqs.map((faq, idx) => (
+                <AccordionItem key={idx} value={`item-${idx}`} className="border-white/10 px-2 md:px-4 rounded-xl bg-white/5">
+                  <AccordionTrigger className="text-base md:text-lg hover:no-underline hover:text-blue-400">
+                    {faq.question}
+                  </AccordionTrigger>
+                  <AccordionContent className="text-slate-400 text-sm md:text-base">
+                    {faq.answer}
+                  </AccordionContent>
+                </AccordionItem>
+              ))}
+            </Accordion>
+          )}
         </div>
       </section>
 

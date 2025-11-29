@@ -33,17 +33,21 @@ import {
   Info
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { authService } from '@/lib/services/auth-service'
+import { useToast } from '@/components/ui/use-toast'
 
 const STORAGE_KEY = 'agency_signup_progress'
 
 export default function CreateAgencyAccountPage() {
   const router = useRouter()
+  const { toast } = useToast()
   const fileInputRef = useRef<HTMLInputElement>(null)
   const rcDocumentInputRef = useRef<HTMLInputElement>(null)
   const [logoPreview, setLogoPreview] = useState<string | null>(null)
   const [rcDocumentPreview, setRcDocumentPreview] = useState<string | null>(null)
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
+  const [isLoading, setIsLoading] = useState(false)
   
   const [formData, setFormData] = useState({
     agencyName: '',
@@ -248,11 +252,57 @@ export default function CreateAgencyAccountPage() {
     return { level: 'strong', color: 'bg-green-500', text: 'strong' }
   }
 
-  const handleCreateAccount = (e: React.FormEvent) => {
+  const handleCreateAccount = async (e: React.FormEvent) => {
     e.preventDefault()
-    console.log('Create agency account:', formData)
-    localStorage.removeItem(STORAGE_KEY)
-    router.push('/verify-email')
+    setIsLoading(true)
+    
+    try {
+      const formDataToSend = new FormData();
+      formDataToSend.append('name', formData.agencyName);
+      formDataToSend.append('email', formData.email);
+      formDataToSend.append('password', formData.password);
+      formDataToSend.append('phone', formData.phoneNumber);
+      formDataToSend.append('website', formData.websiteUrl);
+      formDataToSend.append('address', `${formData.streetAddress}, ${formData.city}, ${formData.postalCode}, ${formData.country}`);
+      formDataToSend.append('businessRegistrationNumber', formData.businessRegistrationNumber);
+      formDataToSend.append('industry', formData.industry);
+      formDataToSend.append('companySize', formData.companySize);
+      formDataToSend.append('yearEstablished', formData.yearEstablished);
+      formDataToSend.append('contactPerson[name]', formData.fullName);
+      formDataToSend.append('contactPerson[title]', formData.jobTitle);
+      
+      formData.servicesOffered.forEach(service => {
+        formDataToSend.append('services[]', service);
+      });
+      
+      formDataToSend.append('socialMedia[facebook]', formData.facebookUrl);
+      formDataToSend.append('socialMedia[linkedin]', formData.linkedinUrl);
+
+      if (formData.logo) {
+        formDataToSend.append('logo', formData.logo);
+      }
+      
+      if (formData.rcDocument) {
+        formDataToSend.append('rcDocument', formData.rcDocument);
+      }
+
+      await authService.registerAgency(formDataToSend);
+      
+      localStorage.removeItem(STORAGE_KEY)
+      toast({
+        title: "Success",
+        description: "Agency account created successfully. Please login.",
+      });
+      router.push('/login')
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.response?.data?.message || "Failed to create agency account. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false)
+    }
   }
   return (
     <div className="min-h-screen pt-32 pb-12 px-2 bg-[#020618] flex items-center justify-center">
@@ -813,10 +863,14 @@ export default function CreateAgencyAccountPage() {
                 </p>
                 <Button
                   type="submit"
-                  disabled={!formData.agreeToTerms}
+                  disabled={!formData.agreeToTerms || isLoading}
                   className="w-full md:w-auto bg-gradient-to-r from-blue-500 via-cyan-400 to-teal-400 hover:from-blue-600 hover:to-teal-500 text-white px-10 py-3 rounded-full font-semibold disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-cyan-500/30"
                 >
-                  Create Agency Account
+                  {isLoading ? (
+                    <span className="loading loading-spinner loading-sm"></span>
+                  ) : (
+                    'Create Agency Account'
+                  )}
                 </Button>
               </div>
             </section>

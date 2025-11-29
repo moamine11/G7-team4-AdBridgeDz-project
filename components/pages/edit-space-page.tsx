@@ -1,48 +1,166 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
+import { useParams, useRouter } from 'next/navigation'
 import { Sidebar, SidebarProvider } from '@/components/ui/sidebar'
 import Navbar from '@/components/ui/navbar'
 import { Upload, X } from 'lucide-react'
+import { postsService } from '@/lib/services/posts-service'
+import { useToast } from '@/components/ui/use-toast'
 
 export default function EditSpacePage() {
-  const [selectedImages, setSelectedImages] = useState<string[]>([
-    '/billboard1.jpg',
-    '/billboard2.jpg',
-    '/billboard3.jpg'
-  ])
+  const params = useParams()
+  const router = useRouter()
+  const { toast } = useToast()
+  const id = params.id as string
+
+  const [selectedImages, setSelectedImages] = useState<string[]>([])
+  const [imageFiles, setImageFiles] = useState<File[]>([])
+  const [isLoading, setIsLoading] = useState(true)
+  const [isSaving, setIsSaving] = useState(false)
+
   const [formData, setFormData] = useState({
-    title: 'Downtown Digital Billboard',
+    title: '',
+    description: '',
     type: 'Billboard',
-    city: 'Metropolis',
-    address: '123 Main Street',
-    availability: '2024-08-01 to 2024-09-30',
-    latitude: '40.7128',
-    longitude: '-74.0060',
+    width: '',
+    height: '',
+    price: '',
+    availability: 'Available',
+    city: '',
+    address: '',
+    latitude: '',
+    longitude: '',
   })
+
+  useEffect(() => {
+    const fetchSpace = async () => {
+      try {
+        const post = await postsService.getPostById(id)
+        const [width, height] = post.dimensions ? post.dimensions.split('x') : ['', '']
+        const [address, city] = post.location ? post.location.split(', ') : ['', '']
+
+        setFormData({
+          title: post.title || '',
+          description: post.description || '',
+          type: post.category || 'Billboard',
+          width: width || '',
+          height: height || '',
+          price: post.price || '',
+          availability: 'Available', // Assuming default or from data
+          city: city || '',
+          address: address || '',
+          latitude: '', // Assuming not in basic post object yet
+          longitude: '',
+        })
+        
+        if (post.images) {
+          setSelectedImages(post.images)
+        }
+      } catch (error) {
+        console.error('Failed to fetch space:', error)
+        toast({
+          title: "Error",
+          description: "Failed to load advertising space details.",
+          variant: "destructive",
+        })
+      } finally {
+        setIsLoading(false)
+      }
+    }
+
+    if (id) {
+      fetchSpace()
+    }
+  }, [id, toast])
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files
     if (files) {
-      const newImages = Array.from(files).map(file => URL.createObjectURL(file))
+      const newFiles = Array.from(files)
+      setImageFiles([...imageFiles, ...newFiles])
+      const newImages = newFiles.map(file => URL.createObjectURL(file))
       setSelectedImages([...selectedImages, ...newImages])
     }
   }
 
   const removeImage = (index: number) => {
     setSelectedImages(selectedImages.filter((_, i) => i !== index))
+    setImageFiles(imageFiles.filter((_, i) => i !== index))
   }
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    console.log('Form updated:', formData)
+    setIsSaving(true)
+
+    try {
+      const postData = new FormData()
+      postData.append('title', formData.title)
+      postData.append('description', formData.description)
+      postData.append('category', formData.type)
+      postData.append('price', formData.price)
+      postData.append('location', `${formData.address}, ${formData.city}`)
+      postData.append('dimensions', `${formData.width}x${formData.height}`)
+
+      imageFiles.forEach((file) => {
+        postData.append('images', file)
+      })
+
+      await postsService.updatePost(id, postData)
+      
+      toast({
+        title: "Success",
+        description: "Advertising space updated successfully.",
+      })
+      
+      router.push('/manage-spaces')
+    } catch (error) {
+      console.error('Failed to update space:', error)
+      toast({
+        title: "Error",
+        description: "Failed to update advertising space.",
+        variant: "destructive",
+      })
+    } finally {
+      setIsSaving(false)
+    }
   }
 
-  const handleDelete = () => {
-    if (confirm('Are you sure you want to delete this space?')) {
-      console.log('Space deleted')
+  const handleDelete = async () => {
+    if (!confirm('Are you sure you want to delete this space?')) return
+
+    try {
+      await postsService.deletePost(id)
+      toast({
+        title: "Success",
+        description: "Advertising space deleted successfully.",
+      })
+      router.push('/manage-spaces')
+    } catch (error) {
+      console.error('Failed to delete space:', error)
+      toast({
+        title: "Error",
+        description: "Failed to delete advertising space.",
+        variant: "destructive",
+      })
     }
+  }
+
+  if (isLoading) {
+    return (
+      <SidebarProvider>
+        <div className="flex min-h-screen bg-gray-50">
+          <Sidebar />
+          <div className="flex-1 flex flex-col">
+            <Navbar />
+            <main className="flex-1 p-8 flex justify-center items-center">
+              <span className="loading loading-spinner loading-lg text-teal-500"></span>
+            </main>
+          </div>
+        </div>
+      </SidebarProvider>
+    )
   }
 
   return (
@@ -84,6 +202,16 @@ export default function EditSpacePage() {
                       value={formData.title}
                       onChange={(e) => setFormData({...formData, title: e.target.value})}
                       className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition-colors"
+                    />
+                  </div>
+
+                  {/* Description */}
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">Description</label>
+                    <textarea
+                      value={formData.description}
+                      onChange={(e) => setFormData({...formData, description: e.target.value})}
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition-colors h-32"
                     />
                   </div>
 
@@ -129,39 +257,44 @@ export default function EditSpacePage() {
                       <option>Digital Screen</option>
                       <option>Bus Shelter</option>
                       <option>Transit Ad</option>
+                      <option>Street Furniture</option>
+                      <option>Airport</option>
+                      <option>Stadium</option>
                     </select>
                   </div>
 
                   <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">Size</label>
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">Width (ft)</label>
                     <input
                       type="text"
-                      placeholder="e.g., 14x48"
+                      value={formData.width}
+                      onChange={(e) => setFormData({...formData, width: e.target.value})}
                       className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition-colors"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">Price (per week)</label>
-                    <div className="relative">
-                      <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500">$</span>
-                      <input
-                        type="text"
-                        placeholder="1,500"
-                        className="w-full pl-8 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition-colors"
-                      />
-                    </div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">Height (ft)</label>
+                    <input
+                      type="text"
+                      value={formData.height}
+                      onChange={(e) => setFormData({...formData, height: e.target.value})}
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition-colors"
+                    />
                   </div>
                 </div>
 
                 <div className="mt-4">
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">Availability</label>
-                  <input
-                    type="text"
-                    value={formData.availability}
-                    onChange={(e) => setFormData({...formData, availability: e.target.value})}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition-colors"
-                  />
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">Price (DZD per day)</label>
+                  <div className="relative">
+                    <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500">DZD</span>
+                    <input
+                      type="number"
+                      value={formData.price}
+                      onChange={(e) => setFormData({...formData, price: e.target.value})}
+                      className="w-full pl-14 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition-colors"
+                    />
+                  </div>
                 </div>
               </div>
 
