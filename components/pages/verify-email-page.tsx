@@ -1,46 +1,50 @@
-'use client'
+'use client';
 
-import { useState } from 'react'
-import { useRouter, useSearchParams } from 'next/navigation'
-import { Button } from '@/components/ui/button'
-import { MailCheck } from 'lucide-react'
+import { useState } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { Button } from '@/components/ui/button';
+import { MailCheck } from 'lucide-react';
 
 export default function VerifyEmailPage() {
-  const router = useRouter()
-  const searchParams = useSearchParams()
+  const router = useRouter();
+  const searchParams = useSearchParams();
 
-  const emailFromQuery = searchParams.get('email') || ''
-  const [email, setEmail] = useState(emailFromQuery)
-  const [loading, setLoading] = useState(false)
+  const emailFromQuery = searchParams.get('email') || '';
+  const userTypeFromQuery = searchParams.get('userType') || ''; // You can get this info from URL, or use a different method to identify if it's an agency or company
+  const [email, setEmail] = useState(emailFromQuery);
+  const [userType, setUserType] = useState(userTypeFromQuery); // 'agency' or 'company'
+  const [loading, setLoading] = useState(false);
 
   const handleResend = async () => {
-    if (!email) return alert('Email not found.')
+    if (!email) return alert('Email not found.');
 
-    setLoading(true)
+    setLoading(true);
+    const endpoint = userType === 'company' ? '/api/companies/resend-verification' : '/api/agencies/resend-verification';
+
     try {
-      const res = await fetch(`${process.env.BACKEND_URL}/resend-verification`, {
+      const res = await fetch(`http://localhost:5000/api/agencies/resend-verification`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email })
-      })
+      });
 
-      const data = await res.json()
+      const data = await res.json();
       if (res.ok) {
-        alert(data.message || 'Verification email sent!')
+        alert(data.message || 'Verification email sent!');
       } else {
-        alert(data.error || 'Failed to resend verification email.')
+        alert(data.error || 'Failed to resend verification email.');
       }
     } catch (err) {
-      console.error(err)
-      alert('Error sending verification email.')
+      console.error(err);
+      alert('Error sending verification email.');
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   const handleChangeEmail = () => {
-    router.back()
-  }
+    router.back();
+  };
 
   return (
     <div className="min-h-screen flex items-center justify-center p-4">
@@ -78,5 +82,5 @@ export default function VerifyEmailPage() {
         </button>
       </div>
     </div>
-  )
+  );
 }

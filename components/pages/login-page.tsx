@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input'
 import Link from 'next/link'
 import { Eye, EyeOff } from 'lucide-react'
 
-// Declare google on window
+
 declare global {
   interface Window {
     google?: any;
@@ -21,22 +21,18 @@ export default function LoginPage() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
-
-  // Load Google Sign-In script
   useEffect(() => {
     const script = document.createElement('script')
     script.src = 'https://accounts.google.com/gsi/client'
     script.async = true
     script.defer = true
     document.body.appendChild(script)
-
-    // Define the callback function globally
     window.handleCredentialResponse = handleGoogleLogin
 
     script.onload = () => {
       if (window.google) {
         window.google.accounts.id.initialize({
-          client_id: '847708558168-12ljci267ehd9eonebevvos968u1o6md.apps.googleusercontent.com',
+          client_id: '847708558168-12ljci267ehd9eonebevvos968u1o6md.apps.googleusercontent.com', 
           callback: handleGoogleLogin
         })
         window.google.accounts.id.renderButton(
@@ -60,6 +56,7 @@ export default function LoginPage() {
 
   const handleGoogleLogin = async (response: any) => {
     const idToken = response.credential
+    console.log(idToken)
 
     try {
       const res = await fetch('http://localhost:5000/api/companies/google-auth', {
@@ -76,12 +73,10 @@ export default function LoginPage() {
         alert(data.error || 'Google login failed')
         return
       }
-
-      // Save token in localStorage
       localStorage.setItem('token', data.token)
-
-      // Redirect to dashboard
       router.push('/dashboard')
+
+     
     } catch (error) {
       console.error(error)
       alert('Something went wrong with Google login.')
@@ -107,11 +102,13 @@ export default function LoginPage() {
         return
       }
 
-      // Save token in localStorage
+     
       localStorage.setItem('token', data.token)
-
-      // Redirect to dashboard
-      router.push('/dashboard')
+      if (data.userType === 'agency') {
+        router.push('/agency-dashboard')
+      } else if (data.userType === 'company') {
+        router.push('/company-dashboard')
+      }
     } catch (error) {
       console.error(error)
       alert('Something went wrong.')
