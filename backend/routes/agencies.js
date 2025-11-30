@@ -525,4 +525,48 @@ router.put('/booking/:id/status', authMiddleware, async (req, res) => {
   }
 });
 
+router.get('/:id', async (req, res) => {
+  try {
+    const agency = await Agency.findById(req.params.id)
+      .select('-password -verificationToken')
+      .populate('servicesOffered');
+
+    if (!agency) return res.status(404).json({ error: 'Agency not found' });
+
+    res.json(agency);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+router.get('/', async (req, res) => {
+  try {
+    const agencies = await Agency.find({ isVerified: true })
+      .select('agencyName email location city country phoneNumber websiteUrl profileDescription servicesOffered rating reviewCount industry companySize yearEstablished logo isVerified')
+      .lean();
+
+    const mappedAgencies = agencies.map(a => ({
+      _id: a._id,
+      name: a.agencyName,
+      location: a.location || (a.city ? `${a.city}, ${a.country}` : 'Unknown'),
+      rating: a.rating || 5,
+      reviewCount: a.reviewCount || 0,
+      verified: a.isVerified,
+      email: a.email,
+      phone: a.phoneNumber,
+      website: a.websiteUrl,
+      profileDescription: a.profileDescription || '',
+      services: a.servicesOffered || [],
+      industry: a.industry,
+      companySize: a.companySize,
+      yearEstablished: a.yearEstablished,
+      logo: a.logo
+    }));
+
+    res.json(mappedAgencies);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 module.exports = router;

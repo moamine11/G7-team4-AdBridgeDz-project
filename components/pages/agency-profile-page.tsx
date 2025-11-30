@@ -63,10 +63,8 @@ export default function AgencyProfilePage({ agencyId }: AgencyProfilePageProps) 
         const agencyData = await agenciesService.getAgencyById(agencyId)
         
         // Fetch agency spaces
-        const allPosts = await postsService.getAllPosts()
-        const agencySpaces = allPosts.filter((post: any) => 
-          post.agency === agencyId || post.agency?._id === agencyId
-        )
+        const postsResponse = await postsService.getAllPosts({ agencyId })
+        const agencySpaces = postsResponse.posts || []
 
         // Map data to component structure
         const mappedAgency: AgencyProfile = {

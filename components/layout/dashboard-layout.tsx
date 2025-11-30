@@ -76,11 +76,11 @@ export default function DashboardLayout({ children, userType }: DashboardLayoutP
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-slate-950 text-slate-50">
       {/* Mobile Sidebar Overlay */}
       {sidebarOpen && (
         <div
-          className="fixed inset-0 bg-black/50 z-40 lg:hidden"
+          className="fixed inset-0 bg-black/50 z-40 lg:hidden backdrop-blur-sm"
           onClick={() => setSidebarOpen(false)}
         />
       )}
@@ -88,21 +88,21 @@ export default function DashboardLayout({ children, userType }: DashboardLayoutP
       {/* Sidebar */}
       <aside
         className={cn(
-          "fixed top-0 left-0 h-full w-64 bg-white border-r border-gray-200 z-50 transform transition-transform duration-300 ease-in-out lg:translate-x-0",
+          "fixed top-0 left-0 h-full w-64 bg-slate-900 border-r border-white/10 z-50 transform transition-transform duration-300 ease-in-out lg:translate-x-0",
           sidebarOpen ? "translate-x-0" : "-translate-x-full"
         )}
       >
         <div className="flex flex-col h-full">
           {/* Logo */}
-          <div className="p-6 border-b border-gray-200">
+          <div className="p-6 border-b border-white/10">
             <div className="flex items-center justify-between">
               <Link href="/" className="flex items-center gap-2">
-                <Building2 className="w-8 h-8 text-teal-600" />
-                <span className="text-xl font-bold text-gray-900">AdBridgeDZ</span>
+                <Building2 className="w-8 h-8 text-blue-500" />
+                <span className="text-xl font-bold text-white">AdBridgeDZ</span>
               </Link>
               <button
                 onClick={() => setSidebarOpen(false)}
-                className="lg:hidden text-gray-400 hover:text-gray-600"
+                className="lg:hidden text-slate-400 hover:text-white"
               >
                 <X className="w-6 h-6" />
               </button>
@@ -119,10 +119,10 @@ export default function DashboardLayout({ children, userType }: DashboardLayoutP
                   href={item.href}
                   onClick={() => setSidebarOpen(false)}
                   className={cn(
-                    "flex items-center gap-3 px-4 py-3 rounded-lg transition-colors",
+                    "flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200",
                     isActive(item.href)
-                      ? "bg-gradient-to-r from-teal-500 to-blue-500 text-white"
-                      : "text-gray-700 hover:bg-gray-100"
+                      ? "bg-gradient-to-r from-blue-600 to-teal-500 text-white shadow-md"
+                      : "text-slate-400 hover:bg-white/5 hover:text-white"
                   )}
                 >
                   <Icon className="w-5 h-5" />
@@ -133,10 +133,10 @@ export default function DashboardLayout({ children, userType }: DashboardLayoutP
           </nav>
 
           {/* Logout */}
-          <div className="p-4 border-t border-gray-200">
+          <div className="p-4 border-t border-white/10">
             <Button
               variant="ghost"
-              className="w-full justify-start text-red-600 hover:text-red-700 hover:bg-red-50"
+              className="w-full justify-start text-red-400 hover:text-red-300 hover:bg-red-500/10"
               onClick={() => {
                 // Handle logout
                 console.log('Logout')
@@ -152,20 +152,20 @@ export default function DashboardLayout({ children, userType }: DashboardLayoutP
       {/* Main Content */}
       <div className="lg:pl-64">
         {/* Top Bar */}
-        <header className="sticky top-0 z-30 bg-white border-b border-gray-200">
+        <header className="sticky top-0 z-30 bg-slate-950/80 backdrop-blur-md border-b border-white/10">
           <div className="px-4 sm:px-6 lg:px-8 py-4">
             <div className="flex items-center justify-between">
               <button
                 onClick={() => setSidebarOpen(true)}
-                className="lg:hidden text-gray-600 hover:text-gray-900"
+                className="lg:hidden text-slate-400 hover:text-white"
               >
                 <Menu className="w-6 h-6" />
               </button>
               <div className="flex-1 lg:flex-none" />
               <div className="flex items-center gap-4">
-                <div className="text-right">
-                  <p className="text-sm font-medium text-gray-900">John Doe</p>
-                  <p className="text-xs text-gray-500">
+                <div className="text-right hidden sm:block">
+                  <p className="text-sm font-medium text-white">John Doe</p>
+                  <p className="text-xs text-slate-400">
                     {userType === 'company'
                       ? 'Company Account'
                       : userType === 'agency'
@@ -173,7 +173,7 @@ export default function DashboardLayout({ children, userType }: DashboardLayoutP
                       : 'Admin Account'}
                   </p>
                 </div>
-                <div className="w-10 h-10 bg-gradient-to-br from-teal-500 to-blue-500 rounded-full flex items-center justify-center text-white font-semibold">
+                <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-teal-500 rounded-full flex items-center justify-center text-white font-semibold shadow-lg ring-2 ring-white/10">
                   JD
                 </div>
               </div>

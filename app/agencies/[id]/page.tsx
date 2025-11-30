@@ -1,9 +1,11 @@
 import AgencyProfilePage from '@/components/pages/agency-profile-page'
+import { use } from 'react'
 
 interface AgencyProfileRouteProps {
-  params: { id: string }
+  params: Promise<{ id: string }>
 }
 
 export default function AgencyProfileRoute({ params }: AgencyProfileRouteProps) {
-  return <AgencyProfilePage agencyId={params.id} />
+  const { id } = use(params)
+  return <AgencyProfilePage agencyId={id} />
 }

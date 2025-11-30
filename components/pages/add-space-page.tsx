@@ -80,7 +80,7 @@ export default function AddSpacePage() {
 
   return (
     <SidebarProvider>
-      <div className="flex min-h-screen bg-gray-50">
+      <div className="flex min-h-screen bg-slate-950 text-slate-50">
         <Sidebar />
         
         <div className="flex-1 flex flex-col">
@@ -89,47 +89,47 @@ export default function AddSpacePage() {
           <main className="flex-1 p-8">
           <div className="max-w-4xl mx-auto">
             {/* Breadcrumb */}
-            <nav className="text-sm text-gray-500 mb-2">
-              <Link href="/dashboard" className="hover:text-gray-700">Dashboard</Link>
+            <nav className="text-sm text-slate-400 mb-2">
+              <Link href="/dashboard" className="hover:text-white">Dashboard</Link>
               <span className="mx-2">/</span>
-              <Link href="/manage-spaces" className="hover:text-gray-700">Manage Spaces</Link>
+              <Link href="/manage-spaces" className="hover:text-white">Manage Spaces</Link>
               <span className="mx-2">/</span>
-              <span className="text-gray-900 font-medium">Add New Space</span>
+              <span className="text-white font-medium">Add New Space</span>
             </nav>
 
             {/* Page Header */}
             <div className="mb-8">
-              <h1 className="text-3xl font-bold text-gray-900 mb-2">Add New Advertising Space</h1>
-              <p className="text-gray-600">Fill in the details below to list a new advertising location.</p>
+              <h1 className="text-3xl font-bold text-white mb-2">Add New Advertising Space</h1>
+              <p className="text-slate-400">Fill in the details below to list a new advertising location.</p>
             </div>
 
             <form onSubmit={handleSubmit}>
               {/* Space Details */}
-              <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
-                <h2 className="text-xl font-bold text-gray-900 mb-6">Space Details</h2>
+              <div className="bg-white/5 rounded-xl border border-white/10 p-6 mb-6">
+                <h2 className="text-xl font-bold text-white mb-6">Space Details</h2>
                 
                 <div className="space-y-4">
                   {/* Title */}
                   <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">Title</label>
+                    <label className="block text-sm font-semibold text-slate-300 mb-2">Title</label>
                     <input
                       type="text"
                       placeholder="e.g., Downtown Main Street Billboard"
                       value={formData.title}
                       onChange={(e) => setFormData({...formData, title: e.target.value})}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition-colors"
+                      className="w-full px-4 py-3 bg-slate-900/50 border border-white/10 rounded-lg text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors placeholder:text-slate-500"
                       required
                     />
                   </div>
 
                   {/* Description */}
                   <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">Description</label>
+                    <label className="block text-sm font-semibold text-slate-300 mb-2">Description</label>
                     <textarea
                       placeholder="Describe the location, visibility, and audience..."
                       value={formData.description}
                       onChange={(e) => setFormData({...formData, description: e.target.value})}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition-colors h-32"
+                      className="w-full px-4 py-3 bg-slate-900/50 border border-white/10 rounded-lg text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors h-32 placeholder:text-slate-500"
                       required
                     />
                   </div>
@@ -137,11 +137,11 @@ export default function AddSpacePage() {
                   <div className="grid grid-cols-2 gap-4">
                     {/* Type */}
                     <div>
-                      <label className="block text-sm font-semibold text-gray-700 mb-2">Type</label>
+                      <label className="block text-sm font-semibold text-slate-300 mb-2">Type</label>
                       <select
                         value={formData.type}
                         onChange={(e) => setFormData({...formData, type: e.target.value})}
-                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition-colors"
+                        className="w-full px-4 py-3 bg-slate-900/50 border border-white/10 rounded-lg text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
                       >
                         <option>Billboard</option>
                         <option>Digital Screen</option>
@@ -156,23 +156,23 @@ export default function AddSpacePage() {
                     {/* Size */}
                     <div className="grid grid-cols-2 gap-2">
                       <div>
-                        <label className="block text-sm font-semibold text-gray-700 mb-2">Width (ft)</label>
+                        <label className="block text-sm font-semibold text-slate-300 mb-2">Width (ft)</label>
                         <input
                           type="text"
                           placeholder="Width"
                           value={formData.width}
                           onChange={(e) => setFormData({...formData, width: e.target.value})}
-                          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition-colors"
+                          className="w-full px-4 py-3 bg-slate-900/50 border border-white/10 rounded-lg text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors placeholder:text-slate-500"
                         />
                       </div>
                       <div>
-                        <label className="block text-sm font-semibold text-gray-700 mb-2">Height (ft)</label>
+                        <label className="block text-sm font-semibold text-slate-300 mb-2">Height (ft)</label>
                         <input
                           type="text"
                           placeholder="Height"
                           value={formData.height}
                           onChange={(e) => setFormData({...formData, height: e.target.value})}
-                          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition-colors"
+                          className="w-full px-4 py-3 bg-slate-900/50 border border-white/10 rounded-lg text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors placeholder:text-slate-500"
                         />
                       </div>
                     </div>
@@ -181,15 +181,15 @@ export default function AddSpacePage() {
                   <div className="grid grid-cols-2 gap-4">
                     {/* Price */}
                     <div>
-                      <label className="block text-sm font-semibold text-gray-700 mb-2">Price (DZD per day)</label>
+                      <label className="block text-sm font-semibold text-slate-300 mb-2">Price (DZD per day)</label>
                       <div className="relative">
-                        <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500">DZD</span>
+                        <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500">DZD</span>
                         <input
                           type="number"
                           placeholder="25000"
                           value={formData.price}
                           onChange={(e) => setFormData({...formData, price: e.target.value})}
-                          className="w-full pl-14 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition-colors"
+                          className="w-full pl-14 pr-4 py-3 bg-slate-900/50 border border-white/10 rounded-lg text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors placeholder:text-slate-500"
                           required
                         />
                       </div>
@@ -197,7 +197,7 @@ export default function AddSpacePage() {
 
                     {/* Availability */}
                     <div>
-                      <label className="block text-sm font-semibold text-gray-700 mb-2">Availability</label>
+                      <label className="block text-sm font-semibold text-slate-300 mb-2">Availability</label>
                       <div className="flex items-center gap-6 pt-3">
                         <label className="flex items-center gap-2 cursor-pointer">
                           <input
@@ -206,9 +206,9 @@ export default function AddSpacePage() {
                             value="Available"
                             checked={formData.availability === 'Available'}
                             onChange={(e) => setFormData({...formData, availability: e.target.value})}
-                            className="w-4 h-4 text-teal-600 focus:ring-teal-500"
+                            className="w-4 h-4 text-blue-500 focus:ring-blue-500 bg-slate-900 border-white/10"
                           />
-                          <span className="text-sm text-gray-700">Available</span>
+                          <span className="text-sm text-slate-300">Available</span>
                         </label>
                         <label className="flex items-center gap-2 cursor-pointer">
                           <input
@@ -217,9 +217,9 @@ export default function AddSpacePage() {
                             value="Booked"
                             checked={formData.availability === 'Booked'}
                             onChange={(e) => setFormData({...formData, availability: e.target.value})}
-                            className="w-4 h-4 text-teal-600 focus:ring-teal-500"
+                            className="w-4 h-4 text-blue-500 focus:ring-blue-500 bg-slate-900 border-white/10"
                           />
-                          <span className="text-sm text-gray-700">Booked</span>
+                          <span className="text-sm text-slate-300">Booked</span>
                         </label>
                       </div>
                     </div>
@@ -228,17 +228,17 @@ export default function AddSpacePage() {
               </div>
 
               {/* Location */}
-              <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
-                <h2 className="text-xl font-bold text-gray-900 mb-6">Location</h2>
+              <div className="bg-white/5 rounded-xl border border-white/10 p-6 mb-6">
+                <h2 className="text-xl font-bold text-white mb-6">Location</h2>
                 
                 <div className="grid grid-cols-2 gap-4 mb-4">
                   {/* City */}
                   <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">City</label>
+                    <label className="block text-sm font-semibold text-slate-300 mb-2">City</label>
                     <select
                       value={formData.city}
                       onChange={(e) => setFormData({...formData, city: e.target.value})}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition-colors"
+                      className="w-full px-4 py-3 bg-slate-900/50 border border-white/10 rounded-lg text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
                     >
                       <option>Algiers</option>
                       <option>Oran</option>
@@ -251,13 +251,13 @@ export default function AddSpacePage() {
 
                   {/* Address */}
                   <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">Address</label>
+                    <label className="block text-sm font-semibold text-slate-300 mb-2">Address</label>
                     <input
                       type="text"
                       placeholder="e.g., 123 Main Street"
                       value={formData.address}
                       onChange={(e) => setFormData({...formData, address: e.target.value})}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition-colors"
+                      className="w-full px-4 py-3 bg-slate-900/50 border border-white/10 rounded-lg text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors placeholder:text-slate-500"
                       required
                     />
                   </div>
@@ -265,19 +265,19 @@ export default function AddSpacePage() {
 
                 {/* Map Placeholder */}
                 <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">Pin Location</label>
-                  <div className="w-full h-64 bg-gradient-to-br from-blue-50 to-teal-50 rounded-lg border border-gray-300 flex items-center justify-center">
-                    <p className="text-gray-400">Map integration placeholder</p>
+                  <label className="block text-sm font-semibold text-slate-300 mb-2">Pin Location</label>
+                  <div className="w-full h-64 bg-slate-900/50 rounded-lg border border-white/10 flex items-center justify-center">
+                    <p className="text-slate-500">Map integration placeholder</p>
                   </div>
                 </div>
               </div>
 
               {/* Media */}
-              <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
-                <h2 className="text-xl font-bold text-gray-900 mb-6">Media</h2>
+              <div className="bg-white/5 rounded-xl border border-white/10 p-6 mb-6">
+                <h2 className="text-xl font-bold text-white mb-6">Media</h2>
                 
                 {/* Upload Area */}
-                <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center mb-4">
+                <div className="border-2 border-dashed border-white/10 rounded-lg p-8 text-center mb-4 hover:border-blue-500/50 transition-colors">
                   <input
                     type="file"
                     multiple
@@ -287,10 +287,10 @@ export default function AddSpacePage() {
                     id="image-upload"
                   />
                   <label htmlFor="image-upload" className="cursor-pointer">
-                    <Upload className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                    <p className="text-gray-600 mb-2">Drag & drop files here</p>
-                    <p className="text-sm text-gray-400 mb-4">or</p>
-                    <span className="text-teal-600 hover:text-teal-700 font-semibold">Browse files</span>
+                    <Upload className="w-12 h-12 text-slate-500 mx-auto mb-4" />
+                    <p className="text-slate-300 mb-2">Drag & drop files here</p>
+                    <p className="text-sm text-slate-500 mb-4">or</p>
+                    <span className="text-blue-400 hover:text-blue-300 font-semibold">Browse files</span>
                   </label>
                 </div>
 
@@ -302,12 +302,12 @@ export default function AddSpacePage() {
                         <img
                           src={image}
                           alt={`Upload ${index + 1}`}
-                          className="w-full h-32 object-cover rounded-lg"
+                          className="w-full h-32 object-cover rounded-lg border border-white/10"
                         />
                         <button
                           type="button"
                           onClick={() => removeImage(index)}
-                          className="absolute top-2 right-2 p-1 bg-red-500 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                          className="absolute top-2 right-2 p-1 bg-red-500/80 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-600"
                         >
                           <X className="w-4 h-4" />
                         </button>
@@ -321,14 +321,14 @@ export default function AddSpacePage() {
               <div className="flex items-center justify-end gap-4">
                 <Link
                   href="/manage-spaces"
-                  className="px-6 py-3 text-gray-700 font-semibold hover:bg-gray-100 rounded-lg transition-colors"
+                  className="px-6 py-3 text-slate-300 font-semibold hover:text-white hover:bg-white/5 rounded-lg transition-colors"
                 >
                   Cancel
                 </Link>
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="px-8 py-3 bg-teal-500 hover:bg-teal-600 text-white font-semibold rounded-lg shadow-lg shadow-teal-500/25 hover:shadow-xl hover:shadow-teal-500/30 transition-all duration-200 disabled:opacity-50"
+                  className="px-8 py-3 bg-gradient-to-r from-blue-600 to-teal-500 hover:from-blue-700 hover:to-teal-600 text-white font-semibold rounded-lg shadow-lg shadow-blue-500/20 hover:shadow-xl hover:shadow-blue-500/30 transition-all duration-200 disabled:opacity-50"
                 >
                   {isSubmitting ? 'Creating...' : 'Submit'}
                 </button>

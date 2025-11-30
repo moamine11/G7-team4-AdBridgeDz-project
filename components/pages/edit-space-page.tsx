@@ -150,12 +150,12 @@ export default function EditSpacePage() {
   if (isLoading) {
     return (
       <SidebarProvider>
-        <div className="flex min-h-screen bg-gray-50">
+        <div className="flex min-h-screen bg-slate-950">
           <Sidebar />
           <div className="flex-1 flex flex-col">
             <Navbar />
             <main className="flex-1 p-8 flex justify-center items-center">
-              <span className="loading loading-spinner loading-lg text-teal-500"></span>
+              <span className="loading loading-spinner loading-lg text-blue-500"></span>
             </main>
           </div>
         </div>
@@ -165,7 +165,7 @@ export default function EditSpacePage() {
 
   return (
     <SidebarProvider>
-      <div className="flex min-h-screen bg-gray-50">
+      <div className="flex min-h-screen bg-slate-950 text-slate-50">
         <Sidebar />
         
         <div className="flex-1 flex flex-col">
@@ -174,67 +174,67 @@ export default function EditSpacePage() {
           <main className="flex-1 p-8">
           <div className="max-w-4xl mx-auto">
             {/* Breadcrumb */}
-            <nav className="text-sm text-gray-500 mb-2">
-              <Link href="/dashboard" className="hover:text-gray-700">Dashboard</Link>
+            <nav className="text-sm text-slate-400 mb-2">
+              <Link href="/dashboard" className="hover:text-white">Dashboard</Link>
               <span className="mx-2">/</span>
-              <Link href="/manage-spaces" className="hover:text-gray-700">Manage Spaces</Link>
+              <Link href="/manage-spaces" className="hover:text-white">Manage Spaces</Link>
               <span className="mx-2">/</span>
-              <span className="text-gray-900 font-medium">Edit Space</span>
+              <span className="text-white font-medium">Edit Space</span>
             </nav>
 
             {/* Page Header */}
             <div className="mb-8">
-              <h1 className="text-3xl font-bold text-gray-900 mb-2">Edit Advertising Space</h1>
-              <p className="text-gray-600">Update the details for your advertising space below.</p>
+              <h1 className="text-3xl font-bold text-white mb-2">Edit Advertising Space</h1>
+              <p className="text-slate-400">Update the details for your advertising space below.</p>
             </div>
 
             <form onSubmit={handleSubmit}>
               {/* General Information */}
-              <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
-                <h2 className="text-xl font-bold text-gray-900 mb-6">General Information</h2>
+              <div className="bg-white/5 rounded-xl border border-white/10 p-6 mb-6">
+                <h2 className="text-xl font-bold text-white mb-6">General Information</h2>
                 
                 <div className="space-y-4">
                   {/* Title */}
                   <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">Title</label>
+                    <label className="block text-sm font-semibold text-slate-300 mb-2">Title</label>
                     <input
                       type="text"
                       value={formData.title}
                       onChange={(e) => setFormData({...formData, title: e.target.value})}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition-colors"
+                      className="w-full px-4 py-3 bg-slate-900/50 border border-white/10 rounded-lg text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors placeholder:text-slate-500"
                     />
                   </div>
 
                   {/* Description */}
                   <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">Description</label>
+                    <label className="block text-sm font-semibold text-slate-300 mb-2">Description</label>
                     <textarea
                       value={formData.description}
                       onChange={(e) => setFormData({...formData, description: e.target.value})}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition-colors h-32"
+                      className="w-full px-4 py-3 bg-slate-900/50 border border-white/10 rounded-lg text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors h-32 placeholder:text-slate-500"
                     />
                   </div>
 
                   <div className="grid grid-cols-2 gap-4">
                     {/* City */}
                     <div>
-                      <label className="block text-sm font-semibold text-gray-700 mb-2">City</label>
+                      <label className="block text-sm font-semibold text-slate-300 mb-2">City</label>
                       <input
                         type="text"
                         value={formData.city}
                         onChange={(e) => setFormData({...formData, city: e.target.value})}
-                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition-colors"
+                        className="w-full px-4 py-3 bg-slate-900/50 border border-white/10 rounded-lg text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors placeholder:text-slate-500"
                       />
                     </div>
 
                     {/* Address */}
                     <div>
-                      <label className="block text-sm font-semibold text-gray-700 mb-2">Address</label>
+                      <label className="block text-sm font-semibold text-slate-300 mb-2">Address</label>
                       <input
                         type="text"
                         value={formData.address}
                         onChange={(e) => setFormData({...formData, address: e.target.value})}
-                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition-colors"
+                        className="w-full px-4 py-3 bg-slate-900/50 border border-white/10 rounded-lg text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors placeholder:text-slate-500"
                       />
                     </div>
                   </div>
@@ -242,16 +242,16 @@ export default function EditSpacePage() {
               </div>
 
               {/* Space Specifications */}
-              <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
-                <h2 className="text-xl font-bold text-gray-900 mb-6">Space Specifications</h2>
+              <div className="bg-white/5 rounded-xl border border-white/10 p-6 mb-6">
+                <h2 className="text-xl font-bold text-white mb-6">Space Specifications</h2>
                 
                 <div className="grid grid-cols-3 gap-4">
                   <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">Type</label>
+                    <label className="block text-sm font-semibold text-slate-300 mb-2">Type</label>
                     <select
                       value={formData.type}
                       onChange={(e) => setFormData({...formData, type: e.target.value})}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition-colors"
+                      className="w-full px-4 py-3 bg-slate-900/50 border border-white/10 rounded-lg text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
                     >
                       <option>Billboard</option>
                       <option>Digital Screen</option>
@@ -264,63 +264,63 @@ export default function EditSpacePage() {
                   </div>
 
                   <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">Width (ft)</label>
+                    <label className="block text-sm font-semibold text-slate-300 mb-2">Width (ft)</label>
                     <input
                       type="text"
                       value={formData.width}
                       onChange={(e) => setFormData({...formData, width: e.target.value})}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition-colors"
+                      className="w-full px-4 py-3 bg-slate-900/50 border border-white/10 rounded-lg text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors placeholder:text-slate-500"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">Height (ft)</label>
+                    <label className="block text-sm font-semibold text-slate-300 mb-2">Height (ft)</label>
                     <input
                       type="text"
                       value={formData.height}
                       onChange={(e) => setFormData({...formData, height: e.target.value})}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition-colors"
+                      className="w-full px-4 py-3 bg-slate-900/50 border border-white/10 rounded-lg text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors placeholder:text-slate-500"
                     />
                   </div>
                 </div>
 
                 <div className="mt-4">
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">Price (DZD per day)</label>
+                  <label className="block text-sm font-semibold text-slate-300 mb-2">Price (DZD per day)</label>
                   <div className="relative">
-                    <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500">DZD</span>
+                    <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500">DZD</span>
                     <input
                       type="number"
                       value={formData.price}
                       onChange={(e) => setFormData({...formData, price: e.target.value})}
-                      className="w-full pl-14 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition-colors"
+                      className="w-full pl-14 pr-4 py-3 bg-slate-900/50 border border-white/10 rounded-lg text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors placeholder:text-slate-500"
                     />
                   </div>
                 </div>
               </div>
 
               {/* Visuals & Location */}
-              <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
-                <h2 className="text-xl font-bold text-gray-900 mb-6">Visuals & Location</h2>
+              <div className="bg-white/5 rounded-xl border border-white/10 p-6 mb-6">
+                <h2 className="text-xl font-bold text-white mb-6">Visuals & Location</h2>
                 
                 {/* Image Gallery */}
                 <div className="mb-6">
-                  <label className="block text-sm font-semibold text-gray-700 mb-3">Image Gallery</label>
+                  <label className="block text-sm font-semibold text-slate-300 mb-3">Image Gallery</label>
                   <div className="grid grid-cols-4 gap-4 mb-4">
                     {selectedImages.map((image, index) => (
                       <div key={index} className="relative group">
                         <img
                           src={image}
                           alt={`Space ${index + 1}`}
-                          className="w-full h-32 object-cover rounded-lg"
+                          className="w-full h-32 object-cover rounded-lg border border-white/10"
                           onError={(e) => {
                             const target = e.target as HTMLImageElement
-                            target.src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="200" height="200"%3E%3Crect fill="%23e5e7eb" width="200" height="200"/%3E%3Ctext fill="%239ca3af" font-family="sans-serif" font-size="14" x="50%25" y="50%25" text-anchor="middle" dominant-baseline="middle"%3EImage%3C/text%3E%3C/svg%3E'
+                            target.src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="200" height="200"%3E%3Crect fill="%231e293b" width="200" height="200"/%3E%3Ctext fill="%2394a3b8" font-family="sans-serif" font-size="14" x="50%25" y="50%25" text-anchor="middle" dominant-baseline="middle"%3EImage%3C/text%3E%3C/svg%3E'
                           }}
                         />
                         <button
                           type="button"
                           onClick={() => removeImage(index)}
-                          className="absolute top-2 right-2 p-1.5 bg-white hover:bg-red-500 text-gray-700 hover:text-white rounded-full shadow-lg opacity-0 group-hover:opacity-100 transition-all"
+                          className="absolute top-2 right-2 p-1.5 bg-slate-900/80 hover:bg-red-500 text-white rounded-full shadow-lg opacity-0 group-hover:opacity-100 transition-all"
                         >
                           <X className="w-4 h-4" />
                         </button>
@@ -328,9 +328,9 @@ export default function EditSpacePage() {
                     ))}
                     
                     {/* Add Image Button */}
-                    <label htmlFor="add-image" className="w-full h-32 border-2 border-dashed border-gray-300 rounded-lg flex flex-col items-center justify-center cursor-pointer hover:border-teal-500 hover:bg-teal-50 transition-colors">
-                      <Upload className="w-8 h-8 text-gray-400 mb-2" />
-                      <span className="text-sm text-gray-500">Add Image</span>
+                    <label htmlFor="add-image" className="w-full h-32 border-2 border-dashed border-white/10 rounded-lg flex flex-col items-center justify-center cursor-pointer hover:border-blue-500/50 hover:bg-white/5 transition-colors">
+                      <Upload className="w-8 h-8 text-slate-500 mb-2" />
+                      <span className="text-sm text-slate-400">Add Image</span>
                       <input
                         type="file"
                         id="add-image"
@@ -346,21 +346,21 @@ export default function EditSpacePage() {
                 {/* Map Coordinates */}
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">Map Coordinates (Latitude)</label>
+                    <label className="block text-sm font-semibold text-slate-300 mb-2">Map Coordinates (Latitude)</label>
                     <input
                       type="text"
                       value={formData.latitude}
                       onChange={(e) => setFormData({...formData, latitude: e.target.value})}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition-colors"
+                      className="w-full px-4 py-3 bg-slate-900/50 border border-white/10 rounded-lg text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors placeholder:text-slate-500"
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">Map Coordinates (Longitude)</label>
+                    <label className="block text-sm font-semibold text-slate-300 mb-2">Map Coordinates (Longitude)</label>
                     <input
                       type="text"
                       value={formData.longitude}
                       onChange={(e) => setFormData({...formData, longitude: e.target.value})}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition-colors"
+                      className="w-full px-4 py-3 bg-slate-900/50 border border-white/10 rounded-lg text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors placeholder:text-slate-500"
                     />
                   </div>
                 </div>
@@ -371,7 +371,7 @@ export default function EditSpacePage() {
                 <button
                   type="button"
                   onClick={handleDelete}
-                  className="px-6 py-3 text-red-600 font-semibold hover:bg-red-50 rounded-lg transition-colors"
+                  className="px-6 py-3 text-red-400 font-semibold hover:bg-red-500/10 rounded-lg transition-colors"
                 >
                   Delete Space
                 </button>
@@ -379,13 +379,13 @@ export default function EditSpacePage() {
                 <div className="flex items-center gap-4">
                   <Link
                     href="/manage-spaces"
-                    className="px-6 py-3 text-gray-700 font-semibold hover:bg-gray-100 rounded-lg transition-colors"
+                    className="px-6 py-3 text-slate-300 font-semibold hover:text-white hover:bg-white/5 rounded-lg transition-colors"
                   >
                     Cancel
                   </Link>
                   <button
                     type="submit"
-                    className="px-8 py-3 bg-teal-500 hover:bg-teal-600 text-white font-semibold rounded-lg shadow-lg shadow-teal-500/25 hover:shadow-xl hover:shadow-teal-500/30 transition-all duration-200"
+                    className="px-8 py-3 bg-gradient-to-r from-blue-600 to-teal-500 hover:from-blue-700 hover:to-teal-600 text-white font-semibold rounded-lg shadow-lg shadow-blue-500/20 hover:shadow-xl hover:shadow-blue-500/30 transition-all duration-200"
                   >
                     Save Changes
                   </button>
