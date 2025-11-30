@@ -10,9 +10,9 @@ export default function VerifyEmailPage() {
   const searchParams = useSearchParams();
 
   const emailFromQuery = searchParams.get('email') || '';
-  const userTypeFromQuery = searchParams.get('userType') || ''; // You can get this info from URL, or use a different method to identify if it's an agency or company
+  const userTypeFromQuery = searchParams.get('userType') || ''; 
   const [email, setEmail] = useState(emailFromQuery);
-  const [userType, setUserType] = useState(userTypeFromQuery); // 'agency' or 'company'
+  const [userType, setUserType] = useState(userTypeFromQuery); 
   const [loading, setLoading] = useState(false);
 
   const handleResend = async () => {
@@ -22,7 +22,7 @@ export default function VerifyEmailPage() {
     const endpoint = userType === 'company' ? '/api/companies/resend-verification' : '/api/agencies/resend-verification';
 
     try {
-      const res = await fetch(`http://localhost:5000/api/agencies/resend-verification`, {
+      const res = await fetch(`${process.env.BACKEND_URL}${endpoint}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email })

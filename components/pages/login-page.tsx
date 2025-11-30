@@ -59,7 +59,7 @@ export default function LoginPage() {
     console.log(idToken)
 
     try {
-      const res = await fetch('http://localhost:5000/api/companies/google-auth', {
+      const res = await fetch('http://localhost:5000/api/agencies/google-auth', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -74,7 +74,7 @@ export default function LoginPage() {
         return
       }
       localStorage.setItem('token', data.token)
-      router.push('/dashboard')
+      router.push('/Agencydashboard')
 
      
     } catch (error) {
@@ -87,7 +87,7 @@ export default function LoginPage() {
     e.preventDefault()
 
     try {
-      const res = await fetch('http://localhost:5000/api/companies/login', {
+      const res = await fetch('http://localhost:5000/api/agencies/login', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

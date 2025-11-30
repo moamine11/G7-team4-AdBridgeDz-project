@@ -73,9 +73,7 @@ const sendVerificationEmail = async (company, token) => {
   });
 };
 
-// ========================
-// Registration with logo upload
-// ========================
+
 router.post('/register', upload.single('logo'), async (req, res) => {
   try {
     const {
@@ -341,6 +339,7 @@ router.get('/bookings', authMiddleware, async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 });
+
 
 router.get('/bookings/:id', authMiddleware, async (req, res) => {
   try {

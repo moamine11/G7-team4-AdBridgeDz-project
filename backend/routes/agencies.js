@@ -14,11 +14,9 @@ const Post = require('../models/post');
 const router = express.Router();
 const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
-// ============================================
-// MULTER CONFIGURATION FOR FILE UPLOADS
-// ============================================
 
-// Ensure upload directories exist
+
+
 const uploadDirs = ['uploads/logos', 'uploads/documents'];
 uploadDirs.forEach(dir => {
   if (!fs.existsSync(dir)) {
@@ -26,7 +24,6 @@ uploadDirs.forEach(dir => {
   }
 });
 
-// Storage configuration for logos
 const logoStorage = multer.diskStorage({
   destination: function (req, file, cb) {
     cb(null, 'uploads/logos/');
@@ -37,7 +34,7 @@ const logoStorage = multer.diskStorage({
   }
 });
 
-// Storage configuration for RC documents
+
 const documentStorage = multer.diskStorage({
   destination: function (req, file, cb) {
     cb(null, 'uploads/documents/');
@@ -48,7 +45,6 @@ const documentStorage = multer.diskStorage({
   }
 });
 
-// File filter for images
 const imageFilter = (req, file, cb) => {
   const allowedTypes = /jpeg|jpg|png|gif|webp/;
   const extname = allowedTypes.test(path.extname(file.originalname).toLowerCase());
@@ -61,7 +57,6 @@ const imageFilter = (req, file, cb) => {
   }
 };
 
-// File filter for documents
 const documentFilter = (req, file, cb) => {
   const allowedTypes = /pdf|doc|docx|jpeg|jpg|png/;
   const extname = allowedTypes.test(path.extname(file.originalname).toLowerCase());
@@ -74,7 +69,6 @@ const documentFilter = (req, file, cb) => {
   }
 };
 
-// Multer upload instances
 const uploadLogo = multer({
   storage: logoStorage,
   limits: { fileSize: 5 * 1024 * 1024 }, 
@@ -86,8 +80,6 @@ const uploadDocument = multer({
   limits: { fileSize: 10 * 1024 * 1024 }, 
   fileFilter: documentFilter
 });
-
-// Multiple file upload (logo + rcDocument)
 const uploadFiles = multer({
   storage: multer.diskStorage({
     destination: function (req, file, cb) {
@@ -120,9 +112,7 @@ const uploadFiles = multer({
   { name: 'rcDocument', maxCount: 1 }
 ]);
 
-// ============================================
-// MIDDLEWARE FOR AUTHENTICATION
-// ============================================
+
 const authMiddleware = async (req, res, next) => {
   try {
     const token = req.headers.authorization?.split(' ')[1];
@@ -136,9 +126,6 @@ const authMiddleware = async (req, res, next) => {
   }
 };
 
-// ============================================
-// EMAIL VERIFICATION
-// ============================================
 const sendVerificationEmail = async (agency, token) => {
   const transporter = nodemailer.createTransport({
     host: process.env.SMTP_HOST,
@@ -162,9 +149,6 @@ const sendVerificationEmail = async (agency, token) => {
   });
 };
 
-// ============================================
-// REGISTER AGENCY (WITH FILE UPLOADS)
-// ============================================
 router.post('/register', (req, res) => {
   uploadFiles(req, res, async (err) => {
     if (err) {
@@ -178,17 +162,16 @@ router.post('/register', (req, res) => {
         jobTitle, servicesOffered, facebookUrl, linkedinUrl, agreeToTerms 
       } = req.body;
 
-      // Check if agency already exists
+     
       const existingAgency = await Agency.findOne({ email });
       if (existingAgency) return res.status(400).json({ error: 'Email already exists' });
 
-      // Hash password
+   
       const hashedPassword = await bcrypt.hash(password, 10);
 
-      // Generate verification token
+    
       const verificationToken = crypto.randomBytes(32).toString('hex');
 
-      // Parse servicesOffered if it's a JSON string
       let parsedServices = [];
       if (servicesOffered) {
         try {
@@ -198,11 +181,9 @@ router.post('/register', (req, res) => {
         }
       }
 
-      // Get file paths
       const logoPath = req.files?.logo ? `/uploads/logos/${req.files.logo[0].filename}` : undefined;
       const rcDocumentPath = req.files?.rcDocument ? `/uploads/documents/${req.files.rcDocument[0].filename}` : undefined;
 
-      // Create new agency
       const agency = new Agency({
         agencyName,
         email,
@@ -249,7 +230,7 @@ router.post('/register', (req, res) => {
         }
       });
     } catch (error) {
-      // Clean up uploaded files if registration fails
+      
       if (req.files?.logo) {
         fs.unlinkSync(path.join(__dirname, '..', req.files.logo[0].path));
       }
@@ -260,10 +241,17 @@ router.post('/register', (req, res) => {
     }
   });
 });
-
-// ============================================
-// GOOGLE AUTHENTICATION
-// ============================================
+router.get('/bookings', authMiddleware, async (req, res) => {
+  try {
+    const bookings = await Booking.find({ agency: req.agencyId })
+      .populate('post', 'title description priceRange imageURL category location')
+      .populate('agency', 'name email location ')
+      .sort({ createdAt: -1 });
+    res.json(bookings);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
 router.post('/google-auth', async (req, res) => {
   try {
     const { idToken } = req.body;
@@ -311,9 +299,7 @@ router.post('/google-auth', async (req, res) => {
   }
 });
 
-// ============================================
-// EMAIL VERIFICATION
-// ============================================
+
 router.get('/verify-email', async (req, res) => {
   try {
     const { token, id } = req.query;
@@ -355,9 +341,7 @@ router.post('/resend-verification', async (req, res) => {
   }
 });
 
-// ============================================
-// LOGIN
-// ============================================
+
 router.post('/login', async (req, res) => {
   try {
     const { email, password } = req.body;
@@ -386,9 +370,7 @@ router.post('/login', async (req, res) => {
   }
 });
 
-// ============================================
-// GET AGENCY PROFILE
-// ============================================
+
 router.get('/profile', authMiddleware, async (req, res) => {
   try {
     const agency = await Agency.findById(req.agencyId)
@@ -404,9 +386,7 @@ router.get('/profile', authMiddleware, async (req, res) => {
   }
 });
 
-// ============================================
-// UPDATE AGENCY PROFILE (WITH FILE UPLOADS)
-// ============================================
+
 router.put('/profile', authMiddleware, (req, res) => {
   uploadFiles(req, res, async (err) => {
     if (err) {
@@ -441,11 +421,10 @@ router.put('/profile', authMiddleware, (req, res) => {
         updatedAt: Date.now()
       };
 
-      // Update logo if new file uploaded
+      
       if (req.files?.logo) {
         updateData.logo = `/uploads/logos/${req.files.logo[0].filename}`;
         
-        // Delete old logo
         const oldAgency = await Agency.findById(req.agencyId);
         if (oldAgency.logo) {
           const oldLogoPath = path.join(__dirname, '..', oldAgency.logo);
@@ -455,11 +434,10 @@ router.put('/profile', authMiddleware, (req, res) => {
         }
       }
 
-      // Update RC document if new file uploaded
+      
       if (req.files?.rcDocument) {
         updateData.rcDocument = `/uploads/documents/${req.files.rcDocument[0].filename}`;
-        
-        // Delete old document
+    
         const oldAgency = await Agency.findById(req.agencyId);
         if (oldAgency.rcDocument) {
           const oldDocPath = path.join(__dirname, '..', oldAgency.rcDocument);
@@ -482,9 +460,6 @@ router.put('/profile', authMiddleware, (req, res) => {
   });
 });
 
-// ============================================
-// CREATE POST
-// ============================================
 router.post('/posts', authMiddleware, async (req, res) => {
   try {
     const { title, description, priceRange, imageURL, category } = req.body;
@@ -507,9 +482,7 @@ router.post('/posts', authMiddleware, async (req, res) => {
   }
 });
 
-// ============================================
-// GET AGENCY POSTS
-// ============================================
+
 router.get('/posts/agency/:agencyId', async (req, res) => {
   try {
     const posts = await Post.find({ agencyId: req.params.agencyId }).populate('agencyId', 'agencyName');
@@ -522,13 +495,31 @@ router.get('/posts/agency/:agencyId', async (req, res) => {
   }
 });
 
-// ============================================
-// TEST ROUTE
-// ============================================
 router.get('/test', async (req, res) => {
   try {
     const agencies = await Agency.find().select('agencyName email verificationToken isVerified userType');
     res.json(agencies);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+router.put('/booking/:id/status', authMiddleware, async (req, res) => {
+  try {
+    const bookingId = req.params.id;
+    const { status } = req.body;
+    const allowedStatuses = ['Pending', 'Accepted', 'Rejected', 'Completed'];
+    if (!allowedStatuses.includes(status)) {
+      return res.status(400).json({ error: 'Invalid booking status' });
+    }
+    const booking = await Booking.findById(bookingId);
+    if (!booking) return res.status(404).json({ error: 'Booking not found' });
+    if (booking.agency.toString() !== req.agencyId) {
+      return res.status(403).json({ error: 'Unauthorized: This booking belongs to another agency' });
+    }
+    booking.status = status;
+    await booking.save();
+    res.json({ message: 'Booking status updated successfully', booking });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }

@@ -1,7 +1,6 @@
 
 const Company = require("../models/company");
 
-// GET all companies
 exports.getAllCompanies = async (req, res) => {
   try {
     const companies = await Company.find();
@@ -11,7 +10,6 @@ exports.getAllCompanies = async (req, res) => {
   }
 };
 
-// DELETE company by ID
 exports.deleteCompanyById = async (req, res) => {
   try {
     const { id } = req.params;
@@ -27,7 +25,6 @@ exports.deleteCompanyById = async (req, res) => {
   }
 };
 
-// DELETE company by email
 exports.deleteCompanyByEmail = async (req, res) => {
   try {
     const { email } = req.body;

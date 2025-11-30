@@ -1,4 +1,4 @@
-// scripts/seedServices.js
+
 require('dotenv').config();
 const mongoose = require('mongoose');
 const Service = require('./models/service');
@@ -18,7 +18,7 @@ async function seed() {
       useUnifiedTopology: true 
   });
 
-  // Optional: Delete existing to avoid duplicates
+  
   await Service.deleteMany({});
 
   for (const svc of services) {
