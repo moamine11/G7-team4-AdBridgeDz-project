@@ -2,9 +2,12 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import { Sidebar, SidebarProvider } from '@/components/ui/sidebar'
 import Navbar from '@/components/ui/navbar'
 import { Upload, X } from 'lucide-react'
+import { useToast } from '@/components/ui/use-toast'
+import { postsService } from '@/lib/services/posts-service'
 
 export default function AddSpacePage() {
   const router = useRouter()
