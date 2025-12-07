@@ -31,7 +31,6 @@ export default function Sidebar() {
     },
   ]
 
-  // Also update logout to redirect to login
   const handleLogout = () => {
     console.log('Logging out...')
     window.location.href = '/login'
@@ -40,16 +39,16 @@ export default function Sidebar() {
   const isActive = (href: string) => pathname === href
 
   return (
-    <div className="w-64 bg-white border-r border-gray-200 min-h-screen flex flex-col">
+    <div className="w-64 bg-slate-900/50 backdrop-blur-sm border-r border-white/10 min-h-screen flex flex-col">
       {/* Agency Info */}
-      <div className="p-6 border-b border-gray-200">
+      <div className="p-6 border-b border-white/10">
         <div className="flex items-center gap-3">
-          <div className="w-12 h-12 rounded-full bg-gradient-to-br from-teal-100 to-blue-100 flex items-center justify-center">
-            <span className="text-teal-600 font-bold text-lg">CS</span>
+          <div className="w-12 h-12 rounded-full bg-gradient-to-br from-blue-500 to-teal-500 flex items-center justify-center">
+            <span className="text-white font-bold text-lg">CS</span>
           </div>
           <div>
-            <h3 className="font-semibold text-gray-900 text-sm">Creative Solutions Inc.</h3>
-            <p className="text-xs text-gray-500">Agency Panel</p>
+            <h3 className="font-semibold text-white text-sm">Creative Solutions Inc.</h3>
+            <p className="text-xs text-slate-400">Agency Panel</p>
           </div>
         </div>
       </div>
@@ -67,17 +66,17 @@ export default function Sidebar() {
                 href={item.href}
                 className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 group ${
                   active
-                    ? 'bg-teal-50 text-teal-600'
-                    : 'text-gray-600 hover:bg-gray-50'
+                    ? 'bg-gradient-to-r from-blue-500/20 to-teal-500/20 border border-blue-500/30'
+                    : 'text-slate-400 hover:bg-white/5'
                 }`}
               >
-                <Icon className={`w-5 h-5 ${active ? 'text-teal-600' : 'text-gray-400 group-hover:text-gray-600'}`} />
+                <Icon className={`w-5 h-5 ${active ? 'text-blue-400' : 'text-slate-500 group-hover:text-slate-300'}`} />
                 <div className="flex-1">
-                  <div className={`font-medium text-sm ${active ? 'text-teal-600' : 'text-gray-700'}`}>
+                  <div className={`font-medium text-sm ${active ? 'text-white' : 'text-slate-300'}`}>
                     {item.label}
                   </div>
                   {item.subLabel && (
-                    <div className="text-xs text-gray-400">{item.subLabel}</div>
+                    <div className="text-xs text-slate-500">{item.subLabel}</div>
                   )}
                 </div>
               </Link>
@@ -87,17 +86,17 @@ export default function Sidebar() {
       </nav>
 
       {/* Bottom Actions */}
-      <div className="p-4 border-t border-gray-200 space-y-1">
+      <div className="p-4 border-t border-white/10 space-y-1">
         <Link
           href="/settings"
-          className="flex items-center gap-3 px-4 py-3 rounded-lg text-gray-600 hover:bg-gray-50 transition-all duration-200"
+          className="flex items-center gap-3 px-4 py-3 rounded-lg text-slate-400 hover:bg-white/5 hover:text-slate-300 transition-all duration-200"
         >
-          <Settings className="w-5 h-5 text-gray-400" />
+          <Settings className="w-5 h-5" />
           <span className="font-medium text-sm">Settings</span>
         </Link>
         <button
-          onClick={() => console.log('Logout')}
-          className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-gray-600 hover:bg-red-50 hover:text-red-600 transition-all duration-200"
+          onClick={handleLogout}
+          className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-slate-400 hover:bg-red-500/10 hover:text-red-400 transition-all duration-200"
         >
           <LogOut className="w-5 h-5" />
           <span className="font-medium text-sm">Log out</span>

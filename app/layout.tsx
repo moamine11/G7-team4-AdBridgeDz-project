@@ -40,7 +40,9 @@ export default function RootLayout({
       <body className={`font-sans antialiased`}>
         <StorageProvider>
           <Navbar />
-          {children}
+          <main className="pt-24 min-h-screen bg-gradient-to-br from-slate-950 via-blue-950 to-slate-950">
+            {children}
+          </main>
         </StorageProvider>
       </body>
     </html>
