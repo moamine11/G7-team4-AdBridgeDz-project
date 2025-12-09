@@ -5,11 +5,13 @@ import { useState, useEffect } from 'react'
 import { usePathname } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
+import { useAuth } from '@/contexts/auth-context'
 
 export default function Navbar() {
   const [open, setOpen] = useState(false)
   const [scrolled, setScrolled] = useState(false)
   const pathname = usePathname()
+  const { user } = useAuth()
 
   useEffect(() => {
     const handleScroll = () => {
@@ -19,11 +21,14 @@ export default function Navbar() {
     return () => window.removeEventListener('scroll', handleScroll)
   }, [])
 
+  // Determine profile URL based on user role
+  const profileUrl = user?.role === 'agency' ? '/profile-agency' : '/profile-company'
+
   const navLinks = [
     { href: '/', label: 'Home' },
     { href: '/channels', label: 'Explore' },
     { href: '/dashboard/bookings', label: 'Bookings' },
-    { href: '/profile-company', label: 'Profile' },
+    { href: profileUrl, label: 'Profile' },
   ]
 
   const isActive = (href: string) => {
@@ -35,6 +40,11 @@ export default function Navbar() {
     }
     return pathname?.startsWith(href)
   }
+
+  // Check if we're on pages that should hide auth buttons
+  const isAuthHiddenPage = pathname?.startsWith('/channels') || 
+                           pathname?.startsWith('/dashboard') || 
+                           pathname?.startsWith('/profile')
 
   return (
     <header className="fixed top-6 left-0 right-0 z-50 flex justify-center px-4">
@@ -70,19 +80,24 @@ export default function Navbar() {
         {/* Center: Spacer (no logo) */}
         <div className="flex-1 flex justify-center"></div>
 
-        {/* Right: Actions (Desktop) */}
-        <div className="hidden md:flex items-center gap-3 flex-1 justify-end">
-          <Link href="/login">
-            <Button variant="ghost" className="rounded-full text-blue-400 hover:text-white hover:bg-blue-700/20 font-semibold px-5 py-2 transition-all duration-200">
-              Login
-            </Button>
-          </Link>
-          <Link href="/account-type">
-            <Button className="rounded-full bg-gradient-to-r from-blue-600 via-teal-500 to-blue-400 hover:from-blue-700 hover:to-teal-600 text-white font-bold shadow-md hover:shadow-lg px-5 py-2 transition-all duration-200">
-              Get Started
-            </Button>
-          </Link>
-        </div>
+        {/* Right: Actions (Desktop) - Hide on explore/dashboard/profile pages */}
+        {!isAuthHiddenPage && (
+          <div className="hidden md:flex items-center gap-3 flex-1 justify-end">
+            <Link href="/login">
+              <Button variant="ghost" className="rounded-full text-blue-400 hover:text-white hover:bg-blue-700/20 font-semibold px-5 py-2 transition-all duration-200">
+                Login
+              </Button>
+            </Link>
+            <Link href="/account-type">
+              <Button className="rounded-full bg-gradient-to-r from-blue-600 via-teal-500 to-blue-400 hover:from-blue-700 hover:to-teal-600 text-white font-bold shadow-md hover:shadow-lg px-5 py-2 transition-all duration-200">
+                Get Started
+              </Button>
+            </Link>
+          </div>
+        )}
+
+        {/* Empty spacer when auth buttons are hidden */}
+        {isAuthHiddenPage && <div className="flex-1" />}
 
         {/* Mobile Menu Toggle (Absolute Right) */}
         <div className="md:hidden absolute right-4">
@@ -121,17 +136,21 @@ export default function Navbar() {
               {link.label}
             </Link>
           ))}
-          <div className="h-px bg-slate-700 my-2" />
-          <Link href="/login" onClick={() => setOpen(false)}>
-            <Button variant="ghost" className="w-full justify-start rounded-xl text-slate-200 hover:text-white hover:bg-slate-800/60">
-              Login
-            </Button>
-          </Link>
-          <Link href="/account-type" onClick={() => setOpen(false)}>
-            <Button className="w-full rounded-xl bg-gradient-to-r from-blue-500 to-teal-400 text-white">
-              Get Started
-            </Button>
-          </Link>
+          {!isAuthHiddenPage && (
+            <>
+              <div className="h-px bg-slate-700 my-2" />
+              <Link href="/login" onClick={() => setOpen(false)}>
+                <Button variant="ghost" className="w-full justify-start rounded-xl text-slate-200 hover:text-white hover:bg-slate-800/60">
+                  Login
+                </Button>
+              </Link>
+              <Link href="/account-type" onClick={() => setOpen(false)}>
+                <Button className="w-full rounded-xl bg-gradient-to-r from-blue-500 to-teal-400 text-white">
+                  Get Started
+                </Button>
+              </Link>
+            </>
+          )}
         </div>
       )}
     </header>

@@ -277,17 +277,18 @@ export default function CreateAccountPage() {
         name: formData.companyName,
         email: formData.email,
         password: formData.password,
-        phone: formData.phoneNumber,
-        website: formData.websiteUrl,
-        address: formData.physicalAddress,
-        industry: formData.industry,
+        userType: 'company',
+        phonenumber: formData.phoneNumber.replace(/\D/g, ''),
+        websiteURL: formData.websiteUrl,
+        location: formData.physicalAddress,
+        industrySector: formData.industry,
         companySize: formData.companySize,
-        yearEstablished: formData.yearEstablished,
-        services: formData.servicesOffered,
-        socialMedia: {
+        yearEstablished: formData.yearEstablished ? parseInt(formData.yearEstablished) : undefined,
+        socialMedia: JSON.stringify({
           facebook: formData.facebookUrl,
           linkedin: formData.linkedinUrl,
-        }
+        }),
+        agreesToTerms: true,
       }
 
       await authService.registerCompany(data);
@@ -295,7 +296,7 @@ export default function CreateAccountPage() {
       localStorage.removeItem(STORAGE_KEY) // Clear saved progress
       toast({
         title: "Success",
-        description: "Account created successfully. Please login.",
+        description: "Account created successfully. Please check your email to verify your account, then login.",
       });
       router.push('/login')
     } catch (error: any) {

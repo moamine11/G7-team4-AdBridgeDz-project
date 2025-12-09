@@ -1,548 +1,395 @@
 'use client'
 
-import { useState } from 'react'
-import {
-  Sparkles,
-  Building2,
-  MapPin,
-  ArrowRight,
-  Upload,
-  CalendarCheck,
-  Phone,
-  Mail,
-  FileText,
-  CheckCircle2,
-  Star
-} from 'lucide-react'
-import { Input } from '@/components/ui/input'
-import { Textarea } from '@/components/ui/textarea'
+import { useState, useEffect } from 'react'
+import Link from 'next/link'
+import { Sidebar, SidebarProvider } from '@/components/ui/sidebar'
+import Navbar from '@/components/ui/navbar'
+import { Save, Building2, MapPin, Globe, Mail, Phone, FileText, Target } from 'lucide-react'
+import { authService } from '@/lib/services/auth-service'
+import { useAuth } from '@/contexts/auth-context'
+import { useToast } from '@/components/ui/use-toast'
 import { Button } from '@/components/ui/button'
-import { Switch } from '@/components/ui/switch'
-import { cn } from '@/lib/utils'
-
-const upcomingCampaigns = [
-  {
-    title: 'Ramadan Awareness Push',
-    period: 'Mar 10 – Apr 15',
-    status: 'Creative in review',
-    budget: 'DZD 18M'
-  },
-  {
-    title: 'Summer Beverage Launch',
-    period: 'Jun 01 – Jul 30',
-    status: 'Awaiting agency shortlist',
-    budget: 'DZD 24M'
-  },
-  {
-    title: 'Back-to-School Pulse',
-    period: 'Aug 20 – Sep 15',
-    status: 'Brief drafting',
-    budget: 'DZD 11M'
-  }
-]
-
-const savedAgencies = [
-  {
-    name: 'Digital Media Solutions',
-    specialty: 'DOOH Screens',
-    status: 'Awaiting deck',
-    score: 92
-  },
-  {
-    name: 'Alpha Communications',
-    specialty: 'Highway Billboards',
-    status: 'Budget approved',
-    score: 88
-  },
-  {
-    name: 'Creative Studio Algeria',
-    specialty: 'Production + Installation',
-    status: 'Kick-off scheduled',
-    score: 95
-  }
-]
-
-const goalOptions = [
-  'Brand Awareness',
-  'Product Launch',
-  'Lead Generation',
-  'Store Footfall',
-  'Sponsorship Amplification',
-  'Seasonal Campaign'
-]
-
-const communicationOptions = [
-  { id: 'email', label: 'Email updates' },
-  { id: 'phone', label: 'Phone syncs' },
-  { id: 'slack', label: 'Slack / Teams channel' },
-  { id: 'whatsapp', label: 'WhatsApp status alerts' }
-]
-
-type ProfileState = {
-  companyName: string
-  brandTagline: string
-  email: string
-  phone: string
-  website: string
-  location: string
-  industry: string
-  teamSize: string
-  budgetRange: string
-  decisionWindow: string
-  brandGuidelinesUrl: string
-  notes: string
-}
-
-const initialProfile: ProfileState = {
-  companyName: 'Atlas Beverages',
-  brandTagline: 'Hydration for the new generation.',
-  email: 'marketing@atlasbev.dz',
-  phone: '+213 555 789 001',
-  website: 'https://atlasbev.dz',
-  location: 'Algiers, Algeria',
-  industry: 'FMCG / Beverage',
-  teamSize: '51-200 employees',
-  budgetRange: 'DZD 15M - DZD 25M per quarter',
-  decisionWindow: '2-3 weeks',
-  brandGuidelinesUrl: 'https://brandhub.atlasbev.dz/style-guide',
-  notes: 'Priority on DOOH + premium city center wraps. Require bilingual messaging (AR/FR).'
-}
 
 export default function ProfileCompanyPage() {
-  const [profile, setProfile] = useState<ProfileState>(initialProfile)
-  const [selectedGoals, setSelectedGoals] = useState<string[]>(['Brand Awareness', 'Product Launch'])
-  const [communicationPrefs, setCommunicationPrefs] = useState<Record<string, boolean>>({
-    email: true,
-    phone: false,
-    slack: true,
-    whatsapp: true
+  const { user } = useAuth()
+  const { toast } = useToast()
+  const [isLoading, setIsLoading] = useState(true)
+  const [isSaving, setIsSaving] = useState(false)
+  
+  const [formData, setFormData] = useState({
+    companyName: '',
+    brandTagline: '',
+    email: '',
+    phone: '',
+    website: '',
+    location: '',
+    industrySector: '',
+    companySize: '',
+    budgetRange: '',
+    decisionWindow: '',
+    goals: ''
   })
 
-  const handleProfileChange = (field: keyof ProfileState, value: string) => {
-    setProfile((prev) => ({ ...prev, [field]: value }))
+  useEffect(() => {
+    const fetchProfile = async () => {
+      try {
+        const data = await authService.getCompanyProfile()
+        setFormData({
+          companyName: data.name || '',
+          brandTagline: data.brandTagline || '',
+          email: data.email || '',
+          phone: data.phonenumber || '',
+          website: data.websiteURL || '',
+          location: data.location || '',
+          industrySector: data.industrySector || '',
+          companySize: data.companySize || '',
+          budgetRange: data.budgetRange || '',
+          decisionWindow: data.decisionWindow || '',
+          goals: data.notes || ''
+        })
+      } catch (error) {
+        console.error('Failed to fetch profile:', error)
+        toast({
+          title: "Error",
+          description: "Failed to load profile data.",
+          variant: "destructive",
+        })
+      } finally {
+        setIsLoading(false)
+      }
+    }
+
+    // Fetch profile regardless of user check - let the API handle auth
+    fetchProfile()
+  }, [toast])
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setIsSaving(true)
+    
+    try {
+      const apiData = {
+        name: formData.companyName,
+        brandTagline: formData.brandTagline,
+        email: formData.email,
+        phonenumber: formData.phone,
+        websiteURL: formData.website,
+        location: formData.location,
+        industrySector: formData.industrySector,
+        companySize: formData.companySize,
+        budgetRange: formData.budgetRange,
+        decisionWindow: formData.decisionWindow,
+        notes: formData.goals
+      }
+      
+      await authService.updateCompanyProfile(apiData)
+      toast({
+        title: "Success",
+        description: "Profile updated successfully.",
+      })
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to update profile.",
+        variant: "destructive",
+      })
+    } finally {
+      setIsSaving(false)
+    }
   }
 
-  const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault()
-    console.log('Profile saved', profile, selectedGoals, communicationPrefs)
-  }
-
-  const toggleGoal = (goal: string) => {
-    setSelectedGoals((prev) =>
-      prev.includes(goal) ? prev.filter((item) => item !== goal) : [...prev, goal]
+  if (isLoading) {
+    return (
+      <SidebarProvider>
+        <div className="flex min-h-screen bg-slate-950">
+          <Sidebar />
+          <div className="flex-1 flex flex-col">
+            <Navbar />
+            <main className="flex-1 p-8 flex justify-center items-center">
+              <span className="loading loading-spinner loading-lg text-blue-500"></span>
+            </main>
+          </div>
+        </div>
+      </SidebarProvider>
     )
   }
 
   return (
-    <div className="relative min-h-screen bg-slate-950 text-slate-50">
-      <div
-        className="pointer-events-none absolute inset-0 opacity-60"
-        style={{
-          backgroundImage:
-            'radial-gradient(circle at 20% 20%, rgba(59,130,246,0.25), transparent 45%), radial-gradient(circle at 80% 0%, rgba(45,212,191,0.2), transparent 40%), radial-gradient(circle at 50% 100%, rgba(147,51,234,0.15), transparent 35%)'
-        }}
-      />
+    <SidebarProvider>
+      <div className="flex min-h-screen bg-slate-950 text-slate-50">
+        <Sidebar />
+        
+        <div className="flex-1 flex flex-col">
+          <Navbar />
+          
+          <main className="flex-1 p-8 overflow-y-auto">
+          <div className="max-w-5xl mx-auto">
+            {/* Breadcrumb */}
+            <nav className="text-sm text-slate-400 mb-4 flex items-center gap-2">
+              <Link href="/dashboard" className="hover:text-white transition-colors">Dashboard</Link>
+              <span className="text-slate-600">/</span>
+              <span className="text-white font-medium">Company Profile</span>
+            </nav>
 
-      <main className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-36 pb-24 space-y-10">
-        <section className="relative overflow-hidden rounded-[36px] border border-white/10 bg-gradient-to-r from-slate-900/80 via-slate-900/60 to-blue-900/70 backdrop-blur-xl">
-          <div className="absolute inset-0 opacity-60">
-            <img
-              src="/times_square.jpg"
-              alt="City skyline"
-              className="w-full h-full object-cover"
-            />
-            <div className="absolute inset-0 bg-gradient-to-r from-slate-950/90 via-slate-950/80 to-slate-900/60" />
-          </div>
-
-          <div className="relative z-10 grid gap-8 lg:grid-cols-3 p-8 sm:p-10 lg:p-14">
-            <div className="lg:col-span-2 space-y-6">
-              <div className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/10 px-4 py-1.5 text-xs font-semibold uppercase tracking-[0.3em] text-blue-200">
-                <Sparkles className="w-4 h-4 text-blue-300" />
-                Company Profile
-              </div>
-              <div className="flex flex-wrap items-center gap-4">
-                <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-blue-500 to-teal-500 flex items-center justify-center text-2xl font-bold">
-                  AB
-                </div>
-                <div className="min-w-[220px]">
-                  <p className="text-sm uppercase tracking-[0.35em] text-slate-400">Primary brand</p>
-                  <h1 className="text-3xl sm:text-4xl font-bold text-white">{profile.companyName}</h1>
-                  <p className="text-slate-300 mt-1">{profile.brandTagline}</p>
-                </div>
-              </div>
-
-              <div className="grid gap-4 sm:grid-cols-3">
-                <div className="rounded-2xl border border-white/10 bg-black/20 p-4">
-                  <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Quarterly budget</p>
-                  <p className="mt-2 text-2xl font-semibold text-white">DZD 22M</p>
-                  <p className="text-xs text-slate-400">45% reserved for DOOH</p>
-                </div>
-                <div className="rounded-2xl border border-white/10 bg-black/20 p-4">
-                  <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Status</p>
-                  <p className="mt-2 text-2xl font-semibold text-white flex items-center gap-1">
-                    Ready <CheckCircle2 className="w-4 h-4 text-teal-300" />
-                  </p>
-                  <p className="text-xs text-slate-400">Assets synced 2 days ago</p>
-                </div>
-                <div className="rounded-2xl border border-white/10 bg-black/20 p-4">
-                  <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Next decision window</p>
-                  <p className="mt-2 text-2xl font-semibold text-white">{profile.decisionWindow}</p>
-                  <p className="text-xs text-slate-400">Fast-track available</p>
-                </div>
-              </div>
-
-              <div className="flex flex-wrap gap-3">
-                <Button className="rounded-2xl bg-gradient-to-r from-blue-500 via-teal-500 to-blue-400">
-                  Upload Brand Deck
-                </Button>
-                <Button
-                  variant="secondary"
-                  className="rounded-2xl border border-white/20 bg-white/10 text-white"
-                >
-                  Preview Latest Brief
-                </Button>
-              </div>
-            </div>
-
-            <div className="rounded-3xl border border-white/10 bg-slate-900/70 p-6 space-y-5">
+            {/* Page Header */}
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
               <div>
-                <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Key contacts</p>
-                <div className="mt-3 space-y-2 text-sm text-slate-200">
-                  <p className="flex items-center gap-2">
-                    <Mail className="w-4 h-4 text-blue-300" /> {profile.email}
-                  </p>
-                  <p className="flex items-center gap-2">
-                    <Phone className="w-4 h-4 text-teal-300" /> {profile.phone}
-                  </p>
-                  <p className="flex items-center gap-2">
-                    <MapPin className="w-4 h-4 text-slate-400" /> {profile.location}
-                  </p>
-                </div>
+                <h1 className="text-3xl font-bold text-white mb-2">Company Profile</h1>
+                <p className="text-slate-400">Manage your company profile, contact information, and business details.</p>
               </div>
-
-              <div className="rounded-2xl border border-white/10 bg-white/5 p-4 text-sm text-slate-200">
-                <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Latest note</p>
-                <p className="mt-2">{profile.notes}</p>
-              </div>
-              <div className="text-xs text-slate-400">
-                Last synced: 2 hours ago • Owner: Brand Partnerships Squad
-              </div>
+              <Button 
+                onClick={handleSubmit}
+                disabled={isSaving}
+                className="bg-gradient-to-r from-blue-600 to-teal-500 hover:from-blue-700 hover:to-teal-600 text-white shadow-lg shadow-blue-500/20"
+              >
+                {isSaving ? (
+                  <>
+                    <span className="loading loading-spinner loading-xs mr-2"></span>
+                    Saving...
+                  </>
+                ) : (
+                  <>
+                    <Save className="w-4 h-4 mr-2" />
+                    Save Changes
+                  </>
+                )}
+              </Button>
             </div>
-          </div>
-        </section>
 
-        <section className="grid gap-4 md:grid-cols-3">
-          {[
-            { label: 'Active briefs', value: '03', detail: 'With delivery timelines' },
-            { label: 'Agencies engaged', value: '08', detail: '4 verified partners shortlisted' },
-            { label: 'Creative assets', value: '12', detail: 'Logos, videos, guidelines' }
-          ].map((stat) => (
-            <div key={stat.label} className="rounded-2xl border border-white/10 bg-white/5 p-6 shadow-lg shadow-blue-500/5">
-              <p className="text-xs uppercase tracking-[0.3em] text-slate-400">{stat.label}</p>
-              <p className="mt-2 text-3xl font-bold text-white">{stat.value}</p>
-              <p className="text-sm text-slate-300">{stat.detail}</p>
-            </div>
-          ))}
-        </section>
-
-        <section className="grid gap-6 lg:grid-cols-3">
-          <div className="space-y-6 lg:col-span-2">
             <form onSubmit={handleSubmit} className="space-y-6">
-              <div className="rounded-[32px] border border-white/10 bg-white/5 p-6 md:p-8 space-y-6">
-                <div className="flex items-center justify-between">
-                  <h2 className="text-2xl font-semibold text-white">Brand & Account Details</h2>
-                  <span className="text-xs uppercase tracking-[0.3em] text-slate-400">Core info</span>
+              
+              {/* Basic Account Information */}
+              <div className="bg-white/5 rounded-2xl border border-white/10 overflow-hidden">
+                <div className="p-6 border-b border-white/10 flex items-center gap-3">
+                  <div className="p-2 bg-blue-500/10 rounded-lg">
+                    <Building2 className="w-5 h-5 text-blue-400" />
+                  </div>
+                  <h2 className="text-lg font-bold text-white">Basic Information</h2>
                 </div>
+                
+                <div className="p-6 space-y-6">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium text-slate-300">Company Name</label>
+                      <input
+                        type="text"
+                        value={formData.companyName}
+                        onChange={(e) => setFormData({...formData, companyName: e.target.value})}
+                        className="w-full px-4 py-3 bg-slate-900/50 border border-white/10 rounded-xl text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all placeholder:text-slate-600"
+                        placeholder="Enter company name"
+                      />
+                    </div>
 
-                <div className="grid gap-4 md:grid-cols-2">
-                  <div>
-                    <label className="text-sm font-semibold text-slate-200 mb-2 block">Company name</label>
-                    <Input
-                      value={profile.companyName}
-                      onChange={(e) => handleProfileChange('companyName', e.target.value)}
-                      className="bg-slate-900/40 border-white/10 text-slate-100"
-                    />
-                  </div>
-                  <div>
-                    <label className="text-sm font-semibold text-slate-200 mb-2 block">Brand tagline</label>
-                    <Input
-                      value={profile.brandTagline}
-                      onChange={(e) => handleProfileChange('brandTagline', e.target.value)}
-                      className="bg-slate-900/40 border-white/10 text-slate-100"
-                    />
-                  </div>
-                  <div>
-                    <label className="text-sm font-semibold text-slate-200 mb-2 block">Industry</label>
-                    <Input
-                      value={profile.industry}
-                      onChange={(e) => handleProfileChange('industry', e.target.value)}
-                      className="bg-slate-900/40 border-white/10 text-slate-100"
-                    />
-                  </div>
-                  <div>
-                    <label className="text-sm font-semibold text-slate-200 mb-2 block">Team size</label>
-                    <Input
-                      value={profile.teamSize}
-                      onChange={(e) => handleProfileChange('teamSize', e.target.value)}
-                      className="bg-slate-900/40 border-white/10 text-slate-100"
-                    />
-                  </div>
-                </div>
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium text-slate-300">Brand Tagline <span className="text-slate-500 font-normal text-xs ml-1">(Optional)</span></label>
+                      <input
+                        type="text"
+                        value={formData.brandTagline}
+                        onChange={(e) => setFormData({...formData, brandTagline: e.target.value})}
+                        className="w-full px-4 py-3 bg-slate-900/50 border border-white/10 rounded-xl text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all placeholder:text-slate-600"
+                        placeholder="Your brand slogan"
+                      />
+                    </div>
 
-                <div className="grid gap-4 md:grid-cols-2">
-                  <div>
-                    <label className="text-sm font-semibold text-slate-200 mb-2 block">Email</label>
-                    <Input
-                      type="email"
-                      value={profile.email}
-                      onChange={(e) => handleProfileChange('email', e.target.value)}
-                      className="bg-slate-900/40 border-white/10 text-slate-100"
-                    />
-                  </div>
-                  <div>
-                    <label className="text-sm font-semibold text-slate-200 mb-2 block">Phone</label>
-                    <Input
-                      value={profile.phone}
-                      onChange={(e) => handleProfileChange('phone', e.target.value)}
-                      className="bg-slate-900/40 border-white/10 text-slate-100"
-                    />
-                  </div>
-                </div>
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium text-slate-300">Email Address</label>
+                      <div className="relative">
+                        <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
+                        <input
+                          type="email"
+                          value={formData.email}
+                          onChange={(e) => setFormData({...formData, email: e.target.value})}
+                          className="w-full pl-10 pr-4 py-3 bg-slate-900/50 border border-white/10 rounded-xl text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all placeholder:text-slate-600"
+                          placeholder="company@example.com"
+                        />
+                      </div>
+                    </div>
 
-                <div className="grid gap-4 md:grid-cols-2">
-                  <div>
-                    <label className="text-sm font-semibold text-slate-200 mb-2 block">Website</label>
-                    <Input
-                      value={profile.website}
-                      onChange={(e) => handleProfileChange('website', e.target.value)}
-                      className="bg-slate-900/40 border-white/10 text-slate-100"
-                    />
-                  </div>
-                  <div>
-                    <label className="text-sm font-semibold text-slate-200 mb-2 block">Location</label>
-                    <Input
-                      value={profile.location}
-                      onChange={(e) => handleProfileChange('location', e.target.value)}
-                      className="bg-slate-900/40 border-white/10 text-slate-100"
-                    />
-                  </div>
-                </div>
-              </div>
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium text-slate-300">Phone Number</label>
+                      <div className="relative">
+                        <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
+                        <input
+                          type="tel"
+                          value={formData.phone}
+                          onChange={(e) => setFormData({...formData, phone: e.target.value})}
+                          className="w-full pl-10 pr-4 py-3 bg-slate-900/50 border border-white/10 rounded-xl text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all placeholder:text-slate-600"
+                          placeholder="+213 555 123 456"
+                        />
+                      </div>
+                    </div>
 
-              <div className="rounded-[32px] border border-white/10 bg-white/5 p-6 md:p-8 space-y-6">
-                <div className="flex items-center justify-between">
-                  <h2 className="text-2xl font-semibold text-white">Campaign Preferences</h2>
-                  <span className="text-xs uppercase tracking-[0.3em] text-slate-400">Strategy</span>
-                </div>
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium text-slate-300">Website URL <span className="text-slate-500 font-normal text-xs ml-1">(Optional)</span></label>
+                      <div className="relative">
+                        <Globe className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
+                        <input
+                          type="url"
+                          value={formData.website}
+                          onChange={(e) => setFormData({...formData, website: e.target.value})}
+                          className="w-full pl-10 pr-4 py-3 bg-slate-900/50 border border-white/10 rounded-xl text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all placeholder:text-slate-600"
+                          placeholder="https://example.com"
+                        />
+                      </div>
+                    </div>
 
-                <div className="grid gap-4 md:grid-cols-2">
-                  <div>
-                    <label className="text-sm font-semibold text-slate-200 mb-2 block">Budget range</label>
-                    <Input
-                      value={profile.budgetRange}
-                      onChange={(e) => handleProfileChange('budgetRange', e.target.value)}
-                      className="bg-slate-900/40 border-white/10 text-slate-100"
-                    />
-                  </div>
-                  <div>
-                    <label className="text-sm font-semibold text-slate-200 mb-2 block">Decision window</label>
-                    <Input
-                      value={profile.decisionWindow}
-                      onChange={(e) => handleProfileChange('decisionWindow', e.target.value)}
-                      className="bg-slate-900/40 border-white/10 text-slate-100"
-                    />
-                  </div>
-                </div>
-
-                <div>
-                  <label className="text-sm font-semibold text-slate-200 mb-3 block">Primary goals</label>
-                  <div className="flex flex-wrap gap-3">
-                    {goalOptions.map((goal) => (
-                      <button
-                        type="button"
-                        key={goal}
-                        onClick={() => toggleGoal(goal)}
-                        className={cn(
-                          'rounded-full border px-5 py-2 text-sm font-medium transition-all',
-                          selectedGoals.includes(goal)
-                            ? 'bg-gradient-to-r from-blue-500 to-teal-500 text-white border-transparent shadow-lg shadow-blue-500/20'
-                            : 'border-white/10 text-slate-300 hover:text-white'
-                        )}
-                      >
-                        {goal}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                <div>
-                  <label className="text-sm font-semibold text-slate-200 mb-3 block">Context & notes</label>
-                  <Textarea
-                    value={profile.notes}
-                    onChange={(e) => handleProfileChange('notes', e.target.value)}
-                    className="bg-slate-900/40 border-white/10 text-slate-100 min-h-[120px]"
-                  />
-                </div>
-
-                <div className="grid gap-4 md:grid-cols-2">
-                  <div>
-                    <label className="text-sm font-semibold text-slate-200 mb-2 block">Brand guidelines link</label>
-                    <Input
-                      value={profile.brandGuidelinesUrl}
-                      onChange={(e) => handleProfileChange('brandGuidelinesUrl', e.target.value)}
-                      className="bg-slate-900/40 border-white/10 text-slate-100"
-                    />
-                  </div>
-                  <div>
-                    <label className="text-sm font-semibold text-slate-200 mb-3 block">Asset uploads</label>
-                    <div className="rounded-2xl border-2 border-dashed border-white/20 p-4 text-center text-sm text-slate-300">
-                      <Upload className="w-6 h-6 mx-auto mb-2 text-blue-300" />
-                      Drop logo packs, videos, or PDF briefs (max 200MB)
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium text-slate-300">Location</label>
+                      <div className="relative">
+                        <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
+                        <input
+                          type="text"
+                          value={formData.location}
+                          onChange={(e) => setFormData({...formData, location: e.target.value})}
+                          className="w-full pl-10 pr-4 py-3 bg-slate-900/50 border border-white/10 rounded-xl text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all placeholder:text-slate-600"
+                          placeholder="City, Country"
+                        />
+                      </div>
                     </div>
                   </div>
                 </div>
               </div>
 
-              <div className="rounded-[32px] border border-white/10 bg-white/5 p-6 md:p-8">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <h2 className="text-2xl font-semibold text-white">Communication preferences</h2>
-                    <p className="text-sm text-slate-400">Choose how AdBridgeDZ and agencies keep you updated.</p>
+              {/* Company Details */}
+              <div className="bg-white/5 rounded-2xl border border-white/10 overflow-hidden">
+                <div className="p-6 border-b border-white/10 flex items-center gap-3">
+                  <div className="p-2 bg-purple-500/10 rounded-lg">
+                    <FileText className="w-5 h-5 text-purple-400" />
                   </div>
-                  <span className="text-xs uppercase tracking-[0.3em] text-slate-400">Collaboration</span>
+                  <h2 className="text-lg font-bold text-white">Company Details</h2>
                 </div>
+                
+                <div className="p-6 space-y-6">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium text-slate-300">Industry/Sector</label>
+                      <select
+                        value={formData.industrySector}
+                        onChange={(e) => setFormData({...formData, industrySector: e.target.value})}
+                        className="w-full px-4 py-3 bg-slate-900/50 border border-white/10 rounded-xl text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all appearance-none"
+                      >
+                        <option className="bg-slate-900" value="">Select Industry</option>
+                        <option className="bg-slate-900">Technology</option>
+                        <option className="bg-slate-900">Finance</option>
+                        <option className="bg-slate-900">Healthcare</option>
+                        <option className="bg-slate-900">Retail</option>
+                        <option className="bg-slate-900">Education</option>
+                        <option className="bg-slate-900">Manufacturing</option>
+                        <option className="bg-slate-900">Entertainment</option>
+                        <option className="bg-slate-900">FMCG</option>
+                        <option className="bg-slate-900">Real Estate</option>
+                        <option className="bg-slate-900">Other</option>
+                      </select>
+                    </div>
 
-                <div className="mt-6 space-y-4">
-                  {communicationOptions.map((option) => (
-                    <label
-                      key={option.id}
-                      className="flex items-center justify-between rounded-2xl border border-white/10 bg-white/5 px-4 py-3"
-                    >
-                      <span className="text-sm font-medium text-slate-200">{option.label}</span>
-                      <Switch
-                        checked={communicationPrefs[option.id]}
-                        onCheckedChange={(checked) =>
-                          setCommunicationPrefs((prev) => ({ ...prev, [option.id]: checked }))
-                        }
-                      />
-                    </label>
-                  ))}
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium text-slate-300">Company Size</label>
+                      <select
+                        value={formData.companySize}
+                        onChange={(e) => setFormData({...formData, companySize: e.target.value})}
+                        className="w-full px-4 py-3 bg-slate-900/50 border border-white/10 rounded-xl text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all appearance-none"
+                      >
+                        <option className="bg-slate-900" value="">Select Size</option>
+                        <option className="bg-slate-900">1-10 employees</option>
+                        <option className="bg-slate-900">11-50 employees</option>
+                        <option className="bg-slate-900">51-200 employees</option>
+                        <option className="bg-slate-900">200+ employees</option>
+                      </select>
+                    </div>
+                  </div>
                 </div>
               </div>
 
-              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                <p className="text-sm text-slate-400">Changes auto-save to drafts. Share brief when you are ready.</p>
-                <div className="flex gap-3">
-                  <Button
-                    type="button"
-                    variant="secondary"
-                    className="rounded-2xl border border-white/20 text-white"
-                  >
-                    Save draft
-                  </Button>
-                  <Button type="submit" className="rounded-2xl bg-gradient-to-r from-blue-500 via-teal-500 to-blue-400">
-                    Share with agencies
-                    <ArrowRight className="ml-2 h-4 w-4" />
-                  </Button>
+              {/* Campaign Preferences */}
+              <div className="bg-white/5 rounded-2xl border border-white/10 overflow-hidden">
+                <div className="p-6 border-b border-white/10 flex items-center gap-3">
+                  <div className="p-2 bg-teal-500/10 rounded-lg">
+                    <Target className="w-5 h-5 text-teal-400" />
+                  </div>
+                  <h2 className="text-lg font-bold text-white">Campaign Preferences</h2>
                 </div>
+                
+                <div className="p-6 space-y-6">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium text-slate-300">Budget Range</label>
+                      <select
+                        value={formData.budgetRange}
+                        onChange={(e) => setFormData({...formData, budgetRange: e.target.value})}
+                        className="w-full px-4 py-3 bg-slate-900/50 border border-white/10 rounded-xl text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all appearance-none"
+                      >
+                        <option className="bg-slate-900" value="">Select Budget Range</option>
+                        <option className="bg-slate-900">DZD 1M - 5M</option>
+                        <option className="bg-slate-900">DZD 5M - 10M</option>
+                        <option className="bg-slate-900">DZD 10M - 20M</option>
+                        <option className="bg-slate-900">DZD 20M+</option>
+                      </select>
+                    </div>
+
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium text-slate-300">Decision Window</label>
+                      <select
+                        value={formData.decisionWindow}
+                        onChange={(e) => setFormData({...formData, decisionWindow: e.target.value})}
+                        className="w-full px-4 py-3 bg-slate-900/50 border border-white/10 rounded-xl text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all appearance-none"
+                      >
+                        <option className="bg-slate-900" value="">Select Timeline</option>
+                        <option className="bg-slate-900">Immediate (1-2 weeks)</option>
+                        <option className="bg-slate-900">This Month</option>
+                        <option className="bg-slate-900">This Quarter</option>
+                        <option className="bg-slate-900">Planning Phase</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-slate-300">Primary Goals & Notes <span className="text-slate-500 font-normal text-xs ml-1">(Optional)</span></label>
+                    <textarea
+                      value={formData.goals}
+                      onChange={(e) => setFormData({...formData, goals: e.target.value})}
+                      rows={4}
+                      className="w-full px-4 py-3 bg-slate-900/50 border border-white/10 rounded-xl text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all placeholder:text-slate-600 resize-none"
+                      placeholder="What are you looking to achieve? (e.g. Brand Awareness, Product Launch, Lead Generation)"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Terms Agreement */}
+              <div className="bg-white/5 rounded-2xl border border-white/10 p-6">
+                <label className="flex items-start gap-3 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    className="w-5 h-5 text-blue-500 border-white/10 bg-slate-900 rounded focus:ring-blue-500 mt-0.5"
+                  />
+                  <span className="text-sm text-slate-400">
+                    I confirm that the information provided is accurate and I agree to the <Link href="/terms" className="text-blue-400 hover:text-blue-300 font-medium hover:underline">Terms of Service</Link> and <Link href="/privacy" className="text-blue-400 hover:text-blue-300 font-medium hover:underline">Privacy Policy</Link>.
+                  </span>
+                </label>
+              </div>
+
+              {/* Bottom Action Bar */}
+              <div className="flex justify-end pt-4">
+                <Button 
+                  onClick={handleSubmit}
+                  disabled={isSaving}
+                  className="h-12 px-8 bg-gradient-to-r from-blue-600 to-teal-500 hover:from-blue-700 hover:to-teal-600 text-white shadow-lg shadow-blue-500/20 rounded-xl text-base font-medium"
+                >
+                  {isSaving ? (
+                    <>
+                      <span className="loading loading-spinner loading-sm mr-2"></span>
+                      Saving Changes...
+                    </>
+                  ) : (
+                    'Save All Changes'
+                  )}
+                </Button>
               </div>
             </form>
           </div>
-
-          <div className="space-y-6">
-            <div className="rounded-[32px] border border-white/10 bg-white/5 p-6">
-              <div className="flex items-center justify-between">
-                <h3 className="text-xl font-semibold text-white">Saved agencies</h3>
-                <span className="text-xs uppercase tracking-[0.3em] text-slate-400">Shortlist</span>
-              </div>
-              <div className="mt-5 space-y-4">
-                {savedAgencies.map((agency) => (
-                  <div key={agency.name} className="rounded-2xl border border-white/10 bg-white/5 p-4">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="text-sm font-semibold text-white">{agency.name}</p>
-                        <p className="text-xs text-slate-400">{agency.specialty}</p>
-                      </div>
-                      <span className="text-xs font-semibold text-teal-200">Score {agency.score}</span>
-                    </div>
-                    <p className="mt-3 text-xs text-slate-400">{agency.status}</p>
-                  </div>
-                ))}
-              </div>
-              <Button
-                variant="secondary"
-                className="mt-4 w-full rounded-2xl border border-white/20 text-white"
-              >
-                Manage shortlist
-              </Button>
-            </div>
-
-            <div className="rounded-[32px] border border-white/10 bg-white/5 p-6">
-              <div className="flex items-center justify-between">
-                <h3 className="text-xl font-semibold text-white">Upcoming campaigns</h3>
-                <span className="text-xs uppercase tracking-[0.3em] text-slate-400">Timeline</span>
-              </div>
-              <div className="mt-5 space-y-4">
-                {upcomingCampaigns.map((campaign) => (
-                  <div key={campaign.title} className="rounded-2xl border border-white/10 bg-slate-900/40 p-4">
-                    <p className="text-sm font-semibold text-white">{campaign.title}</p>
-                    <p className="text-xs text-slate-400 flex items-center gap-1 mt-1">
-                      <CalendarCheck className="w-3 h-3" /> {campaign.period}
-                    </p>
-                    <div className="mt-3 flex items-center justify-between text-xs text-slate-300">
-                      <span>{campaign.status}</span>
-                      <span className="text-teal-200 font-semibold">{campaign.budget}</span>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            <div className="rounded-[32px] border border-white/10 bg-white/5 p-6 space-y-4">
-              <div className="flex items-center gap-3">
-                <Building2 className="w-5 h-5 text-blue-300" />
-                <h3 className="text-xl font-semibold text-white">Quick actions</h3>
-              </div>
-              <div className="space-y-3 text-sm text-slate-200">
-                <button className="w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-left hover:border-blue-400/60">
-                  <div className="font-semibold text-white">Book strategy session</div>
-                  <p className="text-xs text-slate-400">Align with AdBridgeDZ planners next week.</p>
-                </button>
-                <button className="w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-left hover:border-blue-400/60">
-                  <div className="font-semibold text-white">Request performance report</div>
-                  <p className="text-xs text-slate-400">Compile last quarter impressions & CPVs.</p>
-                </button>
-                <button className="w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-left hover:border-blue-400/60">
-                  <div className="font-semibold text-white">Invite teammate</div>
-                  <p className="text-xs text-slate-400">Add procurement or finance approvers.</p>
-                </button>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        <section className="rounded-[32px] border border-white/10 bg-gradient-to-r from-blue-500/20 to-teal-500/20 p-10" role="region" aria-label="cta">
-          <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-            <div>
-              <p className="text-xs uppercase tracking-[0.4em] text-blue-200">Need strategic support?</p>
-              <h3 className="mt-3 text-3xl font-bold text-white">Partner with an AdBridgeDZ strategist for full-funnel planning.</h3>
-              <p className="mt-2 text-slate-200">Share KPIs and we will co-build your channel mix, delivery calendar, and verification workflow.</p>
-            </div>
-            <div className="flex flex-col sm:flex-row gap-3">
-              <Button className="h-12 rounded-2xl bg-white text-slate-900 font-semibold hover:bg-white/90 hover:text-slate-900">
-                Talk to Strategy Team
-              </Button>
-              <Button
-                variant="secondary"
-                className="h-12 rounded-2xl border border-white/40 text-white hover:text-white hover:bg-white/20"
-              >
-                View Collaboration Guide
-                <FileText className="ml-2 h-4 w-4" />
-              </Button>
-            </div>
-          </div>
-        </section>
-      </main>
-    </div>
+          </main>
+        </div>
+      </div>
+    </SidebarProvider>
   )
 }

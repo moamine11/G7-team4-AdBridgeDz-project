@@ -291,7 +291,7 @@ export default function CreateAgencyAccountPage() {
       localStorage.removeItem(STORAGE_KEY)
       toast({
         title: "Success",
-        description: "Agency account created successfully. Please login.",
+        description: "Agency account created successfully. Please check your email to verify your account, then login.",
       });
       router.push('/login')
     } catch (error: any) {

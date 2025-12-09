@@ -96,6 +96,28 @@ export const authService = {
     }
   },
 
+  // Google Auth for Agency
+  googleAuthAgency: async (idToken: string) => {
+    try {
+      const response = await api.post('/agencies/google-auth', { idToken });
+      return response.data;
+    } catch (error: any) {
+      console.warn('Google auth agency failed:', error);
+      throw error;
+    }
+  },
+
+  // Google Auth for Company
+  googleAuthCompany: async (idToken: string) => {
+    try {
+      const response = await api.post('/companies/google-auth', { idToken });
+      return response.data;
+    } catch (error: any) {
+      console.warn('Google auth company failed:', error);
+      throw error;
+    }
+  },
+
   getCompanyProfile: async () => {
     try {
       const response = await api.get('/companies/profile');
@@ -113,6 +135,26 @@ export const authService = {
     } catch (error) {
       console.warn('API failed, returning mock agency profile:', error);
       return MOCK_AGENCY;
+    }
+  },
+
+  updateCompanyProfile: async (data: any) => {
+    try {
+      const response = await api.put('/companies/profile', data);
+      return response.data;
+    } catch (error) {
+      console.warn('API failed for company profile update:', error);
+      throw error;
+    }
+  },
+
+  updateAgencyProfile: async (data: any) => {
+    try {
+      const response = await api.put('/agencies/profile', data);
+      return response.data;
+    } catch (error) {
+      console.warn('API failed for agency profile update:', error);
+      throw error;
     }
   },
 };

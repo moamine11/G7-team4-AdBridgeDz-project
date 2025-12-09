@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -9,6 +9,12 @@ import { Eye, EyeOff, Mail, Lock, LogIn } from 'lucide-react'
 import { authService } from '@/lib/services/auth-service'
 import { useAuth } from '@/contexts/auth-context'
 import { useToast } from '@/components/ui/use-toast'
+
+declare global {
+  interface Window {
+    google: any;
+  }
+}
 
 export default function LoginPage() {
   const router = useRouter()
@@ -19,6 +25,103 @@ export default function LoginPage() {
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
+  const [isGoogleLoading, setIsGoogleLoading] = useState(false)
+
+  // Load Google Sign-In script
+  useEffect(() => {
+    const script = document.createElement('script')
+    script.src = 'https://accounts.google.com/gsi/client'
+    script.async = true
+    script.defer = true
+    document.body.appendChild(script)
+
+    script.onload = () => {
+      if (window.google) {
+        window.google.accounts.id.initialize({
+          client_id: process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID,
+          callback: handleGoogleCallback,
+          use_fedcm_for_prompt: false, // Disable FedCM to avoid the error
+        })
+      }
+    }
+
+    return () => {
+      const existingScript = document.querySelector('script[src="https://accounts.google.com/gsi/client"]')
+      if (existingScript) {
+        existingScript.remove()
+      }
+    }
+  }, [])
+
+  const handleGoogleCallback = async (response: any) => {
+    setIsGoogleLoading(true)
+    try {
+      const idToken = response.credential
+      
+      // Try agency first, then company
+      try {
+        const data = await authService.googleAuthAgency(idToken)
+        login(data.token, data.agency, 'agency')
+        toast({
+          title: "Success",
+          description: "Logged in successfully with Google as Agency",
+        })
+        router.push('/profile-agency')
+        return
+      } catch (agencyError: any) {
+        // Try company login
+        try {
+          const data = await authService.googleAuthCompany(idToken)
+          login(data.token, data.company, 'company')
+          toast({
+            title: "Success", 
+            description: "Logged in successfully with Google as Company",
+          })
+          router.push('/profile-company')
+          return
+        } catch (companyError: any) {
+          throw new Error('No account found with this Google email. Please register first.')
+        }
+      }
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "Google login failed",
+        variant: "destructive",
+      })
+    } finally {
+      setIsGoogleLoading(false)
+    }
+  }
+
+  const handleGoogleLogin = () => {
+    if (window.google) {
+      // Use renderButton approach which is more reliable
+      const buttonDiv = document.getElementById('google-signin-button')
+      if (buttonDiv) {
+        buttonDiv.innerHTML = '' // Clear any previous button
+        window.google.accounts.id.renderButton(buttonDiv, {
+          type: 'standard',
+          theme: 'outline',
+          size: 'large',
+          text: 'signin_with',
+          shape: 'rectangular',
+          width: 300,
+        })
+        // Auto-click the rendered button
+        setTimeout(() => {
+          const btn = buttonDiv.querySelector('div[role="button"]') as HTMLElement
+          if (btn) btn.click()
+        }, 100)
+      }
+    } else {
+      toast({
+        title: "Error",
+        description: "Google Sign-In not loaded. Please refresh the page.",
+        variant: "destructive",
+      })
+    }
+  }
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -33,6 +136,7 @@ export default function LoginPage() {
           title: "Success",
           description: "Logged in successfully as Company",
         });
+        router.push('/profile-company');
         return;
       } catch (companyError) {
         // If company login fails, try agency login
@@ -43,6 +147,7 @@ export default function LoginPage() {
             title: "Success",
             description: "Logged in successfully as Agency",
           });
+          router.push('/profile-agency');
           return;
         } catch (agencyError) {
            // If both fail, throw an error
@@ -177,25 +282,37 @@ export default function LoginPage() {
                 </div>
 
                 {/* Login with Google Button */}
-                <div className="pt-4">
+                <div className="pt-4 space-y-3">
+                  {/* Hidden Google button container */}
+                  <div id="google-signin-button" className="flex justify-center"></div>
+                  
+                  {/* Custom styled button that triggers Google Sign-In */}
                   <button
                     type="button"
-                    className="w-full flex items-center justify-center gap-3 py-2.5 lg:py-3 rounded-xl bg-white/90 hover:bg-white text-slate-800 font-semibold text-base shadow-md hover:shadow-lg transition-all duration-200 border border-white/30"
+                    onClick={handleGoogleLogin}
+                    disabled={isGoogleLoading}
+                    className="w-full flex items-center justify-center gap-3 py-2.5 lg:py-3 rounded-xl bg-white/90 hover:bg-white text-slate-800 font-semibold text-base shadow-md hover:shadow-lg transition-all duration-200 border border-white/30 disabled:opacity-50"
                   >
-                    <svg className="w-5 h-5" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
-                      <g clipPath="url(#clip0_17_40)">
-                        <path d="M47.999 24.552c0-1.636-.146-3.273-.438-4.872H24.489v9.23h13.23c-.57 2.98-2.37 5.49-5.04 7.18v5.92h8.14c4.77-4.39 7.18-10.86 7.18-17.46z" fill="#4285F4"/>
-                        <path d="M24.489 48c6.48 0 11.93-2.13 15.91-5.8l-8.14-5.92c-2.27 1.52-5.18 2.41-7.77 2.41-5.97 0-11.03-4.03-12.85-9.47h-8.32v5.97C7.47 43.98 15.47 48 24.489 48z" fill="#34A853"/>
-                        <path d="M11.639 29.22c-.52-1.52-.82-3.13-.82-4.78s.3-3.26.82-4.78v-6.01h-8.32A23.97 23.97 0 000 24.44c0 3.97.96 7.74 2.66 11.01l8.98-6.23z" fill="#FBBC05"/>
-                        <path d="M24.489 9.52c3.53 0 6.68 1.21 9.17 3.59l6.87-6.87C36.41 2.13 30.97 0 24.489 0 15.47 0 7.47 4.02 2.66 11.01l8.98 6.23c1.82-5.44 6.88-9.47 12.85-9.47z" fill="#EA4335"/>
-                      </g>
-                      <defs>
-                        <clipPath id="clip0_17_40">
-                          <rect width="48" height="48" fill="white"/>
-                        </clipPath>
-                      </defs>
-                    </svg>
-                    Login with Google
+                    {isGoogleLoading ? (
+                      <span className="loading loading-spinner loading-sm"></span>
+                    ) : (
+                      <>
+                        <svg className="w-5 h-5" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+                          <g clipPath="url(#clip0_17_40)">
+                            <path d="M47.999 24.552c0-1.636-.146-3.273-.438-4.872H24.489v9.23h13.23c-.57 2.98-2.37 5.49-5.04 7.18v5.92h8.14c4.77-4.39 7.18-10.86 7.18-17.46z" fill="#4285F4"/>
+                            <path d="M24.489 48c6.48 0 11.93-2.13 15.91-5.8l-8.14-5.92c-2.27 1.52-5.18 2.41-7.77 2.41-5.97 0-11.03-4.03-12.85-9.47h-8.32v5.97C7.47 43.98 15.47 48 24.489 48z" fill="#34A853"/>
+                            <path d="M11.639 29.22c-.52-1.52-.82-3.13-.82-4.78s.3-3.26.82-4.78v-6.01h-8.32A23.97 23.97 0 000 24.44c0 3.97.96 7.74 2.66 11.01l8.98-6.23z" fill="#FBBC05"/>
+                            <path d="M24.489 9.52c3.53 0 6.68 1.21 9.17 3.59l6.87-6.87C36.41 2.13 30.97 0 24.489 0 15.47 0 7.47 4.02 2.66 11.01l8.98 6.23c1.82-5.44 6.88-9.47 12.85-9.47z" fill="#EA4335"/>
+                          </g>
+                          <defs>
+                            <clipPath id="clip0_17_40">
+                              <rect width="48" height="48" fill="white"/>
+                            </clipPath>
+                          </defs>
+                        </svg>
+                        Login with Google
+                      </>
+                    )}
                   </button>
                 </div>
               </form>
