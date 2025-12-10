@@ -4,8 +4,8 @@ const Service = require('../models/service');
 
 router.post('/', async (req, res) => {
   try {
-    const { name, description } = req.body;
-    const service = new Service({ name, description });
+    const { name, description, imageURL } = req.body;
+    const service = new Service({ name, description, imageURL });
     await service.save();
     res.status(201).json(service);
   } catch (error) {

@@ -5,7 +5,7 @@ const postSchema = new mongoose.Schema({
   category: { type: mongoose.Schema.Types.ObjectId, ref: 'Service', required: true }, 
   description: { type: String, required: true }, 
   priceRange: { type: String }, 
-  imageURL: { type: String, required: true },
+  imageURL: { type: String },
   isActive: { type: Boolean, default: true },
   createdAt: { type: Date, default: Date.now } 
 });

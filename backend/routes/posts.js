@@ -8,137 +8,140 @@ const Booking = require('../models/booking');
 const jwt = require('jsonwebtoken');
 
 const authMiddleware = async (req, res, next) => {
-  try {
-    const token = req.headers.authorization?.split(' ')[1];
-    if (!token) return res.status(401).json({ error: 'Authentication required' });
+  try {
+    const token = req.headers.authorization?.split(' ')[1];
+    if (!token) return res.status(401).json({ error: 'Authentication required' });
 
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    req.companyId = decoded.companyId;  
-    next();
-  } catch (error) {
-    res.status(401).json({ error: 'Invalid token' });
-  }
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    req.companyId = decoded.companyId;  
+    next();
+  } catch (error) {
+    res.status(401).json({ error: 'Invalid token' });
+  }
 };
 
 
 router.get('/', async (req, res) => {
-  try {
-    const { 
-      agencyId, 
-      serviceId,    
-      q, 
-      minPrice, 
-      maxPrice, 
-      location, 
-      page = 1, 
-      limit = 10 
-    } = req.query;
+  try {
+    const { 
+      agencyId, 
+      category: categoryId,    // Using categoryId for clarity
+      q, 
+      minPrice, 
+      maxPrice, 
+      location, 
+      page = 1, 
+      limit = 10 
+    } = req.query;
 
-    const skip = (page - 1) * limit;
+    const skip = (page - 1) * limit;
 
-    let query = { isActive: true };
-    if (agencyId) {
-      query.agency = new mongoose.Types.ObjectId(agencyId);
-    }
-    if (serviceId) {
-      query.category = new mongoose.Types.ObjectId(serviceId);
-    }
-    if (q) {
-      query.$text = { $search: q };
-    }
-    if (minPrice || maxPrice) {
-      query.priceRange = {};
-      if (minPrice) query.priceRange.$gte = parseFloat(minPrice);
-      if (maxPrice) query.priceRange.$lte = parseFloat(maxPrice);
-    }
+    let query = { isActive: true };
+    if (agencyId) {
+      query.agency = new mongoose.Types.ObjectId(agencyId);
+    }
+    
+    
+    if (categoryId) {
+      query.category = new mongoose.Types.ObjectId(categoryId);
+    }
 
-    if (location) {
-      query.location = { $regex: location, $options: "i" };
-    }
+    if (q) {
+      query.$text = { $search: q };
+    }
+    if (minPrice || maxPrice) {
+      query.priceRange = {};
+      if (minPrice) query.priceRange.$gte = parseFloat(minPrice );
+      if (maxPrice) query.priceRange.$lte = parseFloat(maxPrice );
+    }
 
-    const posts = await Post.find(query)
-      .populate('agency', 'agencyName email phoneNumber country ')
-      .populate('category', 'name description')   
-      .sort({ createdAt: -1 })
-      .skip(Number(skip))
-      .limit(Number(limit));
+    if (location) {
+      query.location = { $regex: location, $options: "i" };
+    }
 
-    const total = await Post.countDocuments(query);
+    const posts = await Post.find(query)
+      .populate('agency', 'agencyName email phoneNumber country ')
+      .populate('category', 'name description')   
+      .sort({ createdAt: -1 })
+      .skip(Number(skip))
+      .limit(Number(limit));
 
-    res.json({
-      posts,
-      pagination: {
-        page: Number(page),
-        limit: Number(limit),
-        total,
-        pages: Math.ceil(total / limit)
-      }
-    });
+    const total = await Post.countDocuments(query);
 
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
+    res.json({
+      posts,
+      pagination: {
+        page: Number(page),
+        limit: Number(limit),
+        total,
+        pages: Math.ceil(total / limit)
+      }
+    });
+
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
 });
 router.get('/services/:id/posts', async (req, res) => {
-  try {
-    const serviceId = req.params.id;
+  try {
+    const serviceId = req.params.id;
 
-    const posts = await Post.find({
-      category: mongoose.Types.ObjectId(serviceId),
-      isActive: true
-    })
-      .populate('agency', 'agencyName email phoneNumber country')
-      .populate('category', 'name')
-      .sort({ createdAt: -1 });
+    const posts = await Post.find({
+      category: new mongoose.Types.ObjectId(serviceId),
+      isActive: true
+    })
+      .populate('agency', 'agencyName email phoneNumber country')
+      .populate('category', 'name')
+      .sort({ createdAt: -1 });
 
-    res.json(posts);
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
+    res.json(posts);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
 });
 
 
 
 router.get('/:id', async (req, res) => {
-  try {
-    const post = await Post.findById(req.params.id)
-      .populate('agency', 'agencyName email phoneNumber country city streetAddress postalCode')
-      .populate('category', 'name');
+  try {
+    const post = await Post.findById(req.params.id)
+      .populate('agency', 'logo agencyName email phoneNumber country city streetAddress postalCode')
+      .populate('category', 'name');
 
-    if (!post) return res.status(404).json({ error: 'Post not found' });
+    if (!post) return res.status(404).json({ error: 'Post not found' });
 
-    res.json(post);
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
+    res.json(post);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
 });
 
 
 router.post('/:id/book', authMiddleware, async (req, res) => {
-  try {
-    const postId = req.params.id;
-    const { requestDescription } = req.body;
-    const post = await Post.findById(postId).populate('agency');
-    if (!post) return res.status(404).json({ error: 'Post not found' });
-    if (!post.isActive) return res.status(400).json({ error: 'Post is no longer available' });
-    const booking = new Booking({
-      company: req.companyId,
-      post: postId,
-      agency: post.agency._id,  // Agency who published the post
-      requestDescription,
-      status: 'Pending',
-    });
-    await booking.save();
-    await booking.populate([
-      { path: 'post', select: 'title description priceRange imageURL category location' },
-      { path: 'agency', select: 'agencyName email phoneNumber country city streetAddress postalCode' },
-      { path: 'company', select: 'companyName email phoneNumber' }
-    ]);
+  try {
+    const postId = req.params.id;
+    const { requestDescription } = req.body;
+    const post = await Post.findById(postId).populate('agency');
+    if (!post) return res.status(404).json({ error: 'Post not found' });
+    if (!post.isActive) return res.status(400).json({ error: 'Post is no longer available' });
+    const booking = new Booking({
+      company: req.companyId,
+      post: postId,
+      agency: post.agency._id,  // Agency who published the post
+      requestDescription,
+      status: 'Pending',
+    });
+    await booking.save();
+    await booking.populate([
+      { path: 'post', select: 'title description priceRange imageURL category location' },
+      { path: 'agency', select: 'agencyName email phoneNumber country city streetAddress postalCode' },
+      { path: 'company', select: 'companyName email phoneNumber' }
+    ]);
 
-    res.status(201).json({ message: 'Booking created successfully', booking });
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
+    res.status(201).json({ message: 'Booking created successfully', booking });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
 });
 
 module.exports = router;

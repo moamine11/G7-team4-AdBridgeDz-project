@@ -1,12 +1,9 @@
-'use client'
+'use client';
 
-import { useState, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import Link from 'next/link'
-import { Eye, EyeOff } from 'lucide-react'
+import { useState, useEffect } from 'react';
+import { Eye, EyeOff, Mail, Lock, ChevronDown, Loader2 } from 'lucide-react';
 
+type UserType = 'company' | 'agency' | null;
 
 declare global {
   interface Window {
@@ -16,209 +13,344 @@ declare global {
 }
 
 export default function LoginPage() {
-  const router = useRouter()
-  const loginPicture = '/login_picture.png'
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
-  const [showPassword, setShowPassword] = useState(false)
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [userType, setUserType] = useState<UserType>('company');
+  const [loading, setLoading] = useState(false);
+
+  const API_BASE_URL = 'http://localhost:5000/api';
+  const GOOGLE_CLIENT_ID = '847708558168-12ljci267ehd9eonebevvos968u1o6md.apps.googleusercontent.com';
+
   useEffect(() => {
-    const script = document.createElement('script')
-    script.src = 'https://accounts.google.com/gsi/client'
-    script.async = true
-    script.defer = true
-    document.body.appendChild(script)
-    window.handleCredentialResponse = handleGoogleLogin
+    const script = document.createElement('script');
+    script.src = 'https://accounts.google.com/gsi/client';
+    script.async = true;
+    script.defer = true;
+    document.body.appendChild(script);
+
+    window.handleCredentialResponse = handleGoogleLogin;
 
     script.onload = () => {
       if (window.google) {
         window.google.accounts.id.initialize({
-          client_id: '847708558168-12ljci267ehd9eonebevvos968u1o6md.apps.googleusercontent.com', 
-          callback: handleGoogleLogin
-        })
+          client_id: GOOGLE_CLIENT_ID,
+          callback: handleGoogleLogin,
+        });
         window.google.accounts.id.renderButton(
           document.getElementById('googleSignInButton'),
-          { 
-            theme: 'outline', 
+          {
+            theme: 'outline',
             size: 'large',
             width: '100%',
             text: 'signin_with',
-            shape: 'rectangular'
+            shape: 'rectangular',
+            logo_alignment: 'left',
+            locale: 'en',
           }
-        )
+        );
       }
-    }
+    };
 
     return () => {
-      document.body.removeChild(script)
-      delete window.handleCredentialResponse
-    }
-  }, [])
+      document.body.removeChild(script);
+      delete window.handleCredentialResponse;
+    };
+  }, [userType]);
 
   const handleGoogleLogin = async (response: any) => {
-    const idToken = response.credential
-    console.log(idToken)
+    if (!userType) {
+      alert('Please select your account type (Company or Agency) first.');
+      return;
+    }
+
+    const idToken = response.credential;
+    setLoading(true);
 
     try {
-      const res = await fetch('http://localhost:5000/api/agencies/google-auth', {
+      const endpoint = userType === 'company' ? 'companies' : 'agencies';
+      const res = await fetch(`${API_BASE_URL}/${endpoint}/google-auth`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ idToken })
-      })
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ idToken }),
+      });
 
-      const data = await res.json()
+      const data = await res.json();
 
       if (!res.ok) {
-        alert(data.error || 'Google login failed')
-        return
+        alert(data.error || 'Google login failed');
+        return;
       }
-      localStorage.setItem('token', data.token)
-      router.push('/Agencydashboard')
 
-     
+      localStorage.setItem('token', data.token);
+      localStorage.setItem('userType', userType);
+      window.location.href = userType === 'agency' ? '/Agencydashboard' : '/dashboard';
     } catch (error) {
-      console.error(error)
-      alert('Something went wrong with Google login.')
+      console.error(error);
+      alert('Something went wrong with Google login.');
+    } finally {
+      setLoading(false);
     }
-  }
+  };
 
-  const handleLogin = async (e: React.FormEvent) => {
-    e.preventDefault()
+  const handleLogin = async () => {
+    if (!userType) {
+      alert('Please select your account type (Company or Agency) first.');
+      return;
+    }
+
+    setLoading(true);
 
     try {
-      const res = await fetch('http://localhost:5000/api/agencies/login', {
+      const endpoint = userType === 'company' ? 'companies' : 'agencies';
+      const res = await fetch(`${API_BASE_URL}/${endpoint}/login`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password }),
-      })
+      });
 
-      const data = await res.json()
+      const data = await res.json();
 
       if (!res.ok) {
-        alert(data.error || 'Login failed')
-        return
+        alert(data.error || 'Login failed');
+        return;
       }
 
-     
-      localStorage.setItem('token', data.token)
-      if (data.userType === 'agency') {
-        router.push('/agency-dashboard')
-      } else if (data.userType === 'company') {
-        router.push('/company-dashboard')
-      }
+      localStorage.setItem('token', data.token);
+      localStorage.setItem('userType', userType);
+      window.location.href = userType === 'agency' ? '/Agencydashboard' : '/dashboard';
     } catch (error) {
-      console.error(error)
-      alert('Something went wrong.')
+      console.error(error);
+      alert('Network error. Please try again.');
+    } finally {
+      setLoading(false);
     }
-  }
+  };
+
+  const handleKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      handleLogin();
+    }
+  };
 
   return (
-    <div className="h-screen flex items-center justify-center p-4 overflow-hidden">
-      <div className="bg-white rounded-3xl shadow-2xl p-0 w-full max-w-2xl overflow-hidden max-h-[90vh] flex flex-col">
-        {/* Gradient Border Top */}
-        <div className="h-1 bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500"></div>
-        
-        <div className="flex flex-col lg:flex-row flex-1 min-h-0">
-          {/* Left Side - Form Content */}
-          <div className="flex-1 p-6 lg:p-10 flex flex-col justify-center">
-            <h1 className="text-3xl lg:text-4xl font-bold text-gray-900 mb-6 lg:mb-8">Secure Login</h1>
+    <div className="h-[100vh] bg-gradient-to-br from-slate-900 via-blue-950 to-teal-900 flex items-center justify-center p-4">
+      <div className="w-full max-w-6xl mx-auto">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-0 bg-white/5 backdrop-blur-sm rounded-3xl overflow-hidden shadow-2xl">
+          {/* Left: Form */}
+          <div className="bg-white p-8 lg:p-12 flex flex-col justify-center">
+            <div className="max-w-md mx-auto w-full max-h-[590]">
+              <h1 className="text-3xl font-bold text-slate-800 mb-2">Welcome Back</h1>
+              <p className="text-slate-600 mb-8">
+                Sign in to manage your campaigns or ad inventory.
+              </p>
 
-            <div className="space-y-5 lg:space-y-6 flex-1 flex flex-col justify-between">
-              <div className="space-y-5 lg:space-y-6">
-                {/* Email Input */}
+              <div className="space-y-5">
+                {/* Account Type */}
                 <div>
-                  <Input
-                    type="email"
-                    placeholder="Email name@example.com"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:border-blue-500 focus:outline-none"
-                    required
-                  />
+                  <label className="block text-sm font-medium text-slate-700 mb-2">
+                    Account Type
+                  </label>
+                  <div className="relative">
+                    <select
+                      value={userType || ''}
+                      onChange={(e) => setUserType(e.target.value as UserType)}
+                      className="w-full bg-slate-50 border border-slate-200 text-slate-800 rounded-lg px-4 py-3 pr-10 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500 appearance-none"
+                    >
+                      <option value="" disabled>
+                        Select account type
+                      </option>
+                      <option value="company">Advertiser</option>
+                      <option value="agency">Agency / Billboard Provider</option>
+                    </select>
+                    <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 w-5 h-5 pointer-events-none" />
+                  </div>
                 </div>
 
-                {/* Password Input */}
-                <div className="relative">
-                  <Input
-                    type={showPassword ? 'text' : 'password'}
-                    placeholder="Password ••••••"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:border-blue-500 focus:outline-none pr-12"
-                    required
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
-                  >
-                    {showPassword ? (
-                      <EyeOff className="w-5 h-5" />
-                    ) : (
-                      <Eye className="w-5 h-5" />
-                    )}
-                  </button>
+                {/* Email */}
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-2">
+                    Email
+                  </label>
+                  <div className="relative">
+                    <div className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400">
+                      <Mail className="w-5 h-5" />
+                    </div>
+                    <input
+                      type="email"
+                      placeholder="bcnriabah@gmail.com"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      onKeyPress={handleKeyPress}
+                      className="w-full bg-slate-50 border border-slate-200 text-slate-800 placeholder-slate-400 rounded-lg pl-12 pr-4 py-3 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+                    />
+                  </div>
                 </div>
 
-                {/* Forgot Password Link */}
+                {/* Password */}
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-2">
+                    Password
+                  </label>
+                  <div className="relative">
+                    <div className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400">
+                      <Lock className="w-5 h-5" />
+                    </div>
+                    <input
+                      type={showPassword ? 'text' : 'password'}
+                      placeholder="••••••••"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      onKeyPress={handleKeyPress}
+                      className="w-full bg-slate-50 border border-slate-200 text-slate-800 placeholder-slate-400 rounded-lg pl-12 pr-12 py-3 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                    >
+                      {showPassword ? (
+                        <EyeOff className="w-5 h-5" />
+                      ) : (
+                        <Eye className="w-5 h-5" />
+                      )}
+                    </button>
+                  </div>
+                </div>
+
+                {/* Forgot Password */}
                 <div className="text-right">
-                  <Link href="/forgot-password" className="text-blue-600 hover:text-blue-700 text-sm font-medium underline">
-                    Forgot Password?
-                  </Link>
+                  <a href="/forgot-password" className="text-teal-600 hover:text-teal-700 text-sm font-medium">
+                    Forgot password?
+                  </a>
                 </div>
-              </div>
 
-              <div className="space-y-4">
                 {/* Login Button */}
-                <Button
+                <button
                   onClick={handleLogin}
-                  className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 rounded-full text-base lg:text-lg"
+                  disabled={loading || !userType}
+                  className="w-full bg-teal-600 hover:bg-teal-700 text-white font-semibold py-3 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  Login
-                </Button>
+                  {loading ? (
+                    <span className="flex items-center justify-center">
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      Signing In...
+                    </span>
+                  ) : (
+                    'Sign In'
+                  )}
+                </button>
 
                 {/* Divider */}
-                <div className="relative">
+                <div className="relative my-6">
                   <div className="absolute inset-0 flex items-center">
-                    <div className="w-full border-t border-gray-300"></div>
+                    <div className="w-full border-t border-slate-200"></div>
                   </div>
-                  <div className="relative flex justify-center text-sm">
-                    <span className="px-2 bg-white text-gray-500">Or continue with</span>
+                  <div className="relative flex justify-center">
+                    <span className="bg-white px-4 text-slate-500 text-sm">Or continue with</span>
                   </div>
                 </div>
 
-                {/* Google Sign-In Button */}
-                <div id="googleSignInButton" className="w-full flex justify-center"></div>
+                {/* Google Sign-In */}
+                <div id="googleSignInButton" className="w-full"></div>
 
                 {/* Register Link */}
-                <div className="text-center">
-                  <p className="text-gray-600 text-sm">
+                <div className="text-center pt-4">
+                  <p className="text-slate-600 text-sm">
                     Don't have an account?{' '}
-                    <Link href="/account-type" className="text-blue-600 hover:text-blue-700 font-medium underline">
-                      Register
-                    </Link>
+                    <a href="/account-type" className="text-teal-600 hover:text-teal-700 font-medium">
+                      Create one
+                    </a>
                   </p>
                 </div>
               </div>
             </div>
           </div>
 
-          {/* Right Side - Logo */}
-          <div className="flex-1 bg-gradient-to-br from-blue-50 to-white flex items-center justify-center p-6 lg:p-10 min-h-[200px] lg:min-h-0">
-            <div className="text-center w-full">
-              <img
-                src={loginPicture}
-                alt="Login illustration"
-                className="w-full max-w-xs lg:max-w-sm h-auto mx-auto object-contain"
-                onError={(e) => { (e.currentTarget as HTMLImageElement).src = '/Adbridgelogo.png' }}
-              />
+          {/* Right: Illustration */}
+          <div className="hidden lg:flex bg-gradient-to-br from-slate-900 via-blue-950 to-teal-900 p-12 flex-col items-center justify-center relative overflow-hidden">
+            {/* Animated background elements */}
+            <div className="absolute inset-0 opacity-20">
+              <div className="absolute top-10 left-10 w-32 h-32 bg-teal-500 rounded-full blur-3xl animate-pulse"></div>
+              <div className="absolute bottom-20 right-10 w-40 h-40 bg-cyan-500 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1s' }}></div>
+            </div>
+
+            <div className="relative z-10 text-center max-w-md">
+              {/* Isometric Map Illustration */}
+              <div className="mb-8 relative">
+                <svg viewBox="0 0 400 300" className="w-full h-auto">
+                  {/* Base platform */}
+                  <path
+                    d="M 200 240 L 320 180 L 320 100 L 200 40 L 80 100 L 80 180 Z"
+                    fill="url(#platformGradient)"
+                    stroke="#0d9488"
+                    strokeWidth="2"
+                  />
+                  
+                  {/* Grid lines */}
+                  <line x1="140" y1="140" x2="140" y2="180" stroke="#14b8a6" strokeWidth="1" opacity="0.3" />
+                  <line x1="180" y1="120" x2="180" y2="200" stroke="#14b8a6" strokeWidth="1" opacity="0.3" />
+                  <line x1="220" y1="120" x2="220" y2="200" stroke="#14b8a6" strokeWidth="1" opacity="0.3" />
+                  <line x1="260" y1="140" x2="260" y2="180" stroke="#14b8a6" strokeWidth="1" opacity="0.3" />
+
+                  {/* Map outline (Algeria) */}
+                  <path
+                    d="M 150 120 L 180 105 L 220 110 L 250 120 L 260 140 L 250 165 L 220 175 L 180 170 L 150 150 Z"
+                    fill="#0d9488"
+                    opacity="0.6"
+                  />
+
+                  {/* Location pins */}
+                  <g className="animate-bounce" style={{ animationDuration: '2s', animationDelay: '0s' }}>
+                    <circle cx="170" cy="135" r="3" fill="#06b6d4" />
+                    <line x1="170" y1="135" x2="170" y2="150" stroke="#06b6d4" strokeWidth="2" />
+                  </g>
+                  
+                  <g className="animate-bounce" style={{ animationDuration: '2s', animationDelay: '0.3s' }}>
+                    <circle cx="200" cy="125" r="3" fill="#06b6d4" />
+                    <line x1="200" y1="125" x2="200" y2="140" stroke="#06b6d4" strokeWidth="2" />
+                  </g>
+                  
+                  <g className="animate-bounce" style={{ animationDuration: '2s', animationDelay: '0.6s' }}>
+                    <circle cx="230" cy="140" r="3" fill="#06b6d4" />
+                    <line x1="230" y1="140" x2="230" y2="155" stroke="#06b6d4" strokeWidth="2" />
+                  </g>
+
+                  {/* Data cards floating */}
+                  <g opacity="0.9">
+                    <rect x="90" y="70" width="50" height="30" rx="4" fill="#1e293b" stroke="#14b8a6" strokeWidth="1" />
+                    <line x1="95" y1="78" x2="125" y2="78" stroke="#14b8a6" strokeWidth="2" />
+                    <line x1="95" y1="85" x2="115" y2="85" stroke="#0d9488" strokeWidth="2" />
+                    <line x1="95" y1="92" x2="130" y2="92" stroke="#0d9488" strokeWidth="2" />
+                  </g>
+
+                  <g opacity="0.9">
+                    <rect x="260" y="60" width="50" height="35" rx="4" fill="#1e293b" stroke="#14b8a6" strokeWidth="1" />
+                    <circle cx="285" cy="72" r="8" fill="none" stroke="#14b8a6" strokeWidth="2" />
+                    <path d="M 278 72 L 282 76 L 292 66" stroke="#14b8a6" strokeWidth="2" fill="none" />
+                    <line x1="267" y1="85" x2="303" y2="85" stroke="#0d9488" strokeWidth="2" />
+                  </g>
+
+                  {/* Gradients */}
+                  <defs>
+                    <linearGradient id="platformGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                      <stop offset="0%" style={{ stopColor: '#0f172a', stopOpacity: 0.9 }} />
+                      <stop offset="100%" style={{ stopColor: '#1e3a5f', stopOpacity: 0.9 }} />
+                    </linearGradient>
+                  </defs>
+                </svg>
+              </div>
+
+              <h2 className="text-3xl font-bold text-white mb-4">
+                Powering Algerian Advertising
+              </h2>
+              <p className="text-slate-300 text-base leading-relaxed">
+                Connect advertisers with high-impact outdoor ad spaces across Algeria — fast, transparent, and trusted.
+              </p>
             </div>
           </div>
         </div>
       </div>
     </div>
-  )
+  );
 }

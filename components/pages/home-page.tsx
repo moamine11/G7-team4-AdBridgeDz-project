@@ -1,443 +1,300 @@
 'use client'
 
-import { useRouter } from 'next/navigation'
 import { useState } from 'react'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Textarea } from '@/components/ui/textarea'
-import Link from 'next/link'
 import { 
   Facebook, 
   Twitter, 
-  Linkedin, 
-  Search, 
-  Calendar, 
-  CheckCircle2, 
-  MapPin,
-  Phone,
-  Mail,
-  ArrowRight,
-  Shield,
-  TrendingUp,
-  Users,
-  Zap
+  Linkedin,
+  Instagram,
+  Target,
+  ChevronLeft,
+  ChevronRight,
+  ExternalLink
 } from 'lucide-react'
 
 export default function HomePage() {
-  const router = useRouter()
+  const [currentSlide, setCurrentSlide] = useState(0)
   const [contactForm, setContactForm] = useState({
     name: '',
     email: '',
     message: ''
   })
 
+  const partners = [
+    { name: 'Ooredoo', logo: 'ooredoo' },
+    { name: 'Cevital', logo: 'cevital' },
+    { name: 'Air Algérie', logo: 'air-algerie' },
+    { name: 'Ads europe', logo: 'ads-europe' },
+    { name: 'Samsung', logo: 'samsung' }
+  ]
+
+  const billboards = [
+    { id: 1, title: 'Billboard 1', subtitle: 'billboard in route', status: 'New' },
+    { id: 2, title: 'Billboard 2', subtitle: 'billboard in route', status: 'New' },
+    { id: 3, title: 'Billboard 3', subtitle: 'a good post', status: 'New' },
+    { id: 4, title: 'Billboard 4', subtitle: 'premium location', status: 'New' }
+  ]
+
+  const nextSlide = () => {
+    setCurrentSlide((prev) => (prev + 1) % Math.max(1, billboards.length - 2))
+  }
+
+  const prevSlide = () => {
+    setCurrentSlide((prev) => (prev - 1 + Math.max(1, billboards.length - 2)) % Math.max(1, billboards.length - 2))
+  }
+
   const handleContactSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     console.log('Contact form:', contactForm)
-    // Handle form submission
     setContactForm({ name: '', email: '', message: '' })
     alert('Thank you for your message! We will get back to you soon.')
   }
 
   return (
-    <div className="min-h-screen flex flex-col">
-      {/* Navbar provided by RootLayout */}
+    <div className="min-h-screen bg-slate-950">
+      {/* Navbar */}
+      <nav className="bg-slate-900/95 backdrop-blur-sm border-b border-teal-500/30 sticky top-0 z-50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex items-center justify-between h-16">
+            <div className="flex items-center gap-2">
+              <div className="w-8 h-8 bg-gradient-to-br from-teal-400 to-cyan-500 rounded-lg flex items-center justify-center">
+                <span className="text-white font-bold text-lg">A</span>
+              </div>
+              <span className="text-xl font-bold">
+                <span className="text-white">AdBridge</span>{' '}
+                <span className="text-teal-400">Algeria</span>
+              </span>
+            </div>
+            
+            <div className="hidden md:flex items-center gap-8">
+              <a href="#home" className="text-teal-400 hover:text-teal-300 transition-colors">Home</a>
+              <a href="#about" className="text-gray-300 hover:text-white transition-colors">About</a>
+              <a href="#services" className="text-gray-300 hover:text-white transition-colors">Services</a>
+              <a href="#resources" className="text-gray-300 hover:text-white transition-colors">Resources</a>
+              <a href="/login" className="text-gray-300 hover:text-white transition-colors">Log In</a>
+              <a 
+                href="/account-type" 
+                className="bg-teal-500 hover:bg-teal-600 text-white px-6 py-2 rounded-full transition-colors"
+              >
+                Sign up
+              </a>
+            </div>
+          </div>
+        </div>
+      </nav>
 
       {/* Hero Section */}
-      <section className="pt-20 pb-16 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-7xl mx-auto">
-          <div className="grid md:grid-cols-2 gap-8 lg:gap-12 items-center">
-          {/* Left Section */}
-            <div className="space-y-6">
-              <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-gray-900 leading-tight">
-                Transform Your Outdoor Advertising Experience in Algeria
+      <section className="relative min-h-[600px] flex items-center justify-center overflow-hidden">
+        {/* Background Image with Overlay */}
+        <div className="absolute inset-0 z-0">
+          <div className="absolute inset-0 bg-gradient-to-r from-slate-950 via-slate-950/90 to-slate-950/70 z-10"></div>
+          <img 
+            src="https://images.unsplash.com/photo-1480714378408-67cf0d13bc1b?w=1920&h=1080&fit=crop" 
+            alt="Algiers cityscape"
+            className="w-full h-full object-cover"
+            onError={(e) => {
+              (e.target as HTMLImageElement).src = 'data:image/svg+xml,%3Csvg width="1920" height="1080" xmlns="http://www.w3.org/2000/svg"%3E%3Crect width="1920" height="1080" fill="%231e293b"/%3E%3C/svg%3E'
+            }}
+          />
+        </div>
+
+        {/* Content */}
+        <div className="relative z-20 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
+          <div className="max-w-2xl">
+            <h1 className="text-5xl md:text-6xl font-bold text-white leading-tight mb-6">
+              Elevate Your Brand with AdBridge Algeria
             </h1>
-              <p className="text-lg md:text-xl text-gray-600 leading-relaxed">
-                The premier digital platform connecting advertisers with premium outdoor advertising spaces. 
-                Browse, compare, and book billboard locations across Algeria effortlessly.
+            <p className="text-xl text-gray-300 mb-8 leading-relaxed">
+              Browse high-impact ad spaces from trusted Algerian agencies and partners.
             </p>
-              <div className="flex flex-col sm:flex-row gap-4 pt-2">
-              <Button
-                size="lg"
-                  className="bg-teal-500 hover:bg-teal-600 text-white rounded-full px-8 py-6 text-base"
-                onClick={() => router.push('/account-type')}
+            <div className="flex flex-wrap gap-4">
+              <a 
+                href="#services"
+                className="bg-teal-500 hover:bg-teal-600 text-white px-8 py-3 rounded-full font-semibold transition-colors"
+              >
+                Explore Services
+              </a>
+              <a 
+                href="/account-type"
+                className="border-2 border-teal-500 text-teal-400 hover:bg-teal-500/10 px-8 py-3 rounded-full font-semibold transition-colors"
               >
                 Get Started
-              </Button>
-              <Link href="/login">
-                <Button
-                  size="lg"
-                  variant="outline"
-                    className="border-2 border-blue-600 text-blue-600 hover:bg-blue-50 rounded-full px-8 py-6 text-base"
+              </a>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Our Mission Section */}
+      <section className="py-16 px-4 sm:px-6 lg:px-8 bg-slate-900/50">
+        <div className="max-w-7xl mx-auto">
+          <div className="bg-gradient-to-br from-slate-800/50 to-slate-900/50 border border-slate-700/50 rounded-2xl p-8 md:p-12">
+            <div className="grid md:grid-cols-2 gap-8 items-center">
+              <div className="flex items-center gap-4">
+                <div className="flex-shrink-0 w-16 h-16 bg-teal-500/20 rounded-full flex items-center justify-center">
+                  <Target className="w-8 h-8 text-teal-400" />
+                </div>
+                <h2 className="text-3xl font-bold text-white">Our Mission</h2>
+              </div>
+              <div>
+                <p className="text-gray-300 leading-relaxed">
+                  AdBridge Algeria is a functional connective prioritizing transparent 
+                  contact swiftly, and manufacturer agreements. We deliver a branded 
+                  solution, for the sources to deliver the nuanced nice skills to 
+                  becoming to our wish multiroaded brand.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Our Partners Section */}
+      <section className="py-16 px-4 sm:px-6 lg:px-8">
+        <div className="max-w-7xl mx-auto">
+          <h2 className="text-3xl font-bold text-white mb-8">Our Partners</h2>
+          <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+            {partners.map((partner, index) => (
+              <div 
+                key={index}
+                className="bg-slate-800/50 border border-slate-700/50 rounded-xl p-8 flex items-center justify-center hover:border-teal-500/50 transition-colors aspect-square"
+              >
+                <span className="text-white text-lg font-semibold">{partner.name}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Most Famous Ads Section */}
+      <section className="py-16 px-4 sm:px-6 lg:px-8">
+        <div className="max-w-7xl mx-auto">
+          <div className="flex items-center justify-between mb-8">
+            <h2 className="text-3xl font-bold text-white">Most Famous Ads</h2>
+            <div className="flex gap-2">
+              <button 
+                onClick={prevSlide}
+                className="w-10 h-10 bg-slate-800 hover:bg-slate-700 rounded-full flex items-center justify-center text-white transition-colors"
+              >
+                <ChevronLeft className="w-5 h-5" />
+              </button>
+              <button 
+                onClick={nextSlide}
+                className="w-10 h-10 bg-teal-500 hover:bg-teal-600 rounded-full flex items-center justify-center text-white transition-colors"
+              >
+                <ChevronRight className="w-5 h-5" />
+              </button>
+            </div>
+          </div>
+
+          <div className="relative overflow-hidden">
+            <div 
+              className="flex gap-4 transition-transform duration-300 ease-in-out"
+              style={{ transform: `translateX(-${currentSlide * (100 / 3)}%)` }}
+            >
+              {billboards.map((billboard) => (
+                <div 
+                  key={billboard.id}
+                  className="min-w-[calc(33.333%-0.67rem)] bg-slate-800/50 border border-slate-700/50 rounded-xl overflow-hidden hover:border-teal-500/50 transition-colors group"
                 >
-                  Login
-                </Button>
-              </Link>
-            </div>
-          </div>
-
-          {/* Right Section - Illustration */}
-            <div className="flex justify-center items-center">
-            <img
-              src="/hero_illustration.png"
-              alt="Outdoor advertising illustration"
-                className="w-full max-w-md lg:max-w-lg object-contain"
-            />
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Purpose/Description Section */}
-      <section className="py-16 px-4 sm:px-6 lg:px-8 bg-white/50">
-        <div className="max-w-7xl mx-auto">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
-              About AdBridgeDZ
-            </h2>
-            <p className="text-lg text-gray-600 max-w-3xl mx-auto">
-              AdBridgeDZ is revolutionizing the outdoor advertising industry in Algeria by providing 
-              a seamless digital marketplace where businesses and advertising agencies can connect, 
-              discover, and book premium billboard spaces with unprecedented ease.
-            </p>
-          </div>
-
-          <div className="grid md:grid-cols-3 gap-8 mt-12">
-            <div className="text-center p-6 rounded-xl bg-gradient-to-br from-blue-50 to-teal-50 border border-blue-100">
-              <div className="inline-flex items-center justify-center w-16 h-16 bg-blue-500 rounded-full mb-4">
-                <Search className="w-8 h-8 text-white" />
-              </div>
-              <h3 className="text-xl font-bold text-gray-900 mb-2">Discover Spaces</h3>
-              <p className="text-gray-600">
-                Browse through hundreds of verified outdoor advertising locations across Algeria 
-                with detailed information and real-time availability.
-              </p>
-            </div>
-
-            <div className="text-center p-6 rounded-xl bg-gradient-to-br from-teal-50 to-blue-50 border border-teal-100">
-              <div className="inline-flex items-center justify-center w-16 h-16 bg-teal-500 rounded-full mb-4">
-                <Shield className="w-8 h-8 text-white" />
-              </div>
-              <h3 className="text-xl font-bold text-gray-900 mb-2">Verified Partners</h3>
-              <p className="text-gray-600">
-                All advertising agencies and billboard providers are thoroughly verified, 
-                ensuring reliability and quality service for your campaigns.
-              </p>
-            </div>
-
-            <div className="text-center p-6 rounded-xl bg-gradient-to-br from-blue-50 to-purple-50 border border-blue-100">
-              <div className="inline-flex items-center justify-center w-16 h-16 bg-purple-500 rounded-full mb-4">
-                <TrendingUp className="w-8 h-8 text-white" />
-              </div>
-              <h3 className="text-xl font-bold text-gray-900 mb-2">Maximize Impact</h3>
-              <p className="text-gray-600">
-                Compare pricing, locations, and features to make data-driven decisions 
-                that maximize the impact of your advertising campaigns.
-              </p>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* How It Works Section */}
-      <section className="py-16 px-4 sm:px-6 lg:px-8" id="how-it-works">
-        <div className="max-w-7xl mx-auto">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
-              How It Works
-            </h2>
-            <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-              Getting started with AdBridgeDZ is simple. Follow these easy steps to 
-              begin your outdoor advertising journey.
-            </p>
-          </div>
-
-          <div className="grid md:grid-cols-3 gap-8 relative">
-            {/* Step 1 */}
-            <div className="relative">
-              <div className="bg-white p-8 rounded-2xl shadow-lg border border-gray-100 hover:shadow-xl transition-shadow">
-                <div className="flex items-center justify-center w-12 h-12 bg-gradient-to-r from-teal-500 to-blue-500 rounded-full text-white font-bold text-xl mb-4">
-                  1
-                </div>
-                <div className="flex items-center gap-3 mb-4">
-                  <Users className="w-6 h-6 text-teal-600" />
-                  <h3 className="text-xl font-bold text-gray-900">Create Account</h3>
-                </div>
-                <p className="text-gray-600 leading-relaxed">
-                  Sign up as either an advertiser looking for billboard spaces or as an 
-                  agency managing advertising locations. The registration process takes just minutes.
-                </p>
-              </div>
-              <div className="hidden md:block absolute top-16 left-full w-16 h-0.5 bg-gradient-to-r from-teal-500 to-blue-500 transform translate-x-4"></div>
-            </div>
-
-            {/* Step 2 */}
-            <div className="relative">
-              <div className="bg-white p-8 rounded-2xl shadow-lg border border-gray-100 hover:shadow-xl transition-shadow">
-                <div className="flex items-center justify-center w-12 h-12 bg-gradient-to-r from-teal-500 to-blue-500 rounded-full text-white font-bold text-xl mb-4">
-                  2
-                </div>
-                <div className="flex items-center gap-3 mb-4">
-                  <Search className="w-6 h-6 text-teal-600" />
-                  <h3 className="text-xl font-bold text-gray-900">Explore Options</h3>
-                </div>
-                <p className="text-gray-600 leading-relaxed">
-                  Browse through our extensive catalog of available billboard spaces. 
-                  Filter by location, size, price, and traffic data to find the perfect match.
-                </p>
-              </div>
-              <div className="hidden md:block absolute top-16 left-full w-16 h-0.5 bg-gradient-to-r from-teal-500 to-blue-500 transform translate-x-4"></div>
-            </div>
-
-            {/* Step 3 */}
-            <div>
-              <div className="bg-white p-8 rounded-2xl shadow-lg border border-gray-100 hover:shadow-xl transition-shadow">
-                <div className="flex items-center justify-center w-12 h-12 bg-gradient-to-r from-teal-500 to-blue-500 rounded-full text-white font-bold text-xl mb-4">
-                  3
-                </div>
-                <div className="flex items-center gap-3 mb-4">
-                  <Calendar className="w-6 h-6 text-teal-600" />
-                  <h3 className="text-xl font-bold text-gray-900">Book & Advertise</h3>
-                </div>
-                <p className="text-gray-600 leading-relaxed">
-                  Reserve your preferred billboard space, upload your creative content, 
-                  and launch your campaign. Track performance and manage bookings all in one place.
-                </p>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Features Section */}
-      <section className="py-16 px-4 sm:px-6 lg:px-8 bg-gradient-to-br from-blue-50 via-teal-50 to-white">
-        <div className="max-w-7xl mx-auto">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
-              Why Choose AdBridgeDZ?
-            </h2>
-          </div>
-
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
-            <div className="bg-white p-6 rounded-xl shadow-md border border-gray-100">
-              <Zap className="w-10 h-10 text-teal-500 mb-4" />
-              <h3 className="text-lg font-bold text-gray-900 mb-2">Instant Booking</h3>
-              <p className="text-gray-600 text-sm">
-                Book advertising spaces instantly with real-time availability updates.
-              </p>
-            </div>
-
-            <div className="bg-white p-6 rounded-xl shadow-md border border-gray-100">
-              <MapPin className="w-10 h-10 text-blue-500 mb-4" />
-              <h3 className="text-lg font-bold text-gray-900 mb-2">Nationwide Coverage</h3>
-              <p className="text-gray-600 text-sm">
-                Access billboard locations across all major cities in Algeria.
-              </p>
-            </div>
-
-            <div className="bg-white p-6 rounded-xl shadow-md border border-gray-100">
-              <CheckCircle2 className="w-10 h-10 text-green-500 mb-4" />
-              <h3 className="text-lg font-bold text-gray-900 mb-2">Verified Agencies</h3>
-              <p className="text-gray-600 text-sm">
-                All partners are verified for quality and reliability.
-              </p>
-            </div>
-
-            <div className="bg-white p-6 rounded-xl shadow-md border border-gray-100">
-              <TrendingUp className="w-10 h-10 text-purple-500 mb-4" />
-              <h3 className="text-lg font-bold text-gray-900 mb-2">Analytics & Insights</h3>
-              <p className="text-gray-600 text-sm">
-                Track campaign performance with detailed analytics and reports.
-              </p>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Contact Section */}
-      <section className="py-16 px-4 sm:px-6 lg:px-8" id="contact">
-        <div className="max-w-7xl mx-auto">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
-              Get In Touch
-            </h2>
-            <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-              Have questions? We'd love to hear from you. Send us a message and we'll respond as soon as possible.
-            </p>
-          </div>
-
-          <div className="grid md:grid-cols-2 gap-12">
-            {/* Contact Information */}
-            <div className="space-y-6">
-              <div className="bg-white p-8 rounded-2xl shadow-lg border border-gray-100">
-                <h3 className="text-2xl font-bold text-gray-900 mb-6">Contact Information</h3>
-                
-                <div className="space-y-4">
-                  <div className="flex items-start gap-4">
-                    <div className="flex items-center justify-center w-12 h-12 bg-blue-100 rounded-lg">
-                      <Mail className="w-6 h-6 text-blue-600" />
-                    </div>
+                  <div className="aspect-video bg-slate-700/50 flex items-center justify-center relative">
+                    <ExternalLink className="w-8 h-8 text-slate-600 group-hover:text-teal-400 transition-colors" />
+                  </div>
+                  <div className="p-6 flex items-end justify-between">
                     <div>
-                      <h4 className="font-semibold text-gray-900 mb-1">Email</h4>
-                      <a href="mailto:support@adbridgedz.dz" className="text-blue-600 hover:text-blue-700">
-                        support@adbridgedz.dz
-                      </a>
+                      <h3 className="text-white font-bold text-lg mb-1">{billboard.title}</h3>
+                      <p className="text-gray-400 text-sm">{billboard.subtitle}</p>
                     </div>
-                  </div>
-
-                  <div className="flex items-start gap-4">
-                    <div className="flex items-center justify-center w-12 h-12 bg-teal-100 rounded-lg">
-                      <Phone className="w-6 h-6 text-teal-600" />
-                    </div>
-                    <div>
-                      <h4 className="font-semibold text-gray-900 mb-1">Phone</h4>
-                      <a href="tel:+213555123456" className="text-blue-600 hover:text-blue-700">
-                        +213 555 123 456
-                      </a>
-                    </div>
-                  </div>
-
-                  <div className="flex items-start gap-4">
-                    <div className="flex items-center justify-center w-12 h-12 bg-purple-100 rounded-lg">
-                      <MapPin className="w-6 h-6 text-purple-600" />
-                    </div>
-                    <div>
-                      <h4 className="font-semibold text-gray-900 mb-1">Address</h4>
-                      <p className="text-gray-600">
-                        Algiers, Algeria
-                      </p>
-                    </div>
+                    <span className="bg-teal-500 text-white text-xs px-3 py-1 rounded-full font-semibold">
+                      {billboard.status}
+                    </span>
                   </div>
                 </div>
-
-                <div className="mt-8 pt-8 border-t border-gray-200">
-                  <h4 className="font-semibold text-gray-900 mb-4">Follow Us</h4>
-                  <div className="flex gap-4">
-                    <a href="#" className="text-gray-600 hover:text-blue-600 transition-colors">
-                      <Facebook className="w-6 h-6" />
-                    </a>
-                    <a href="#" className="text-gray-600 hover:text-blue-400 transition-colors">
-                      <Twitter className="w-6 h-6" />
-                    </a>
-                    <a href="#" className="text-gray-600 hover:text-blue-700 transition-colors">
-                      <Linkedin className="w-6 h-6" />
-                    </a>
-                  </div>
-                </div>
-              </div>
+              ))}
             </div>
+          </div>
 
-            {/* Contact Form */}
-            <div className="bg-white p-8 rounded-2xl shadow-lg border border-gray-100">
-              <form onSubmit={handleContactSubmit} className="space-y-6">
-                <div>
-                  <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-2">
-                    Name
-                  </label>
-                  <Input
-                    id="name"
-                    type="text"
-                    value={contactForm.name}
-                    onChange={(e) => setContactForm({ ...contactForm, name: e.target.value })}
-                    placeholder="Your name"
-                    className="w-full"
-                    required
-                  />
-                </div>
+          {/* Carousel Indicators */}
+          <div className="flex justify-center gap-2 mt-6">
+            {Array.from({ length: Math.max(1, billboards.length - 2) }).map((_, index) => (
+              <button
+                key={index}
+                onClick={() => setCurrentSlide(index)}
+                className={`h-2 rounded-full transition-all ${
+                  currentSlide === index ? 'w-8 bg-teal-500' : 'w-2 bg-slate-600'
+                }`}
+              />
+            ))}
+          </div>
+        </div>
+      </section>
 
-                <div>
-                  <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
-                    Email
-                  </label>
-                  <Input
-                    id="email"
-                    type="email"
-                    value={contactForm.email}
-                    onChange={(e) => setContactForm({ ...contactForm, email: e.target.value })}
-                    placeholder="your.email@example.com"
-                    className="w-full"
-                    required
-                  />
-                </div>
-
-                <div>
-                  <label htmlFor="message" className="block text-sm font-medium text-gray-700 mb-2">
-                    Message
-                  </label>
-                  <Textarea
-                    id="message"
-                    value={contactForm.message}
-                    onChange={(e) => setContactForm({ ...contactForm, message: e.target.value })}
-                    placeholder="Tell us how we can help..."
-                    className="w-full min-h-[120px]"
-                    required
-                  />
-                </div>
-
-                <Button
-                  type="submit"
-                  className="w-full bg-gradient-to-r from-teal-500 to-blue-500 hover:from-teal-600 hover:to-blue-600 text-white rounded-full py-6 text-base font-semibold flex items-center justify-center gap-2"
-                >
-                  Send Message
-                  <ArrowRight className="w-5 h-5" />
-                </Button>
-              </form>
-            </div>
+      {/* CTA Section */}
+      <section className="py-16 px-4 sm:px-6 lg:px-8">
+        <div className="max-w-4xl mx-auto">
+          <div className="bg-gradient-to-br from-slate-800/50 to-slate-900/50 border border-slate-700/50 rounded-2xl p-12 text-center">
+            <h2 className="text-3xl md:text-4xl font-bold text-white mb-6">
+              Ready to launch your next campaign?
+            </h2>
+            <a 
+              href="#contact"
+              className="inline-block bg-teal-500 hover:bg-teal-600 text-white px-8 py-3 rounded-full font-semibold transition-colors"
+            >
+              Contact Us Today
+            </a>
           </div>
         </div>
       </section>
 
       {/* Footer */}
-      <footer className="bg-white/80 border-t border-gray-200 py-8 px-4 sm:px-6 lg:px-8">
+      <footer className="bg-slate-900/50 border-t border-slate-800 py-12 px-4 sm:px-6 lg:px-8">
         <div className="max-w-7xl mx-auto">
-          <div className="grid md:grid-cols-3 gap-8 mb-8">
+          <div className="grid md:grid-cols-4 gap-8 mb-8">
             <div>
-              <h4 className="font-bold text-gray-900 mb-4">AdBridgeDZ</h4>
-              <p className="text-gray-600 text-sm">
-                The premier digital marketplace for outdoor advertising in Algeria.
-              </p>
+              <div className="flex items-center gap-2 mb-4">
+                <div className="w-8 h-8 bg-gradient-to-br from-teal-400 to-cyan-500 rounded-lg flex items-center justify-center">
+                  <span className="text-white font-bold text-lg">A</span>
+                </div>
+                <span className="text-lg font-bold">
+                  <span className="text-white">AdBridge</span>{' '}
+                  <span className="text-teal-400">Algeria</span>
+                </span>
+              </div>
             </div>
+            
             <div>
-              <h4 className="font-bold text-gray-900 mb-4">Quick Links</h4>
-              <ul className="space-y-2 text-sm">
-                <li>
-                  <a href="#how-it-works" className="text-gray-600 hover:text-blue-600">How It Works</a>
-                </li>
-                <li>
-                  <a href="#contact" className="text-gray-600 hover:text-blue-600">Contact</a>
-                </li>
-                <li>
-                  <Link href="/login" className="text-gray-600 hover:text-blue-600">Login</Link>
-                </li>
-                <li>
-                  <Link href="/account-type" className="text-gray-600 hover:text-blue-600">Get Started</Link>
-                </li>
+              <h4 className="text-white font-bold mb-4">Quick Links</h4>
+              <ul className="space-y-2">
+                <li><a href="#home" className="text-gray-400 hover:text-teal-400 text-sm transition-colors">Home</a></li>
+                <li><a href="#about" className="text-gray-400 hover:text-teal-400 text-sm transition-colors">Terms</a></li>
+                <li><a href="#about" className="text-gray-400 hover:text-teal-400 text-sm transition-colors">About Us</a></li>
+                <li><a href="#contact" className="text-gray-400 hover:text-teal-400 text-sm transition-colors">Contact Us</a></li>
               </ul>
             </div>
+            
             <div>
-              <h4 className="font-bold text-gray-900 mb-4">Legal</h4>
-              <ul className="space-y-2 text-sm">
-                <li>
-                  <a href="#" className="text-gray-600 hover:text-blue-600">Terms of Service</a>
-                </li>
-                <li>
-                  <a href="#" className="text-gray-600 hover:text-blue-600">Privacy Policy</a>
-                </li>
+              <h4 className="text-white font-bold mb-4">Legal</h4>
+              <ul className="space-y-2">
+                <li><a href="#" className="text-gray-400 hover:text-teal-400 text-sm transition-colors">Privacy Policy</a></li>
               </ul>
             </div>
-          </div>
-          <div className="pt-8 border-t border-gray-200 flex flex-col md:flex-row items-center justify-between text-sm text-gray-600">
-            <p>&copy; 2024 AdBridgeDZ. All rights reserved.</p>
-            <div className="flex gap-4 mt-4 md:mt-0">
-              <a href="#" className="hover:text-blue-600 transition-colors">
-                <Facebook className="w-5 h-5" />
-              </a>
-              <a href="#" className="hover:text-blue-400 transition-colors">
-                <Twitter className="w-5 h-5" />
-              </a>
-              <a href="#" className="hover:text-blue-700 transition-colors">
-                <Linkedin className="w-5 h-5" />
-              </a>
+
+            <div>
+              <p className="text-gray-400 text-sm mb-4">www.adbridgealgeria.com</p>
+              <div className="flex gap-3">
+                <a href="#" className="w-10 h-10 bg-slate-800 hover:bg-teal-500 rounded-full flex items-center justify-center text-gray-400 hover:text-white transition-colors">
+                  <Twitter className="w-5 h-5" />
+                </a>
+                <a href="#" className="w-10 h-10 bg-slate-800 hover:bg-teal-500 rounded-full flex items-center justify-center text-gray-400 hover:text-white transition-colors">
+                  <Facebook className="w-5 h-5" />
+                </a>
+                <a href="#" className="w-10 h-10 bg-slate-800 hover:bg-teal-500 rounded-full flex items-center justify-center text-gray-400 hover:text-white transition-colors">
+                  <Linkedin className="w-5 h-5" />
+                </a>
+                <a href="#" className="w-10 h-10 bg-slate-800 hover:bg-teal-500 rounded-full flex items-center justify-center text-gray-400 hover:text-white transition-colors">
+                  <Instagram className="w-5 h-5" />
+                </a>
+              </div>
             </div>
           </div>
         </div>

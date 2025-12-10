@@ -1,116 +1,56 @@
 const express = require('express');
+const router = express.Router();
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const mongoose = require('mongoose');
 const crypto = require('crypto');
 const nodemailer = require('nodemailer');
-const { OAuth2Client } = require('google-auth-library');
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
 const Agency = require('../models/agency');
 const Post = require('../models/post');
+const Booking = require('../models/booking');
+const { OAuth2Client } = require('google-auth-library');
+// --- CLOUDINARY IMPORTS ---
+const cloudinary = require('cloudinary').v2;
+const { CloudinaryStorage } = require('multer-storage-cloudinary');
+// --- END CLOUDINARY IMPORTS ---
 
-const router = express.Router();
 const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
-
-
-
-const uploadDirs = ['uploads/logos', 'uploads/documents'];
-uploadDirs.forEach(dir => {
-  if (!fs.existsSync(dir)) {
-    fs.mkdirSync(dir, { recursive: true });
-  }
+// --- CLOUDINARY CONFIGURATION ---
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET
 });
 
-const logoStorage = multer.diskStorage({
-  destination: function (req, file, cb) {
-    cb(null, 'uploads/logos/');
-  },
-  filename: function (req, file, cb) {
-    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-    cb(null, 'logo-' + uniqueSuffix + path.extname(file.originalname));
-  }
-});
-
-
-const documentStorage = multer.diskStorage({
-  destination: function (req, file, cb) {
-    cb(null, 'uploads/documents/');
-  },
-  filename: function (req, file, cb) {
-    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-    cb(null, 'document-' + uniqueSuffix + path.extname(file.originalname));
-  }
-});
-
-const imageFilter = (req, file, cb) => {
-  const allowedTypes = /jpeg|jpg|png|gif|webp/;
-  const extname = allowedTypes.test(path.extname(file.originalname).toLowerCase());
-  const mimetype = allowedTypes.test(file.mimetype);
-  
-  if (mimetype && extname) {
-    return cb(null, true);
-  } else {
-    cb(new Error('Only image files (JPEG, JPG, PNG, GIF, WEBP) are allowed!'));
-  }
+// Helper function to create Cloudinary storage configuration
+const createCloudinaryStorage = (folderName, allowedFormats) => {
+    return new CloudinaryStorage({
+        cloudinary: cloudinary,
+        params: (req, file) => {
+            const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+            return {
+                folder: `agency/${folderName}`,
+                allowed_formats: allowedFormats,
+                transformation: [{ width: 800, crop: 'limit' }],
+                public_id: `${file.fieldname}-${uniqueSuffix}`
+            };
+        }
+    });
 };
 
-const documentFilter = (req, file, cb) => {
-  const allowedTypes = /pdf|doc|docx|jpeg|jpg|png/;
-  const extname = allowedTypes.test(path.extname(file.originalname).toLowerCase());
-  const mimetype = /pdf|msword|officedocument|image/.test(file.mimetype);
-  
-  if (mimetype && extname) {
-    return cb(null, true);
-  } else {
-    cb(new Error('Only PDF, DOC, DOCX, or image files are allowed for documents!'));
-  }
-};
+// --- STORAGE CONFIGURATION FOR ALL FILES ---
+// NOTE: We define single-file upload instances only for simplicity and stability.
+const logoStorage = createCloudinaryStorage('logos', ['jpg', 'jpeg', 'png', 'gif', 'webp']);
+const postImageStorage = createCloudinaryStorage('posts', ['jpg', 'jpeg', 'png', 'gif', 'webp']);
 
-const uploadLogo = multer({
-  storage: logoStorage,
-  limits: { fileSize: 5 * 1024 * 1024 }, 
-  fileFilter: imageFilter
-});
+const uploadLogo = multer({ storage: logoStorage, limits: { fileSize: 5 * 1024 * 1024 } }).single('logo');
+const uploadPostImage = multer({ storage: postImageStorage, limits: { fileSize: 5 * 1024 * 1024 } }).single('image');
 
-const uploadDocument = multer({
-  storage: documentStorage,
-  limits: { fileSize: 10 * 1024 * 1024 }, 
-  fileFilter: documentFilter
-});
-const uploadFiles = multer({
-  storage: multer.diskStorage({
-    destination: function (req, file, cb) {
-      if (file.fieldname === 'logo') {
-        cb(null, 'uploads/logos/');
-      } else if (file.fieldname === 'rcDocument') {
-        cb(null, 'uploads/documents/');
-      } else {
-        cb(new Error('Unexpected field'));
-      }
-    },
-    filename: function (req, file, cb) {
-      const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-      const prefix = file.fieldname === 'logo' ? 'logo-' : 'document-';
-      cb(null, prefix + uniqueSuffix + path.extname(file.originalname));
-    }
-  }),
-  limits: { fileSize: 10 * 1024 * 1024 },
-  fileFilter: function (req, file, cb) {
-    if (file.fieldname === 'logo') {
-      imageFilter(req, file, cb);
-    } else if (file.fieldname === 'rcDocument') {
-      documentFilter(req, file, cb);
-    } else {
-      cb(new Error('Unexpected field'));
-    }
-  }
-}).fields([
-  { name: 'logo', maxCount: 1 },
-  { name: 'rcDocument', maxCount: 1 }
-]);
+// --- END STORAGE CONFIGURATION ---
 
 
 const authMiddleware = async (req, res, next) => {
@@ -124,6 +64,17 @@ const authMiddleware = async (req, res, next) => {
   } catch (error) {
     res.status(401).json({ error: 'Invalid token' });
   }
+};
+
+// Helper to destroy Cloudinary resource
+const destroyCloudinaryResource = async (publicId) => {
+    if (publicId) {
+        try {
+            await cloudinary.uploader.destroy(publicId);
+        } catch (error) {
+            console.error(`Cloudinary deletion failed for ID ${publicId}:`, error);
+        }
+    }
 };
 
 const sendVerificationEmail = async (agency, token) => {
@@ -149,103 +100,236 @@ const sendVerificationEmail = async (agency, token) => {
   });
 };
 
-router.post('/register', (req, res) => {
-  uploadFiles(req, res, async (err) => {
-    if (err) {
-      return res.status(400).json({ error: err.message });
-    }
-
+// --- REGISTER ROUTE (SIMPLIFIED for single logo upload only) ---
+router.post('/register', uploadLogo, async (req, res) => {
     try {
-      const { 
-        agencyName, email, userType, password, phoneNumber, countryCode, websiteUrl, country, city, streetAddress, 
-        postalCode, businessRegistrationNumber, industry, companySize, yearEstablished, fullName, 
-        jobTitle, servicesOffered, facebookUrl, linkedinUrl, agreeToTerms 
-      } = req.body;
+        const { 
+            agencyName, email, userType, password, phoneNumber, countryCode, websiteUrl, country, city, streetAddress, 
+            postalCode, businessRegistrationNumber, industry, companySize, yearEstablished, fullName, 
+            jobTitle, servicesOffered, facebookUrl, linkedinUrl, agreeToTerms 
+        } = req.body;
 
-     
-      const existingAgency = await Agency.findOne({ email });
-      if (existingAgency) return res.status(400).json({ error: 'Email already exists' });
-
-   
-      const hashedPassword = await bcrypt.hash(password, 10);
-
-    
-      const verificationToken = crypto.randomBytes(32).toString('hex');
-
-      let parsedServices = [];
-      if (servicesOffered) {
-        try {
-          parsedServices = JSON.parse(servicesOffered);
-        } catch (e) {
-          parsedServices = Array.isArray(servicesOffered) ? servicesOffered : [servicesOffered];
+        if (!agreeToTerms || agreeToTerms !== 'true' && agreeToTerms !== true) {
+            // Clean up if agreement is missing
+            if (req.file) await destroyCloudinaryResource(req.file.filename);
+            return res.status(400).json({ error: 'You must agree to the Terms and Conditions' });
         }
-      }
 
-      const logoPath = req.files?.logo ? `/uploads/logos/${req.files.logo[0].filename}` : undefined;
-      const rcDocumentPath = req.files?.rcDocument ? `/uploads/documents/${req.files.rcDocument[0].filename}` : undefined;
-
-      const agency = new Agency({
-        agencyName,
-        email,
-        userType: userType || 'agency',
-        password: hashedPassword,
-        phoneNumber,
-        countryCode,
-        websiteUrl,
-        country,
-        city,
-        streetAddress,
-        postalCode,
-        businessRegistrationNumber,
-        rcDocument: rcDocumentPath,
-        logo: logoPath,
-        industry,
-        companySize,
-        yearEstablished: yearEstablished ? parseInt(yearEstablished) : undefined,
-        fullName,
-        jobTitle,
-        servicesOffered: parsedServices,
-        facebookUrl,
-        linkedinUrl,
-        agreeToTerms: agreeToTerms === 'true' || agreeToTerms === true,
-        isVerified: false,
-        verificationToken,
-        signUpMethod: 'local'
-      });
-
-      await agency.save();
-      await sendVerificationEmail(agency, verificationToken);
-
-      const token = jwt.sign({ agencyId: agency._id }, process.env.JWT_SECRET, { expiresIn: '30d' });
-
-      res.status(201).json({
-        message: 'Agency registered successfully. Please check your email to verify your account.',
-        token,
-        agency: { 
-          id: agency._id, 
-          agencyName: agency.agencyName, 
-          email: agency.email,
-          logo: agency.logo,
-          servicesOffered: agency.servicesOffered
+        const existingAgency = await Agency.findOne({ email });
+        if (existingAgency) {
+            if (req.file) await destroyCloudinaryResource(req.file.filename);
+            return res.status(400).json({ error: 'Email already exists' });
         }
-      });
+
+        const hashedPassword = await bcrypt.hash(password, 10);
+        const verificationToken = crypto.randomBytes(32).toString('hex');
+
+        let parsedServices = servicesOffered ? (typeof servicesOffered === 'string' ? JSON.parse(servicesOffered) : servicesOffered) : [];
+
+        // Store Cloudinary URLs and Public IDs
+        const logoUrl = req.file ? req.file.path : undefined;
+        const logoPublicId = req.file ? req.file.filename : undefined;
+        // RC document fields will be null/undefined here, assuming it's done later/separately if needed
+
+        const agency = new Agency({
+            agencyName, email, userType: userType || 'agency', password: hashedPassword,
+            phoneNumber, countryCode, websiteUrl, country, city, streetAddress, postalCode, businessRegistrationNumber,
+            // rcDocument fields omitted for simplicity in this stable version
+            logo: logoUrl, logoPublicId,                      
+            industry, companySize, yearEstablished: yearEstablished ? parseInt(yearEstablished) : undefined,
+            fullName, jobTitle, servicesOffered: parsedServices, facebookUrl, linkedinUrl,
+            agreeToTerms: agreeToTerms === 'true' || agreeToTerms === true, isVerified: false, verificationToken,
+            signUpMethod: 'local'
+        });
+
+        await agency.save();
+        await sendVerificationEmail(agency, verificationToken);
+
+        const token = jwt.sign({ agencyId: agency._id }, process.env.JWT_SECRET, { expiresIn: '30d' });
+
+        res.status(201).json({
+            message: 'Agency registered successfully. Please check your email to verify your account.',
+            token,
+            agency: { id: agency._id, agencyName: agency.agencyName, email: agency.email, logo: agency.logo, servicesOffered: agency.servicesOffered }
+        });
     } catch (error) {
-      
-      if (req.files?.logo) {
-        fs.unlinkSync(path.join(__dirname, '..', req.files.logo[0].path));
-      }
-      if (req.files?.rcDocument) {
-        fs.unlinkSync(path.join(__dirname, '..', req.files.rcDocument[0].path));
-      }
-      res.status(500).json({ error: error.message });
+        console.error('Registration error:', error);
+        if (req.file) await destroyCloudinaryResource(req.file.filename);
+        res.status(500).json({ error: error.message });
     }
-  });
+});
+
+// ... (Existing verification, login, google-auth, resend-verification routes remain unchanged) ...
+
+
+// --- PROFILE UPDATE ROUTE (STABLE SINGLE FILE FIX - Matches companies.js) ---
+router.put('/profile', authMiddleware, uploadLogo, async (req, res) => {
+    try {
+        const { 
+            agencyName, email, phoneNumber, websiteUrl, country, city, streetAddress, postalCode, 
+            businessRegistrationNumber, industry, companySize, yearEstablished, fullName, 
+            jobTitle, servicesOffered, facebookUrl, linkedinUrl 
+        } = req.body;
+
+        const updateData = { updatedAt: Date.now() };
+
+        const oldAgency = await Agency.findById(req.agencyId);
+        if (!oldAgency) return res.status(404).json({ error: 'Agency not found' });
+        
+        // Handle static text fields
+        Object.assign(updateData, {
+            agencyName, email, phoneNumber, websiteUrl, country, city, streetAddress, postalCode, 
+            businessRegistrationNumber, industry, companySize, yearEstablished: yearEstablished ? parseInt(yearEstablished) : undefined,
+            fullName, jobTitle, facebookUrl, linkedinUrl,
+            servicesOffered: servicesOffered ? JSON.parse(servicesOffered) : oldAgency.servicesOffered
+        });
+
+        // CRITICAL FIX: Handle Logo Update (If new file uploaded via uploadLogo middleware)
+        if (req.file) {
+            // Delete old image from Cloudinary
+            await destroyCloudinaryResource(oldAgency.logoPublicId);
+
+            // Update with new Cloudinary URL and Public ID
+            updateData.logo = req.file.path;
+            updateData.logoPublicId = req.file.filename;
+        }
+        
+        // NOTE: rcDocument update fields are ignored here to maintain stability.
+
+        const agency = await Agency.findByIdAndUpdate(
+            req.agencyId,
+            updateData,
+            { new: true, runValidators: true }
+        ).select('-password').populate('servicesOffered');
+
+        res.json({ message: 'Profile updated', agency });
+    } catch (error) {
+        console.error('Update error:', error);
+        // Clean up newly uploaded files if DB update fails
+        if (req.file) await destroyCloudinaryResource(req.file.filename);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+
+// --- CREATE POST ROUTE (UPDATED for Cloudinary URL) ---
+router.post('/posts', authMiddleware, uploadPostImage, async (req, res) => {
+    try {
+        const { title, description, priceRange, category } = req.body;
+        
+        let imageURL = req.file ? req.file.path : null; // Cloudinary URL
+        let imagePublicId = req.file ? req.file.filename : null; // Cloudinary Public ID
+
+        if (!imageURL) {
+             return res.status(400).json({ error: 'Post image is required.' });
+        }
+
+        if (!category) {
+            await destroyCloudinaryResource(imagePublicId);
+            return res.status(400).json({ error: 'Category ID is required.' });
+        }
+
+        const post = new Post({
+            title,
+            description,
+            priceRange,
+            imageURL,
+            imagePublicId, // Store Public ID
+            category: new mongoose.Types.ObjectId(category),
+            agency: req.agencyId
+        });
+
+        await post.save();
+        await Agency.findByIdAndUpdate(req.agencyId, { $push: { posts: post._id } });
+
+        res.status(201).json({ message: 'Post created successfully', post });
+    } catch (error) {
+        if (req.file) await destroyCloudinaryResource(req.file.filename);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// --- UPDATE POST ROUTE (UPDATED for Cloudinary Deletion) ---
+router.put('/posts/:id', authMiddleware, uploadPostImage, async (req, res) => {
+    try {
+        const postId = req.params.id;
+        const { title, description, priceRange, category } = req.body;
+        
+        const updateData = { updatedAt: Date.now() };
+
+        if (title) updateData.title = title;
+        if (description) updateData.description = description;
+        if (priceRange) updateData.priceRange = priceRange;
+        if (category) updateData.category = new mongoose.Types.ObjectId(category);
+
+        const oldPost = await Post.findById(postId);
+        if (!oldPost) {
+            if (req.file) await destroyCloudinaryResource(req.file.filename);
+            return res.status(404).json({ error: 'Post not found' });
+        }
+
+        if (req.file) {
+            // Delete old image from Cloudinary
+            await destroyCloudinaryResource(oldPost.imagePublicId);
+
+            // Update with new Cloudinary URL and Public ID
+            updateData.imageURL = req.file.path;
+            updateData.imagePublicId = req.file.filename;
+        }
+
+        const post = await Post.findOneAndUpdate(
+            { _id: postId, agency: req.agencyId },
+            updateData,
+            { new: true, runValidators: true }
+        ).populate('category', 'name');
+
+        if (!post) {
+            if (req.file) await destroyCloudinaryResource(req.file.filename);
+            return res.status(404).json({ error: 'Post not found or unauthorized' });
+        }
+
+        res.json({ message: 'Post updated successfully', post });
+    } catch (error) {
+        if (req.file) await destroyCloudinaryResource(req.file.filename);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+
+// 3. DELETE/INACTIVATE POST STATUS (UPDATED for Cloudinary Deletion)
+router.put('/posts/:id/status', authMiddleware, async (req, res) => {
+    try {
+        const postId = req.params.id;
+        const { isActive } = req.body; 
+
+        if (typeof isActive !== 'boolean') {
+            return res.status(400).json({ error: 'isActive status must be boolean' });
+        }
+
+        const post = await Post.findOneAndUpdate(
+            { _id: postId, agency: req.agencyId },
+            { isActive: isActive, updatedAt: Date.now() },
+            { new: true }
+        );
+
+        if (!post) {
+            return res.status(404).json({ error: 'Post not found or unauthorized' });
+        }
+
+        // NOTE: We don't delete the resource from Cloudinary here, only set isActive=false. 
+        // A future DELETE endpoint could handle destruction.
+
+        res.json({ message: `Post status set to ${isActive ? 'active' : 'inactive'}`, post });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
 });
 router.get('/bookings', authMiddleware, async (req, res) => {
   try {
     const bookings = await Booking.find({ agency: req.agencyId })
       .populate('post', 'title description priceRange imageURL category location')
       .populate('agency', 'name email location ')
+      .populate('company', 'name email phoneNumber')
       .sort({ createdAt: -1 });
     res.json(bookings);
   } catch (error) {
@@ -298,7 +382,18 @@ router.post('/google-auth', async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 });
+router.get('/new/:id', async (req, res) => {
+  try {
+    const agency = await Agency.findById(req.params.id)
+      .select('+websiteUrl +logo +facebookUrl +linkedinUrl +profileDescription +yearEstablished +companySize +businessRegistrationNumber')
+      .populate('servicesOffered', 'name');
 
+    if (!agency) return res.status(404).json({ error: 'Agency not found' });
+    res.json(agency);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
 
 router.get('/verify-email', async (req, res) => {
   try {
@@ -462,15 +557,16 @@ router.put('/profile', authMiddleware, (req, res) => {
 
 router.post('/posts', authMiddleware, async (req, res) => {
   try {
-    const { title, description, priceRange, imageURL, category } = req.body;
+    const { title, description, priceRange, imageURL } = req.body;
     
+    category =new mongoose.Types.ObjectId("692ae4e54f705d9a1336332d");
     const post = new Post({
       title,
       description,
       priceRange,
       imageURL,
       category,
-      agencyId: req.agencyId 
+      agency: req.agencyId 
     });
 
     await post.save();
@@ -482,22 +578,25 @@ router.post('/posts', authMiddleware, async (req, res) => {
   }
 });
 
-
 router.get('/posts/agency/:agencyId', async (req, res) => {
-  try {
-    const posts = await Post.find({ agencyId: req.params.agencyId }).populate('agencyId', 'agencyName');
+  try {
+    const posts = await Post.find({ agency: req.params.agencyId })
+        .populate('agency', 'agencyName email') // Use 'agency' field to match Post schema
+        .populate('category', 'name')
+        .sort({ createdAt: -1 });
 
-    if (!posts.length) return res.status(404).json({ error: 'No posts found for this agency' });
+    if (!posts.length) return res.status(404).json({ error: 'No posts found for this agency' });
 
-    res.json({ posts });
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
+    res.json({ posts });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
 });
+
 
 router.get('/test', async (req, res) => {
   try {
-    const agencies = await Agency.find().select('agencyName email verificationToken isVerified userType');
+    const agencies = await Agency.find().select('agencyName email logo verificationToken isVerified userType');
     res.json(agencies);
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -523,6 +622,86 @@ router.put('/booking/:id/status', authMiddleware, async (req, res) => {
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
+});
+
+router.put('/posts/:id', authMiddleware, (req, res) => {
+    uploadPostImage(req, res, async (err) => {
+        if (err) {
+            return res.status(400).json({ error: err.message });
+        }
+
+        try {
+            const postId = req.params.id;
+            const { title, description, priceRange, category } = req.body;
+            
+            const updateData = { updatedAt: Date.now() };
+
+            if (title) updateData.title = title;
+            if (description) updateData.description = description;
+            if (priceRange) updateData.priceRange = priceRange;
+            if (category) updateData.category = new mongoose.Types.ObjectId(category);
+
+            if (req.file) {
+                // If a new file is uploaded, update imageURL and delete the old file
+                updateData.imageURL = `/uploads/posts/${req.file.filename}`;
+                
+                const oldPost = await Post.findById(postId);
+                if (oldPost && oldPost.imageURL) {
+                    const oldImagePath = path.join(__dirname, '..', oldPost.imageURL);
+                    if (fs.existsSync(oldImagePath)) {
+                        fs.unlinkSync(oldImagePath);
+                    }
+                }
+            }
+
+            const post = await Post.findOneAndUpdate(
+                { _id: postId, agency: req.agencyId }, // Ensure agency owns the post
+                updateData,
+                { new: true, runValidators: true }
+            ).populate('category', 'name');
+
+            if (!post) {
+                // Clean up the newly uploaded file if the post wasn't found or agency didn't own it
+                if (req.file) fs.unlinkSync(req.file.path);
+                return res.status(404).json({ error: 'Post not found or unauthorized' });
+            }
+
+            res.json({ message: 'Post updated successfully', post });
+        } catch (error) {
+            if (req.file) {
+                try {
+                    fs.unlinkSync(req.file.path);
+                } catch (cleanupError) {
+                    console.error('Error cleaning up file:', cleanupError);
+                }
+            }
+            res.status(500).json({ error: error.message });
+        }
+    });
+});
+router.put('/posts/:id/status', authMiddleware, async (req, res) => {
+    try {
+        const postId = req.params.id;
+        const { isActive } = req.body; // Expecting boolean true/false
+
+        if (typeof isActive !== 'boolean') {
+            return res.status(400).json({ error: 'isActive status must be boolean' });
+        }
+
+        const post = await Post.findOneAndUpdate(
+            { _id: postId, agency: req.agencyId },
+            { isActive: isActive, updatedAt: Date.now() },
+            { new: true }
+        );
+
+        if (!post) {
+            return res.status(404).json({ error: 'Post not found or unauthorized' });
+        }
+
+        res.json({ message: `Post status set to ${isActive ? 'active' : 'inactive'}`, post });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
 });
 
 module.exports = router;

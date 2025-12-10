@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Calendar, Clock, MapPin, Building2, CheckCircle, XCircle, AlertCircle, Trash2 } from 'lucide-react';
+import { Calendar, Clock, MapPin, Building2, CheckCircle, XCircle, AlertCircle, Trash2, Loader2, DollarSign } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 interface Booking {
@@ -23,6 +23,8 @@ interface Booking {
   createdAt: string;
 }
 
+const API_BASE_URL = 'http://localhost:5000/api';
+
 const MyBookingsPage = () => {
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [loading, setLoading] = useState(true);
@@ -35,11 +37,13 @@ const MyBookingsPage = () => {
   const fetchBookings = async () => {
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch('http://localhost:5000/api/companies/bookings', {
+      // GET /api/companies/bookings
+      const response = await fetch(`${API_BASE_URL}/companies/bookings`, {
         headers: { Authorization: `Bearer ${token}` },
       });
+      
       const data = await response.json();
-      setBookings(data || []);
+      setBookings(Array.isArray(data) ? data : []);
     } catch (error) {
       console.error('Error fetching bookings:', error);
       setBookings([]);
@@ -49,11 +53,12 @@ const MyBookingsPage = () => {
   };
 
   const handleCancelBooking = async (bookingId: string) => {
-    if (!confirm('Are you sure you want to cancel this booking?')) return;
+    if (!confirm('Are you sure you want to cancel this booking? This action cannot be undone.')) return;
 
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch(`http://localhost:5000/api/companies/bookings/${bookingId}`, {
+     
+      const response = await fetch(`${API_BASE_URL}/companies/bookings/${bookingId}`, {
         method: 'DELETE',
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -63,7 +68,7 @@ const MyBookingsPage = () => {
         fetchBookings();
       } else {
         const error = await response.json();
-        alert(error.error || 'Failed to cancel booking');
+        alert(error.error || 'Failed to cancel booking. Only Pending bookings can be cancelled.');
       }
     } catch (error) {
       alert('Something went wrong');
@@ -71,19 +76,20 @@ const MyBookingsPage = () => {
   };
 
   const getStatusBadge = (status: string) => {
-    const statusConfig: Record<string, { bg: string; text: string; icon: any }> = {
-      Pending: { bg: 'bg-yellow-100', text: 'text-yellow-700', icon: AlertCircle },
-      Accepted: { bg: 'bg-emerald-100', text: 'text-emerald-700', icon: CheckCircle },
-      Confirmed: { bg: 'bg-emerald-100', text: 'text-emerald-700', icon: CheckCircle },
-      Rejected: { bg: 'bg-red-100', text: 'text-red-700', icon: XCircle },
-      Cancelled: { bg: 'bg-gray-100', text: 'text-gray-700', icon: XCircle },
+    const statusConfig: Record<string, { bg: string; text: string; icon: any; border: string }> = {
+        Pending: { bg: 'bg-yellow-900/30', text: 'text-yellow-400', icon: Clock, border: 'border-yellow-700' },
+        Accepted: { bg: 'bg-teal-900/30', text: 'text-teal-400', icon: CheckCircle, border: 'border-teal-700' },
+        Confirmed: { bg: 'bg-teal-900/30', text: 'text-teal-400', icon: CheckCircle, border: 'border-teal-700' },
+        Rejected: { bg: 'bg-red-900/30', text: 'text-red-400', icon: XCircle, border: 'border-red-700' },
+        Cancelled: { bg: 'bg-gray-700/50', text: 'text-gray-400', icon: XCircle, border: 'border-gray-600' },
+        Completed: { bg: 'bg-cyan-900/30', text: 'text-cyan-400', icon: CheckCircle, border: 'border-cyan-700' },
     };
 
     const config = statusConfig[status] || statusConfig.Pending;
     const Icon = config.icon;
 
     return (
-      <span className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium ${config.bg} ${config.text}`}>
+      <span className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium ${config.bg} ${config.text} border ${config.border}`}>
         <Icon className="w-3 h-3" />
         {status}
       </span>
@@ -95,25 +101,23 @@ const MyBookingsPage = () => {
   );
 
   return (
-    <div>
+    <div className="text-white">
       {/* Header */}
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900">My Bookings</h1>
-        <p className="text-gray-600 mt-2">Track and manage your service booking requests.</p>
+
       </div>
 
       {/* Filters */}
-      <div className="bg-white rounded-2xl p-6 shadow-sm mb-6">
+      <div className="bg-slate-950 rounded-2xl p-6 shadow-xl border border-slate-700 mb-6">
         <div className="flex gap-2 flex-wrap">
-          {['All', 'Pending', 'Accepted', 'Confirmed', 'Rejected', 'Cancelled'].map((status) => (
+          {['All', 'Pending', 'Accepted', 'Rejected', 'Completed', 'Cancelled'].map((status) => (
             <Button
               key={status}
               onClick={() => setFilterStatus(status)}
-              variant={filterStatus === status ? 'default' : 'outline'}
-              className={`rounded-xl ${
+              className={`rounded-xl border-slate-700 ${
                 filterStatus === status
-                  ? 'bg-emerald-600 hover:bg-emerald-700 text-white'
-                  : 'border-gray-200 hover:bg-gray-50'
+                  ? 'bg-cyan-600 hover:bg-cyan-700 text-white'
+                  : 'bg-slate-800 hover:bg-slate-700 text-gray-300'
               }`}
             >
               {status}
@@ -125,36 +129,34 @@ const MyBookingsPage = () => {
       {/* Bookings List */}
       {loading ? (
         <div className="text-center py-12">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-emerald-600 mx-auto"></div>
+          <Loader2 className="w-12 h-12 animate-spin mx-auto text-cyan-400" />
         </div>
       ) : filteredBookings.length === 0 ? (
-        <div className="bg-white rounded-2xl p-12 shadow-sm text-center">
-          <div className="w-24 h-24 bg-emerald-100 rounded-full flex items-center justify-center mx-auto mb-6">
-            <Calendar className="w-12 h-12 text-emerald-600" />
-          </div>
-          <h3 className="text-xl font-bold text-gray-900 mb-2">No bookings yet</h3>
-          <p className="text-gray-600 mb-6">
+        <div className="bg-slate-950 rounded-2xl p-12 shadow-xl border border-slate-700 text-center">
+          <Calendar className="w-12 h-12 text-cyan-400 mx-auto mb-6" />
+          <h3 className="text-xl font-bold text-white mb-2">No bookings yet</h3>
+          <p className="text-gray-400 mb-6">
             {filterStatus === 'All'
-              ? "You haven't made any booking requests yet. Browse agencies and book your first service!"
+              ? "You haven't made any booking requests yet."
               : `No bookings with status "${filterStatus}".`}
           </p>
         </div>
       ) : (
         <div className="space-y-4">
           {filteredBookings.map((booking) => (
-            <div key={booking._id} className="bg-white rounded-2xl shadow-sm hover:shadow-md transition-shadow overflow-hidden">
+            <div key={booking._id} className="bg-slate-950 rounded-2xl shadow-xl hover:shadow-md transition-shadow overflow-hidden border border-slate-700">
               <div className="flex flex-col md:flex-row">
                 {/* Image */}
-                <div className="w-full md:w-48 h-48 bg-gradient-to-br from-emerald-100 to-teal-100 flex-shrink-0">
+                <div className="w-full md:w-48 h-48 bg-slate-800 flex-shrink-0">
                   {booking.post?.imageURL ? (
                     <img
-                      src={booking.post.imageURL}
+                      src={booking.post.imageURL} // NOTE: API_BASE_URL might be needed here if images are local
                       alt={booking.post?.title}
-                      className="w-full h-full object-cover"
+                      className="w-full h-full object-cover opacity-80"
                     />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center">
-                      <Building2 className="w-16 h-16 text-emerald-300" />
+                      <Building2 className="w-16 h-16 text-gray-700" />
                     </div>
                   )}
                 </div>
@@ -164,58 +166,28 @@ const MyBookingsPage = () => {
                   <div className="flex items-start justify-between mb-4">
                     <div className="flex-1">
                       <div className="flex items-center gap-3 mb-2">
-                        <h3 className="text-xl font-bold text-gray-900">
+                        <h3 className="text-xl font-bold text-white">
                           {booking.post?.title || 'Service'}
                         </h3>
                         {getStatusBadge(booking.status)}
                       </div>
-                      <p className="text-sm text-gray-600 mb-2">
-                        {booking.post?.description || 'No description'}
-                      </p>
-                      <p className="text-emerald-600 font-bold">
+                      <p className="text-sm text-cyan-400 font-bold">
                         {booking.post?.priceRange || 'Price not specified'}
                       </p>
+                      <p className="text-gray-500 text-xs mt-1">Agency: {booking.agency?.agencyName || 'N/A'}</p>
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 py-4 border-t border-gray-100">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 bg-emerald-100 rounded-lg flex items-center justify-center">
-                        <Building2 className="w-5 h-5 text-emerald-600" />
-                      </div>
-                      <div>
-                        <p className="text-xs text-gray-500">Agency</p>
-                        <p className="font-medium text-gray-900">{booking.agency?.agencyName || 'N/A'}</p>
-                      </div>
-                    </div>
-
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 bg-teal-100 rounded-lg flex items-center justify-center">
-                        <Calendar className="w-5 h-5 text-teal-600" />
-                      </div>
-                      <div>
-                        <p className="text-xs text-gray-500">Requested</p>
-                        <p className="font-medium text-gray-900">
-                          {new Date(booking.createdAt).toLocaleDateString()}
-                        </p>
-                      </div>
-                    </div>
-
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 bg-cyan-100 rounded-lg flex items-center justify-center">
-                        <MapPin className="w-5 h-5 text-cyan-600" />
-                      </div>
-                      <div>
-                        <p className="text-xs text-gray-500">Location</p>
-                        <p className="font-medium text-gray-900">{booking.post?.location || 'N/A'}</p>
-                      </div>
-                    </div>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 py-4 border-t border-slate-800">
+                    <BookingInfo Icon={Calendar} label="Requested" value={new Date(booking.createdAt).toLocaleDateString()} color="teal" />
+                    <BookingInfo Icon={MapPin} label="Placement Location" value={booking.post?.location || 'N/A'} color="cyan" />
+                    <BookingInfo Icon={DollarSign} label="Price Range" value={booking.post?.priceRange || 'N/A'} color="teal" />
                   </div>
 
                   {/* Request Description */}
-                  <div className="pt-4 border-t border-gray-100">
+                  <div className="pt-4 border-t border-slate-800">
                     <p className="text-xs text-gray-500 mb-2">Your Request:</p>
-                    <p className="text-sm text-gray-700 line-clamp-2">
+                    <p className="text-sm text-gray-400 line-clamp-2">
                       {booking.requestDescription || 'No description provided'}
                     </p>
                   </div>
@@ -225,8 +197,7 @@ const MyBookingsPage = () => {
                     <div className="mt-4 flex gap-3">
                       <Button
                         onClick={() => handleCancelBooking(booking._id)}
-                        variant="outline"
-                        className="rounded-xl border-red-200 text-red-600 hover:bg-red-50"
+                        className="rounded-xl bg-red-900/50 text-red-400 hover:bg-red-900/70 border-red-900/50"
                       >
                         <Trash2 className="w-4 h-4 mr-2" />
                         Cancel Booking
@@ -241,6 +212,27 @@ const MyBookingsPage = () => {
       )}
     </div>
   );
+};
+
+// Helper component for cleaner UI
+const BookingInfo = ({ Icon, label, value, color }: { Icon: any, label: string, value: string, color: 'teal' | 'cyan' }) => {
+    const colorMap = {
+        teal: { bg: 'bg-teal-900/30', text: 'text-teal-400' },
+        cyan: { bg: 'bg-cyan-900/30', text: 'text-cyan-400' },
+    };
+    const style = colorMap[color];
+    
+    return (
+        <div className="flex items-center gap-3">
+          <div className={`w-10 h-10 ${style.bg} rounded-lg flex items-center justify-center border border-slate-700 flex-shrink-0`}>
+            <Icon className={`w-5 h-5 ${style.text}`} />
+          </div>
+          <div>
+            <p className="text-xs text-gray-500">{label}</p>
+            <p className="font-medium text-white truncate">{value}</p>
+          </div>
+        </div>
+    );
 };
 
 export default MyBookingsPage;

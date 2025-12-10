@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { ArrowLeft, Check, MapPin, DollarSign, Building2 } from 'lucide-react';
+import { ArrowLeft, Check, MapPin, DollarSign, Building2, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 
@@ -10,6 +10,8 @@ interface BookingPageProps {
   onBack: () => void;
   onSuccess: () => void;
 }
+
+const API_BASE_URL = 'http://localhost:5000/api';
 
 const BookingPage = ({ post, onBack, onSuccess }: BookingPageProps) => {
   const [bookingDescription, setBookingDescription] = useState('');
@@ -25,7 +27,8 @@ const BookingPage = ({ post, onBack, onSuccess }: BookingPageProps) => {
     setLoading(true);
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch(`http://localhost:5000/api/posts/${post._id}/book`, {
+      // POST /api/posts/{post._id}/book
+      const response = await fetch(`${API_BASE_URL}/posts/${post._id}/book`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -53,17 +56,17 @@ const BookingPage = ({ post, onBack, onSuccess }: BookingPageProps) => {
   if (success) {
     return (
       <div className="max-w-2xl mx-auto">
-        <div className="bg-white rounded-2xl p-12 shadow-sm text-center">
-          <div className="w-20 h-20 bg-emerald-100 rounded-full flex items-center justify-center mx-auto mb-6">
-            <Check className="w-10 h-10 text-emerald-600" />
+        <div className="bg-slate-950 rounded-2xl p-12 shadow-xl border border-slate-700 text-center">
+          <div className="w-20 h-20 bg-teal-900/50 rounded-full flex items-center justify-center mx-auto mb-6 border border-teal-700">
+            <Check className="w-10 h-10 text-teal-400" />
           </div>
-          <h2 className="text-3xl font-bold text-gray-900 mb-4">Booking Request Sent!</h2>
-          <p className="text-gray-600 mb-8">
-            Your booking request has been successfully submitted. The agency will review your request and get back to you soon.
+          <h2 className="text-3xl font-bold text-white mb-4">Booking Request Sent!</h2>
+          <p className="text-gray-400 mb-8">
+            Your request has been successfully submitted. The agency will review it shortly.
           </p>
           <Button
             onClick={onSuccess}
-            className="bg-emerald-600 hover:bg-emerald-700 text-white px-8 py-3 rounded-xl"
+            className="bg-cyan-600 hover:bg-cyan-700 text-white px-8 py-3 rounded-xl"
           >
             View My Bookings
           </Button>
@@ -73,37 +76,37 @@ const BookingPage = ({ post, onBack, onSuccess }: BookingPageProps) => {
   }
 
   return (
-    <div className="max-w-4xl mx-auto">
+    <div className="max-w-4xl mx-auto text-white">
       {/* Header */}
       <button
         onClick={onBack}
-        className="flex items-center text-emerald-600 hover:text-emerald-700 mb-6 font-medium"
+        className="flex items-center text-cyan-400 hover:text-cyan-300 mb-6 font-medium"
       >
         <ArrowLeft className="w-4 h-4 mr-2" />
-        Back to Agencies
+        Back to Listings
       </button>
 
-      <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
+      <div className="bg-slate-950 rounded-2xl shadow-xl border border-slate-700 overflow-hidden">
         {/* Post Preview */}
-        <div className="relative h-64 bg-gradient-to-br from-emerald-100 to-teal-100">
+        <div className="relative h-64 bg-slate-800">
           {post.imageURL ? (
-            <img src={post.imageURL} alt={post.title} className="w-full h-full object-cover" />
+            <img src={post.imageURL} alt={post.title} className="w-full h-full object-cover opacity-80" />
           ) : (
             <div className="w-full h-full flex items-center justify-center">
-              <Building2 className="w-32 h-32 text-emerald-300" />
+              <Building2 className="w-32 h-32 text-gray-700" />
             </div>
           )}
-          <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent flex items-end">
+          <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent flex items-end">
             <div className="p-8 text-white">
               <h1 className="text-3xl font-bold mb-2">{post.title}</h1>
-              <div className="flex items-center gap-4 text-sm">
+              <div className="flex items-center gap-4 text-sm text-gray-300">
                 <div className="flex items-center gap-2">
-                  <Building2 className="w-4 h-4" />
+                  <Building2 className="w-4 h-4 text-cyan-400" />
                   <span>{post.agency?.agencyName || 'Agency'}</span>
                 </div>
                 {post.location && (
                   <div className="flex items-center gap-2">
-                    <MapPin className="w-4 h-4" />
+                    <MapPin className="w-4 h-4 text-teal-400" />
                     <span>{post.location}</span>
                   </div>
                 )}
@@ -115,24 +118,24 @@ const BookingPage = ({ post, onBack, onSuccess }: BookingPageProps) => {
         {/* Booking Form */}
         <div className="p-8">
           <div className="mb-8">
-            <h2 className="text-2xl font-bold text-gray-900 mb-4">Book This Service</h2>
-            <p className="text-gray-600 mb-6">{post.description}</p>
+            <h2 className="text-2xl font-bold text-white mb-4">Book This Service</h2>
+            <p className="text-gray-400 mb-6">{post.description}</p>
             
             {/* Price */}
-            <div className="bg-emerald-50 rounded-xl p-6 border-2 border-emerald-200">
+            <div className="bg-slate-800 rounded-xl p-6 border-2 border-slate-700">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-gray-600 mb-1">Service Price</p>
+                  <p className="text-sm text-gray-500 mb-1">Service Price Range</p>
                   <div className="flex items-center gap-2">
-                    <DollarSign className="w-6 h-6 text-emerald-600" />
-                    <span className="text-3xl font-bold text-emerald-600">
-                      {post.priceRange || '$2,500'}
+                    <DollarSign className="w-6 h-6 text-teal-400" />
+                    <span className="text-3xl font-bold text-teal-400">
+                      {post.priceRange || 'N/A'}
                     </span>
                   </div>
                 </div>
                 <div className="text-right">
-                  <p className="text-sm text-gray-600 mb-1">Agency Contact</p>
-                  <p className="text-gray-900 font-medium">{post.agency?.email}</p>
+                  <p className="text-sm text-gray-500 mb-1">Agency Contact</p>
+                  <p className="text-white font-medium">{post.agency?.email}</p>
                 </div>
               </div>
             </div>
@@ -140,15 +143,15 @@ const BookingPage = ({ post, onBack, onSuccess }: BookingPageProps) => {
 
           {/* Booking Description */}
           <div className="mb-8">
-            <label className="block text-sm font-medium text-gray-700 mb-3">
+            <label className="block text-sm font-medium text-gray-400 mb-3">
               Describe Your Requirements <span className="text-red-500">*</span>
             </label>
             <Textarea
               value={bookingDescription}
               onChange={(e) => setBookingDescription(e.target.value)}
-              placeholder="Tell us about your project, goals, timeline, and any specific requirements you have..."
+              placeholder="Tell us about your project, goals, timeline, and any specific requirements..."
               rows={8}
-              className="rounded-xl border-gray-200 focus:border-emerald-500 resize-none"
+              className="rounded-xl border-slate-700 bg-slate-800 text-white placeholder-gray-500 resize-none"
             />
             <p className="text-sm text-gray-500 mt-2">
               Provide as much detail as possible to help the agency understand your needs.
@@ -159,19 +162,18 @@ const BookingPage = ({ post, onBack, onSuccess }: BookingPageProps) => {
           <div className="flex gap-4">
             <Button
               onClick={onBack}
-              variant="outline"
-              className="flex-1 py-3 rounded-xl border-gray-200 hover:bg-gray-50"
+              className="flex-1 rounded-xl border border-slate-700 bg-slate-800 hover:bg-slate-700 text-gray-300"
             >
               Cancel
             </Button>
             <Button
               onClick={handleSubmit}
               disabled={loading || !bookingDescription.trim()}
-              className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white py-3 rounded-xl disabled:bg-gray-300"
+              className="flex-1 bg-cyan-600 hover:bg-cyan-700 text-white py-3 rounded-xl disabled:bg-slate-700"
             >
               {loading ? (
                 <div className="flex items-center justify-center gap-2">
-                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                  <Loader2 className="w-4 h-4 animate-spin" />
                   <span>Submitting...</span>
                 </div>
               ) : (
@@ -181,10 +183,10 @@ const BookingPage = ({ post, onBack, onSuccess }: BookingPageProps) => {
           </div>
 
           {/* Info Box */}
-          <div className="mt-6 bg-blue-50 rounded-xl p-4 border border-blue-200">
-            <p className="text-sm text-blue-900">
-              <strong>Note:</strong> Your booking request will be sent to the agency for review. 
-              They will contact you via email to discuss the details and confirm the booking.
+          <div className="mt-6 bg-blue-900/30 rounded-xl p-4 border border-blue-700">
+            <p className="text-sm text-blue-300">
+              <strong>Note:</strong> Your request will be sent to the agency for review. 
+              They will contact you via email to confirm the booking.
             </p>
           </div>
         </div>
