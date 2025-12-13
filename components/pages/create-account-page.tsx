@@ -165,7 +165,7 @@ export default function CreateCompanyAccount() {
   ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-emerald-50 to-teal-50 py-12 px-4">
+    <div className="min-h-screen bg-slate-950 py-12 px-4">
       <div className="max-w-4xl mx-auto">
         {/* Progress Steps */}
         <div className="mb-8">
@@ -177,15 +177,15 @@ export default function CreateCompanyAccount() {
                     className={cn(
                       'w-12 h-12 rounded-full flex items-center justify-center font-bold text-lg transition-all',
                       currentStep >= step.number
-                        ? 'bg-gradient-to-r from-emerald-500 to-teal-500 text-white'
-                        : 'bg-gray-200 text-gray-400'
+                        ? 'bg-gradient-to-r from-teal-500 to-cyan-500 text-white shadow-lg shadow-teal-500/30'
+                        : 'bg-slate-700 text-slate-400'
                     )}
                   >
                     {step.number}
                   </div>
                   <p className={cn(
                     'text-sm mt-2 font-medium',
-                    currentStep >= step.number ? 'text-emerald-600' : 'text-gray-400'
+                    currentStep >= step.number ? 'text-teal-400' : 'text-slate-500'
                   )}>
                     {step.title}
                   </p>
@@ -193,7 +193,7 @@ export default function CreateCompanyAccount() {
                 {index < steps.length - 1 && (
                   <div className={cn(
                     'h-1 flex-1 mx-2 transition-all',
-                    currentStep > step.number ? 'bg-gradient-to-r from-emerald-500 to-teal-500' : 'bg-gray-200'
+                    currentStep > step.number ? 'bg-gradient-to-r from-teal-500 to-cyan-500' : 'bg-slate-700'
                   )} />
                 )}
               </div>
@@ -202,75 +202,75 @@ export default function CreateCompanyAccount() {
         </div>
 
         {/* Form Card */}
-        <div className="bg-white rounded-3xl shadow-2xl p-8">
+        <div className="bg-gradient-to-br from-slate-900/80 via-slate-800/70 to-slate-950/90 backdrop-blur-2xl rounded-3xl shadow-2xl border border-teal-500/20 p-8">
           <form onSubmit={handleSubmit}>
             {/* Step 1: Account Info */}
             {currentStep === 1 && (
               <div className="space-y-6">
                 <div>
-                  <h2 className="text-3xl font-bold text-gray-900 mb-2">Basic Account Information</h2>
-                  <p className="text-gray-600">Create your account credentials</p>
+                  <h2 className="text-3xl font-bold text-white mb-2">Basic Account Information</h2>
+                  <p className="text-slate-300">Create your account credentials</p>
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Company Name <span className="text-red-500">*</span>
+                  <label className="block text-sm font-medium text-teal-200 mb-2">
+                    Company Name <span className="text-red-400">*</span>
                   </label>
                   <div className="relative">
-                    <Building2 className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+                    <Building2 className="absolute left-3 top-1/2 transform -translate-y-1/2 text-teal-400 w-5 h-5" />
                     <Input
                       name="name"
                       value={formData.name}
                       onChange={handleChange}
                       placeholder="Enter your company name"
-                      className="pl-10 py-6 rounded-xl border-gray-200"
+                      className="pl-10 py-6 rounded-xl bg-white/5 border border-teal-400/30 text-slate-100 placeholder:text-slate-400 focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400/30"
                       required
                     />
                   </div>
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Email Address <span className="text-red-500">*</span>
+                  <label className="block text-sm font-medium text-teal-200 mb-2">
+                    Email Address <span className="text-red-400">*</span>
                   </label>
                   <div className="relative">
-                    <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+                    <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-teal-400 w-5 h-5" />
                     <Input
                       type="email"
                       name="email"
                       value={formData.email}
                       onChange={handleChange}
                       placeholder="company@example.com"
-                      className="pl-10 py-6 rounded-xl border-gray-200"
+                      className="pl-10 py-6 rounded-xl bg-white/5 border border-teal-400/30 text-slate-100 placeholder:text-slate-400 focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400/30"
                       required
                     />
                   </div>
                   {formData.email && (
-                    <p className="text-green-600 text-sm mt-2 flex items-center gap-1">
+                    <p className="text-teal-400 text-sm mt-2 flex items-center gap-1">
                       <CheckCircle2 className="w-4 h-4" /> Valid email
                     </p>
                   )}
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Password <span className="text-red-500">*</span>
+                  <label className="block text-sm font-medium text-teal-200 mb-2">
+                    Password <span className="text-red-400">*</span>
                   </label>
                   <div className="relative">
-                    <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+                    <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-teal-400 w-5 h-5" />
                     <Input
                       type={showPassword ? 'text' : 'password'}
                       name="password"
                       value={formData.password}
                       onChange={handleChange}
                       placeholder="Enter password"
-                      className="pl-10 pr-10 py-6 rounded-xl border-gray-200"
+                      className="pl-10 pr-10 py-6 rounded-xl bg-white/5 border border-teal-400/30 text-slate-100 placeholder:text-slate-400 focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400/30"
                       required
                     />
                     <button
                       type="button"
                       onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400"
+                      className="absolute right-3 top-1/2 transform -translate-y-1/2 text-slate-400 hover:text-teal-400"
                     >
                       {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                     </button>
@@ -280,10 +280,10 @@ export default function CreateCompanyAccount() {
                     <>
                       <div className="mt-2">
                         <div className="flex items-center gap-2 mb-1">
-                          <div className="flex-1 h-2 bg-gray-200 rounded-full overflow-hidden">
+                          <div className="flex-1 h-2 bg-slate-700 rounded-full overflow-hidden">
                             <div className={cn('h-full transition-all', getPasswordStrengthColor())} style={{ width: `${(Object.values(passwordStrength).filter(Boolean).length / 5) * 100}%` }} />
                           </div>
-                          <span className="text-sm font-medium">{getPasswordStrengthLevel()}</span>
+                          <span className="text-sm font-medium text-slate-300">{getPasswordStrengthLevel()}</span>
                         </div>
                       </div>
                       <ul className="space-y-1 mt-2">
@@ -296,11 +296,11 @@ export default function CreateCompanyAccount() {
                         ].map(({ key, text }) => (
                           <li key={key} className="flex items-center gap-2 text-sm">
                             {passwordStrength[key as keyof typeof passwordStrength] ? (
-                              <CheckCircle2 className="w-4 h-4 text-green-600" />
+                              <CheckCircle2 className="w-4 h-4 text-teal-400" />
                             ) : (
-                              <XCircle className="w-4 h-4 text-gray-300" />
+                              <XCircle className="w-4 h-4 text-slate-600" />
                             )}
-                            <span className={passwordStrength[key as keyof typeof passwordStrength] ? 'text-green-600' : 'text-gray-500'}>
+                            <span className={passwordStrength[key as keyof typeof passwordStrength] ? 'text-teal-400' : 'text-slate-400'}>
                               {text}
                             </span>
                           </li>
@@ -311,24 +311,24 @@ export default function CreateCompanyAccount() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Confirm Password <span className="text-red-500">*</span>
+                  <label className="block text-sm font-medium text-teal-200 mb-2">
+                    Confirm Password <span className="text-red-400">*</span>
                   </label>
                   <div className="relative">
-                    <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+                    <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-teal-400 w-5 h-5" />
                     <Input
                       type={showConfirmPassword ? 'text' : 'password'}
                       name="confirmPassword"
                       value={formData.confirmPassword}
                       onChange={handleChange}
                       placeholder="Confirm your password"
-                      className="pl-10 pr-10 py-6 rounded-xl border-gray-200"
+                      className="pl-10 pr-10 py-6 rounded-xl bg-white/5 border border-teal-400/30 text-slate-100 placeholder:text-slate-400 focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400/30"
                       required
                     />
                     <button
                       type="button"
                       onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                      className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400"
+                      className="absolute right-3 top-1/2 transform -translate-y-1/2 text-slate-400 hover:text-teal-400"
                     >
                       {showConfirmPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                     </button>
@@ -341,58 +341,58 @@ export default function CreateCompanyAccount() {
             {currentStep === 2 && (
               <div className="space-y-6">
                 <div>
-                  <h2 className="text-3xl font-bold text-gray-900 mb-2">Contact Information</h2>
-                  <p className="text-gray-600">How can we reach you?</p>
+                  <h2 className="text-3xl font-bold text-white mb-2">Contact Information</h2>
+                  <p className="text-slate-300">How can we reach you?</p>
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Phone Number <span className="text-red-500">*</span>
+                  <label className="block text-sm font-medium text-teal-200 mb-2">
+                    Phone Number <span className="text-red-400">*</span>
                   </label>
                   <div className="relative">
-                    <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+                    <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 text-teal-400 w-5 h-5" />
                     <Input
                       type="tel"
                       name="phonenumber"
                       value={formData.phonenumber}
                       onChange={handleChange}
                       placeholder="+213 XXX XXX XXX"
-                      className="pl-10 py-6 rounded-xl border-gray-200"
+                      className="pl-10 py-6 rounded-xl bg-white/5 border border-teal-400/30 text-slate-100 placeholder:text-slate-400 focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400/30"
                       required
                     />
                   </div>
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Location <span className="text-red-500">*</span>
+                  <label className="block text-sm font-medium text-teal-200 mb-2">
+                    Location <span className="text-red-400">*</span>
                   </label>
                   <div className="relative">
-                    <MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+                    <MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 text-teal-400 w-5 h-5" />
                     <Input
                       name="location"
                       value={formData.location}
                       onChange={handleChange}
                       placeholder="City, Country"
-                      className="pl-10 py-6 rounded-xl border-gray-200"
+                      className="pl-10 py-6 rounded-xl bg-white/5 border border-teal-400/30 text-slate-100 placeholder:text-slate-400 focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400/30"
                       required
                     />
                   </div>
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-teal-200 mb-2">
                     Website URL
                   </label>
                   <div className="relative">
-                    <Globe className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+                    <Globe className="absolute left-3 top-1/2 transform -translate-y-1/2 text-teal-400 w-5 h-5" />
                     <Input
                       type="url"
                       name="websiteURL"
                       value={formData.websiteURL}
                       onChange={handleChange}
-                      placeholder="https://yourcompany.com  "
-                      className="pl-10 py-6 rounded-xl border-gray-200"
+                      placeholder="https://yourcompany.com"
+                      className="pl-10 py-6 rounded-xl bg-white/5 border border-teal-400/30 text-slate-100 placeholder:text-slate-400 focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400/30"
                     />
                   </div>
                 </div>
@@ -403,54 +403,54 @@ export default function CreateCompanyAccount() {
             {currentStep === 3 && (
               <div className="space-y-6">
                 <div>
-                  <h2 className="text-3xl font-bold text-gray-900 mb-2">Company Profile</h2>
-                  <p className="text-gray-600">Tell us about your company</p>
+                  <h2 className="text-3xl font-bold text-white mb-2">Company Profile</h2>
+                  <p className="text-slate-300">Tell us about your company</p>
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-teal-200 mb-2">
                     Industry Sector
                   </label>
                   <div className="relative">
-                    <Briefcase className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+                    <Briefcase className="absolute left-3 top-1/2 transform -translate-y-1/2 text-teal-400 w-5 h-5" />
                     <Input
                       name="industrySector"
                       value={formData.industrySector}
                       onChange={handleChange}
                       placeholder="e.g., Technology, Healthcare, Finance"
-                      className="pl-10 py-6 rounded-xl border-gray-200"
+                      className="pl-10 py-6 rounded-xl bg-white/5 border border-teal-400/30 text-slate-100 placeholder:text-slate-400 focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400/30"
                     />
                   </div>
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-teal-200 mb-2">
                     Company Size
                   </label>
                   <div className="relative">
-                    <Users className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+                    <Users className="absolute left-3 top-1/2 transform -translate-y-1/2 text-teal-400 w-5 h-5" />
                     <select
                       name="companySize"
                       value={formData.companySize}
                       onChange={handleChange}
-                      className="w-full pl-10 pr-4 py-3 rounded-xl border-2 border-gray-200 focus:border-emerald-500 focus:outline-none appearance-none bg-white"
+                      className="w-full pl-10 pr-4 py-3 rounded-xl border-2 border-teal-400/30 focus:border-cyan-400 focus:outline-none appearance-none bg-white/5 text-slate-100"
                     >
-                      <option value="">Select company size</option>
-                      <option value="1-10">1-10 employees</option>
-                      <option value="11-50">11-50 employees</option>
-                      <option value="51-200">51-200 employees</option>
-                      <option value="201-500">201-500 employees</option>
-                      <option value="500+">500+ employees</option>
+                      <option value="" className="bg-slate-900">Select company size</option>
+                      <option value="1-10" className="bg-slate-900">1-10 employees</option>
+                      <option value="11-50" className="bg-slate-900">11-50 employees</option>
+                      <option value="51-200" className="bg-slate-900">51-200 employees</option>
+                      <option value="201-500" className="bg-slate-900">201-500 employees</option>
+                      <option value="500+" className="bg-slate-900">500+ employees</option>
                     </select>
                   </div>
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-teal-200 mb-2">
                     Year Established
                   </label>
                   <div className="relative">
-                    <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+                    <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 text-teal-400 w-5 h-5" />
                     <Input
                       type="number"
                       name="yearEstablished"
@@ -459,7 +459,7 @@ export default function CreateCompanyAccount() {
                       placeholder="YYYY"
                       min="1900"
                       max={new Date().getFullYear()}
-                      className="pl-10 py-6 rounded-xl border-gray-200"
+                      className="pl-10 py-6 rounded-xl bg-white/5 border border-teal-400/30 text-slate-100 placeholder:text-slate-400 focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400/30"
                     />
                   </div>
                 </div>
@@ -470,12 +470,12 @@ export default function CreateCompanyAccount() {
             {currentStep === 4 && (
               <div className="space-y-6">
                 <div>
-                  <h2 className="text-3xl font-bold text-gray-900 mb-2">Social Media</h2>
-                  <p className="text-gray-600">Connect your social profiles (optional)</p>
+                  <h2 className="text-3xl font-bold text-white mb-2">Social Media</h2>
+                  <p className="text-slate-300">Connect your social profiles (optional)</p>
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-teal-200 mb-2">
                     Facebook URL
                   </label>
                   <Input
@@ -483,13 +483,13 @@ export default function CreateCompanyAccount() {
                     name="socialMedia.facebook"
                     value={formData.socialMedia.facebook}
                     onChange={handleChange}
-                    placeholder="https://facebook.com/yourcompany  "
-                    className="py-6 rounded-xl border-gray-200"
+                    placeholder="https://facebook.com/yourcompany"
+                    className="py-6 rounded-xl bg-white/5 border border-teal-400/30 text-slate-100 placeholder:text-slate-400 focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400/30"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-teal-200 mb-2">
                     LinkedIn URL
                   </label>
                   <Input
@@ -497,8 +497,8 @@ export default function CreateCompanyAccount() {
                     name="socialMedia.linkedin"
                     value={formData.socialMedia.linkedin}
                     onChange={handleChange}
-                    placeholder="https://linkedin.com/company/yourcompany  "
-                    className="py-6 rounded-xl border-gray-200"
+                    placeholder="https://linkedin.com/company/yourcompany"
+                    className="py-6 rounded-xl bg-white/5 border border-teal-400/30 text-slate-100 placeholder:text-slate-400 focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400/30"
                   />
                 </div>
               </div>
@@ -508,26 +508,26 @@ export default function CreateCompanyAccount() {
             {currentStep === 5 && (
               <div className="space-y-6">
                 <div>
-                  <h2 className="text-3xl font-bold text-gray-900 mb-2">Upload Company Logo</h2>
-                  <p className="text-gray-600">Add your company's visual identity</p>
+                  <h2 className="text-3xl font-bold text-white mb-2">Upload Company Logo</h2>
+                  <p className="text-slate-300">Add your company's visual identity</p>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-teal-200 mb-2">
                     Company Logo (JPG, PNG, GIF, WEBP)
                   </label>
                   <div
-                    className="border-2 border-dashed border-gray-300 rounded-xl p-6 text-center cursor-pointer hover:border-emerald-400 transition-colors"
+                    className="border-2 border-dashed border-teal-400/40 rounded-xl p-6 text-center cursor-pointer hover:border-cyan-400 hover:bg-white/5 transition-colors"
                     onClick={() => logoInputRef.current?.click()}
                   >
                     {logoPreview ? (
                       <div className="flex flex-col items-center">
                         <img src={logoPreview} alt="Logo Preview" className="max-w-full max-h-20 object-contain mb-2" />
-                        <p className="mt-2 text-gray-600">{logoFile?.name}</p>
+                        <p className="mt-2 text-slate-300">{logoFile?.name}</p>
                       </div>
                     ) : (
                       <>
-                        <Upload className="w-8 h-8 text-gray-400 mx-auto" />
-                        <p className="mt-2 text-gray-600">
+                        <Upload className="w-8 h-8 text-teal-400 mx-auto" />
+                        <p className="mt-2 text-slate-300">
                           Click to upload logo
                         </p>
                       </>
@@ -541,7 +541,7 @@ export default function CreateCompanyAccount() {
                     />
                   </div>
                 </div>
-                <p className="text-xs text-gray-500">
+                <p className="text-xs text-slate-400">
                   Max file size: 5MB
                 </p>
               </div>
@@ -551,25 +551,25 @@ export default function CreateCompanyAccount() {
             {currentStep === 6 && (
               <div className="space-y-6">
                 <div>
-                  <h2 className="text-3xl font-bold text-gray-900 mb-2">Terms & Conditions</h2>
-                  <p className="text-gray-600">Please review and accept our terms before proceeding.</p>
+                  <h2 className="text-3xl font-bold text-white mb-2">Terms & Conditions</h2>
+                  <p className="text-slate-300">Please review and accept our terms before proceeding.</p>
                 </div>
-                <div className="bg-emerald-50 p-4 rounded-xl border border-emerald-200">
+                <div className="bg-teal-500/10 p-4 rounded-xl border border-teal-500/30">
                   <div className="flex items-start gap-3">
                     <input
                       type="checkbox"
                       id="terms"
                       checked={agreesToTerms}
                       onChange={(e) => setAgreesToTerms(e.target.checked)}
-                      className="mt-1 h-5 w-5 text-emerald-600 border-gray-300 rounded focus:ring-2 focus:ring-emerald-500"
+                      className="mt-1 h-5 w-5 text-teal-500 border-slate-600 rounded focus:ring-2 focus:ring-teal-500 bg-slate-800"
                     />
-                    <label htmlFor="terms" className="text-sm text-gray-700">
+                    <label htmlFor="terms" className="text-sm text-slate-200">
                       I agree to the{' '}
-                      <a href="#" className="text-emerald-600 hover:text-emerald-700 font-medium">
+                      <a href="#" className="text-teal-400 hover:text-teal-300 font-medium">
                         Terms and Conditions
                       </a>{' '}
                       and{' '}
-                      <a href="#" className="text-emerald-600 hover:text-emerald-700 font-medium">
+                      <a href="#" className="text-teal-400 hover:text-teal-300 font-medium">
                         Privacy Policy
                       </a>
                     </label>
@@ -585,7 +585,7 @@ export default function CreateCompanyAccount() {
                   type="button"
                   onClick={() => setCurrentStep(currentStep - 1)}
                   variant="outline"
-                  className="flex-1 py-6 rounded-xl border-gray-200"
+                  className="flex-1 py-6 rounded-xl border-slate-700 text-slate-300 hover:bg-slate-800"
                 >
                   Previous
                 </Button>
@@ -594,7 +594,7 @@ export default function CreateCompanyAccount() {
                 <Button
                   type="button"
                   onClick={() => setCurrentStep(currentStep + 1)}
-                  className="flex-1 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white py-6 rounded-xl"
+                  className="flex-1 bg-gradient-to-r from-teal-500 to-cyan-500 hover:from-teal-600 hover:to-cyan-600 text-white py-6 rounded-xl shadow-lg shadow-teal-500/20"
                 >
                   Next
                 </Button>
@@ -602,7 +602,7 @@ export default function CreateCompanyAccount() {
                 <Button
                   type="submit"
                   disabled={loading || !agreesToTerms}
-                  className="flex-1 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white py-6 rounded-xl"
+                  className="flex-1 bg-gradient-to-r from-teal-500 to-cyan-500 hover:from-teal-600 hover:to-cyan-600 text-white py-6 rounded-xl shadow-lg shadow-teal-500/20 disabled:opacity-50"
                 >
                   {loading ? 'Creating Account...' : 'Create Account'}
                 </Button>
@@ -612,11 +612,11 @@ export default function CreateCompanyAccount() {
         </div>
 
         {/* Login Link */}
-        <p className="text-center mt-6 text-gray-600">
+        <p className="text-center mt-6 text-slate-300">
           Already have an account?{' '}
           <button
             onClick={() => router.push('/login')}
-            className="text-emerald-600 hover:text-emerald-700 font-medium"
+            className="text-teal-400 hover:text-teal-300 font-medium"
           >
             Sign in
           </button>

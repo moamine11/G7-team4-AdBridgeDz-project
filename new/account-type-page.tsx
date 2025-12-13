@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
-import { Building2, Megaphone, CheckCircle2, ArrowRight } from 'lucide-react'
+import { Building2, Megaphone, CheckCircle2, Search, Calendar, MapPin, Upload, TrendingUp, ArrowRight } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 export default function AccountTypePage() {
@@ -19,10 +19,10 @@ export default function AccountTypePage() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center p-4 py-12 pt-32 bg-slate-950">
+    <div className="min-h-screen flex flex-col items-center justify-center p-4 py-12 pt-32 bg-[#020618]">
       {/* Header */}
       <div className="text-center mb-12 max-w-2xl">
-        <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold mb-4 bg-gradient-to-r from-teal-400 via-cyan-400 to-teal-500 bg-clip-text text-transparent drop-shadow">
+        <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold mb-4 bg-gradient-to-r from-blue-400 via-teal-400 to-blue-400 bg-clip-text text-transparent drop-shadow">
           Create Your Account
         </h1>
         <p className="text-lg md:text-xl text-slate-300 leading-relaxed">
@@ -38,23 +38,23 @@ export default function AccountTypePage() {
           className={cn(
             "relative p-8 rounded-[2.5rem_1.5rem_2.5rem_1.5rem] border-2 cursor-pointer transition-all duration-300 transform hover:scale-[1.04] group overflow-hidden backdrop-blur-xl shadow-2xl",
             selectedType === 'company'
-              ? 'border-cyan-500 bg-gradient-to-br from-cyan-900/90 via-cyan-800/80 to-teal-900/80 shadow-cyan-500/30 scale-[1.04]'
-              : 'border-slate-700/50 bg-slate-900/50 hover:border-cyan-400 hover:shadow-lg shadow-md'
+              ? 'border-blue-500 bg-gradient-to-br from-blue-900/90 via-blue-800/80 to-teal-900/80 shadow-blue-500/30 scale-[1.04]'
+              : 'border-white/10 bg-white/10 hover:border-blue-400 hover:shadow-lg shadow-md'
           )}
         >
           {/* Decorative Layered Gradients */}
-          <div className="absolute -top-10 -left-10 w-40 h-40 bg-gradient-to-br from-cyan-500/30 to-teal-400/20 rounded-full blur-2xl opacity-60 z-0" />
-          <div className="absolute -bottom-10 -right-10 w-32 h-32 bg-gradient-to-tr from-cyan-400/20 to-teal-500/30 rounded-full blur-2xl opacity-50 z-0" />
+          <div className="absolute -top-10 -left-10 w-40 h-40 bg-gradient-to-br from-blue-500/30 to-teal-400/20 rounded-full blur-2xl opacity-60 z-0" />
+          <div className="absolute -bottom-10 -right-10 w-32 h-32 bg-gradient-to-tr from-blue-400/20 to-teal-500/30 rounded-full blur-2xl opacity-50 z-0" />
           {/* Selected Indicator */}
           {selectedType === 'company' && (
-            <div className="absolute top-3 right-3 w-6 h-6 bg-cyan-500 rounded-full flex items-center justify-center animate-in fade-in duration-300">
+            <div className="absolute top-3 right-3 w-6 h-6 bg-blue-500 rounded-full flex items-center justify-center animate-in fade-in duration-300">
               <CheckCircle2 className="w-4 h-4 text-white" />
             </div>
           )}
 
           {/* Background Pattern */}
           <div className="absolute inset-0 opacity-5 group-hover:opacity-10 transition-opacity">
-            <div className="absolute top-0 right-0 w-48 h-48 bg-cyan-500 rounded-full blur-3xl transform translate-x-1/2 -translate-y-1/2"></div>
+            <div className="absolute top-0 right-0 w-48 h-48 bg-blue-500 rounded-full blur-3xl transform translate-x-1/2 -translate-y-1/2"></div>
           </div>
 
           <div className="relative z-10">
@@ -66,12 +66,12 @@ export default function AccountTypePage() {
               <div className={cn(
                 "p-4 rounded-xl transition-all duration-300",
                 selectedType === 'company'
-                  ? 'bg-gradient-to-br from-cyan-500 to-teal-500 shadow-md shadow-cyan-500/50'
-                  : 'bg-gradient-to-br from-cyan-900/50 to-teal-900/50 group-hover:from-cyan-800/50 group-hover:to-teal-800/50'
+                  ? 'bg-gradient-to-br from-blue-500 to-teal-500 shadow-md shadow-blue-500/50'
+                  : 'bg-gradient-to-br from-blue-100 to-teal-100 group-hover:from-blue-200 group-hover:to-teal-200'
               )}>
                 <Building2 className={cn(
                   "w-10 h-10 transition-colors duration-300",
-                  selectedType === 'company' ? 'text-white' : 'text-cyan-400'
+                  selectedType === 'company' ? 'text-white' : 'text-blue-600'
                 )} />
               </div>
             </div>
@@ -91,7 +91,7 @@ export default function AccountTypePage() {
               <li className="flex items-center gap-2 text-xs text-slate-300">
                 <div className={cn(
                   "w-4 h-4 rounded-full flex items-center justify-center flex-shrink-0 transition-colors",
-                  selectedType === 'company' ? 'bg-cyan-500' : 'bg-slate-600'
+                  selectedType === 'company' ? 'bg-blue-500' : 'bg-gray-200'
                 )}>
                   {selectedType === 'company' && <CheckCircle2 className="w-2.5 h-2.5 text-white" />}
                 </div>
@@ -100,7 +100,7 @@ export default function AccountTypePage() {
               <li className="flex items-center gap-2 text-xs text-slate-300">
                 <div className={cn(
                   "w-4 h-4 rounded-full flex items-center justify-center flex-shrink-0 transition-colors",
-                  selectedType === 'company' ? 'bg-cyan-500' : 'bg-slate-600'
+                  selectedType === 'company' ? 'bg-blue-500' : 'bg-gray-200'
                 )}>
                   {selectedType === 'company' && <CheckCircle2 className="w-2.5 h-2.5 text-white" />}
                 </div>
@@ -109,7 +109,7 @@ export default function AccountTypePage() {
               <li className="flex items-center gap-2 text-xs text-slate-300">
                 <div className={cn(
                   "w-4 h-4 rounded-full flex items-center justify-center flex-shrink-0 transition-colors",
-                  selectedType === 'company' ? 'bg-cyan-500' : 'bg-slate-600'
+                  selectedType === 'company' ? 'bg-blue-500' : 'bg-gray-200'
                 )}>
                   {selectedType === 'company' && <CheckCircle2 className="w-2.5 h-2.5 text-white" />}
                 </div>
@@ -122,8 +122,8 @@ export default function AccountTypePage() {
               <ArrowRight className={cn(
                 "w-5 h-5 transition-all duration-300",
                 selectedType === 'company' 
-                  ? 'text-cyan-400 translate-x-1' 
-                  : 'text-slate-500 group-hover:text-cyan-400 group-hover:translate-x-1'
+                  ? 'text-blue-600 translate-x-1' 
+                  : 'text-gray-400 group-hover:text-blue-600 group-hover:translate-x-1'
               )} />
             </div>
           </div>
@@ -135,13 +135,13 @@ export default function AccountTypePage() {
           className={cn(
             "relative p-8 rounded-[1.5rem_2.5rem_1.5rem_2.5rem] border-2 cursor-pointer transition-all duration-300 transform hover:scale-[1.04] group overflow-hidden backdrop-blur-xl shadow-2xl",
             selectedType === 'agency'
-              ? 'border-teal-500 bg-gradient-to-br from-teal-900/90 via-cyan-900/80 to-slate-900/80 shadow-teal-500/30 scale-[1.04]'
-              : 'border-slate-700/50 bg-slate-900/50 hover:border-teal-400 hover:shadow-lg shadow-md'
+              ? 'border-teal-500 bg-gradient-to-br from-teal-900/90 via-emerald-900/80 to-blue-900/80 shadow-teal-500/30 scale-[1.04]'
+              : 'border-white/10 bg-white/10 hover:border-teal-400 hover:shadow-lg shadow-md'
           )}
         >
           {/* Decorative Layered Gradients */}
-          <div className="absolute -top-10 -right-10 w-40 h-40 bg-gradient-to-br from-teal-500/30 to-cyan-400/20 rounded-full blur-2xl opacity-60 z-0" />
-          <div className="absolute -bottom-10 -left-10 w-32 h-32 bg-gradient-to-tr from-teal-400/20 to-cyan-500/30 rounded-full blur-2xl opacity-50 z-0" />
+          <div className="absolute -top-10 -right-10 w-40 h-40 bg-gradient-to-br from-teal-500/30 to-blue-400/20 rounded-full blur-2xl opacity-60 z-0" />
+          <div className="absolute -bottom-10 -left-10 w-32 h-32 bg-gradient-to-tr from-emerald-400/20 to-blue-500/30 rounded-full blur-2xl opacity-50 z-0" />
           {/* Selected Indicator */}
           {selectedType === 'agency' && (
             <div className="absolute top-3 right-3 w-6 h-6 bg-teal-500 rounded-full flex items-center justify-center animate-in fade-in duration-300">
@@ -163,12 +163,12 @@ export default function AccountTypePage() {
               <div className={cn(
                 "p-4 rounded-xl transition-all duration-300",
                 selectedType === 'agency'
-                  ? 'bg-gradient-to-br from-teal-500 to-cyan-500 shadow-md shadow-teal-500/50'
-                  : 'bg-gradient-to-br from-teal-900/50 to-cyan-900/50 group-hover:from-teal-800/50 group-hover:to-cyan-800/50'
+                  ? 'bg-gradient-to-br from-teal-500 to-green-500 shadow-md shadow-teal-500/50'
+                  : 'bg-gradient-to-br from-teal-100 to-green-100 group-hover:from-teal-200 group-hover:to-green-200'
               )}>
                 <Megaphone className={cn(
                   "w-10 h-10 transition-colors duration-300",
-                  selectedType === 'agency' ? 'text-white' : 'text-teal-400'
+                  selectedType === 'agency' ? 'text-white' : 'text-teal-600'
                 )} />
               </div>
             </div>
@@ -188,7 +188,7 @@ export default function AccountTypePage() {
               <li className="flex items-center gap-2 text-xs text-slate-300">
                 <div className={cn(
                   "w-4 h-4 rounded-full flex items-center justify-center flex-shrink-0 transition-colors",
-                  selectedType === 'agency' ? 'bg-teal-500' : 'bg-slate-600'
+                  selectedType === 'agency' ? 'bg-teal-500' : 'bg-gray-200'
                 )}>
                   {selectedType === 'agency' && <CheckCircle2 className="w-2.5 h-2.5 text-white" />}
                 </div>
@@ -197,7 +197,7 @@ export default function AccountTypePage() {
               <li className="flex items-center gap-2 text-xs text-slate-300">
                 <div className={cn(
                   "w-4 h-4 rounded-full flex items-center justify-center flex-shrink-0 transition-colors",
-                  selectedType === 'agency' ? 'bg-teal-500' : 'bg-slate-600'
+                  selectedType === 'agency' ? 'bg-teal-500' : 'bg-gray-200'
                 )}>
                   {selectedType === 'agency' && <CheckCircle2 className="w-2.5 h-2.5 text-white" />}
                 </div>
@@ -206,7 +206,7 @@ export default function AccountTypePage() {
               <li className="flex items-center gap-2 text-xs text-slate-300">
                 <div className={cn(
                   "w-4 h-4 rounded-full flex items-center justify-center flex-shrink-0 transition-colors",
-                  selectedType === 'agency' ? 'bg-teal-500' : 'bg-slate-600'
+                  selectedType === 'agency' ? 'bg-teal-500' : 'bg-gray-200'
                 )}>
                   {selectedType === 'agency' && <CheckCircle2 className="w-2.5 h-2.5 text-white" />}
                 </div>
@@ -219,8 +219,8 @@ export default function AccountTypePage() {
               <ArrowRight className={cn(
                 "w-5 h-5 transition-all duration-300",
                 selectedType === 'agency' 
-                  ? 'text-teal-400 translate-x-1' 
-                  : 'text-slate-500 group-hover:text-teal-400 group-hover:translate-x-1'
+                  ? 'text-teal-600 translate-x-1' 
+                  : 'text-gray-400 group-hover:text-teal-600 group-hover:translate-x-1'
               )} />
             </div>
           </div>
@@ -234,7 +234,7 @@ export default function AccountTypePage() {
         className={cn(
           "relative px-8 py-5 text-base font-semibold rounded-full transition-all duration-300 transform mt-6",
           selectedType
-            ? "bg-gradient-to-r from-teal-500 via-cyan-500 to-teal-600 hover:from-teal-600 hover:to-cyan-600 text-white shadow-lg shadow-teal-500/20 hover:shadow-xl hover:shadow-teal-500/30 hover:scale-105"
+            ? "bg-gradient-to-r from-blue-500 via-teal-500 to-blue-400 hover:from-blue-700 hover:to-teal-600 text-white shadow-lg shadow-blue-500/20 hover:shadow-xl hover:shadow-blue-500/30 hover:scale-105"
             : "bg-slate-800 text-slate-500 cursor-not-allowed"
         )}
       >

@@ -5,6 +5,7 @@ import { useState, useEffect } from 'react'
 import { usePathname } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
+import Logo from '@/components/ui/logo'
 
 export default function Navbar() {
   const [open, setOpen] = useState(false)
@@ -47,16 +48,7 @@ export default function Navbar() {
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16 md:h-20">
           {/* Logo */}
-          <Link href="/" className="flex items-center group -ml-2">
-            <div className="relative">
-              <img
-                src="/Adbridgelogo.png"
-                alt="AdBridgeDZ"
-                className="h-8 md:h-10 w-auto transition-transform duration-300 group-hover:scale-105"
-                style={{ transform: 'scale(2)', transformOrigin: 'left center' }}
-              />
-            </div>
-          </Link>
+          <Logo href="/" size="md" showHoverEffects={true} className="-ml-2" />
 
           {/* Desktop Navigation */}
           <nav className="hidden lg:flex items-center gap-8">

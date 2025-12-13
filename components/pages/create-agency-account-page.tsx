@@ -194,7 +194,7 @@ export default function CreateAgencyAccount() {
   ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-emerald-50 to-teal-50 py-12 px-4">
+    <div className="min-h-screen bg-slate-950 py-12 px-4">
       <div className="max-w-4xl mx-auto">
         {/* Progress Steps */}
         <div className="mb-8">
@@ -206,8 +206,8 @@ export default function CreateAgencyAccount() {
                     className={cn(
                       'w-12 h-12 rounded-full flex items-center justify-center font-bold text-lg transition-all',
                       currentStep >= step.number
-                        ? 'bg-gradient-to-r from-emerald-500 to-teal-500 text-white'
-                        : 'bg-gray-200 text-gray-400'
+                        ? 'bg-gradient-to-r from-teal-500 to-cyan-500 text-white shadow-lg shadow-teal-500/30'
+                        : 'bg-slate-700 text-slate-400'
                     )}
                   >
                     {step.number}
@@ -215,7 +215,7 @@ export default function CreateAgencyAccount() {
                   <p
                     className={cn(
                       'text-sm mt-2 font-medium',
-                      currentStep >= step.number ? 'text-emerald-600' : 'text-gray-400'
+                      currentStep >= step.number ? 'text-teal-400' : 'text-slate-500'
                     )}
                   >
                     {step.title}
@@ -226,8 +226,8 @@ export default function CreateAgencyAccount() {
                     className={cn(
                       'h-1 flex-1 mx-2 transition-all',
                       currentStep > step.number
-                        ? 'bg-gradient-to-r from-emerald-500 to-teal-500'
-                        : 'bg-gray-200'
+                        ? 'bg-gradient-to-r from-teal-500 to-cyan-500'
+                        : 'bg-slate-700'
                     )}
                   />
                 )}
@@ -236,7 +236,7 @@ export default function CreateAgencyAccount() {
           </div>
         </div>
 
-        <div className="bg-white rounded-3xl shadow-2xl p-8">
+        <div className="bg-gradient-to-br from-slate-900/80 via-slate-800/70 to-slate-950/90 backdrop-blur-2xl rounded-3xl shadow-2xl border border-teal-500/20 p-8">
           <form onSubmit={handleSubmit} onKeyDown={(e) => {
          if (e.key === 'Enter' && currentStep < 6) {
            e.preventDefault();
@@ -246,61 +246,61 @@ export default function CreateAgencyAccount() {
             {currentStep === 1 && (
               <div className="space-y-6">
                 <div>
-                  <h2 className="text-3xl font-bold text-gray-900 mb-2">Basic Account Information</h2>
-                  <p className="text-gray-600">Create your account credentials</p>
+                  <h2 className="text-3xl font-bold text-white mb-2">Basic Account Information</h2>
+                  <p className="text-slate-300">Create your account credentials</p>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Agency Name <span className="text-red-500">*</span>
+                  <label className="block text-sm font-medium text-teal-200 mb-2">
+                    Agency Name <span className="text-red-400">*</span>
                   </label>
                   <div className="relative">
-                    <Building2 className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+                    <Building2 className="absolute left-3 top-1/2 transform -translate-y-1/2 text-teal-400 w-5 h-5" />
                     <Input
                       name="agencyName"
                       value={formData.agencyName}
                       onChange={handleChange}
                       placeholder="Enter your agency name"
-                      className="pl-10 py-6 rounded-xl border-gray-200"
+                      className="pl-10 py-6 rounded-xl bg-white/5 border border-teal-400/30 text-slate-100 placeholder:text-slate-400 focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400/30"
                       required
                     />
                   </div>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Email Address <span className="text-red-500">*</span>
+                  <label className="block text-sm font-medium text-teal-200 mb-2">
+                    Email Address <span className="text-red-400">*</span>
                   </label>
                   <div className="relative">
-                    <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+                    <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-teal-400 w-5 h-5" />
                     <Input
                       type="email"
                       name="email"
                       value={formData.email}
                       onChange={handleChange}
                       placeholder="agency@example.com"
-                      className="pl-10 py-6 rounded-xl border-gray-200"
+                      className="pl-10 py-6 rounded-xl bg-white/5 border border-teal-400/30 text-slate-100 placeholder:text-slate-400 focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400/30"
                       required
                     />
                   </div>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Password <span className="text-red-500">*</span>
+                  <label className="block text-sm font-medium text-teal-200 mb-2">
+                    Password <span className="text-red-400">*</span>
                   </label>
                   <div className="relative">
-                    <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+                    <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-teal-400 w-5 h-5" />
                     <Input
                       type={showPassword ? 'text' : 'password'}
                       name="password"
                       value={formData.password}
                       onChange={handleChange}
                       placeholder="Enter password"
-                      className="pl-10 pr-10 py-6 rounded-xl border-gray-200"
+                      className="pl-10 pr-10 py-6 rounded-xl bg-white/5 border border-teal-400/30 text-slate-100 placeholder:text-slate-400 focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400/30"
                       required
                     />
                     <button
                       type="button"
                       onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400"
+                      className="absolute right-3 top-1/2 transform -translate-y-1/2 text-slate-400 hover:text-teal-400"
                     >
                       {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                     </button>
@@ -309,7 +309,7 @@ export default function CreateAgencyAccount() {
                     <>
                       <div className="mt-2">
                         <div className="flex items-center gap-2 mb-1">
-                          <div className="flex-1 h-2 bg-gray-200 rounded-full overflow-hidden">
+                          <div className="flex-1 h-2 bg-slate-700 rounded-full overflow-hidden">
                             <div
                               className={cn('h-full transition-all', getPasswordStrengthColor())}
                               style={{
@@ -317,7 +317,7 @@ export default function CreateAgencyAccount() {
                               }}
                             />
                           </div>
-                          <span className="text-sm font-medium">{getPasswordStrengthLevel()}</span>
+                          <span className="text-sm font-medium text-slate-300">{getPasswordStrengthLevel()}</span>
                         </div>
                       </div>
                       <ul className="space-y-1 mt-2">
@@ -330,15 +330,15 @@ export default function CreateAgencyAccount() {
                         ].map(({ key, text }) => (
                           <li key={key} className="flex items-center gap-2 text-sm">
                             {passwordStrength[key as keyof typeof passwordStrength] ? (
-                              <CheckCircle2 className="w-4 h-4 text-green-600" />
+                              <CheckCircle2 className="w-4 h-4 text-teal-400" />
                             ) : (
-                              <XCircle className="w-4 h-4 text-gray-300" />
+                              <XCircle className="w-4 h-4 text-slate-600" />
                             )}
                             <span
                               className={
                                 passwordStrength[key as keyof typeof passwordStrength]
-                                  ? 'text-green-600'
-                                  : 'text-gray-500'
+                                  ? 'text-teal-400'
+                                  : 'text-slate-400'
                               }
                             >
                               {text}
@@ -350,24 +350,24 @@ export default function CreateAgencyAccount() {
                   )}
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Confirm Password <span className="text-red-500">*</span>
+                  <label className="block text-sm font-medium text-teal-200 mb-2">
+                    Confirm Password <span className="text-red-400">*</span>
                   </label>
                   <div className="relative">
-                    <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+                    <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-teal-400 w-5 h-5" />
                     <Input
                       type={showConfirmPressure ? 'text' : 'password'}
                       name="confirmPassword"
                       value={formData.confirmPassword}
                       onChange={handleChange}
                       placeholder="Confirm your password"
-                      className="pl-10 pr-10 py-6 rounded-xl border-gray-200"
+                      className="pl-10 pr-10 py-6 rounded-xl bg-white/5 border border-teal-400/30 text-slate-100 placeholder:text-slate-400 focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400/30"
                       required
                     />
                     <button
                       type="button"
                       onClick={() => setShowConfirmPassword(!showConfirmPressure)}
-                      className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400"
+                      className="absolute right-3 top-1/2 transform -translate-y-1/2 text-slate-400 hover:text-teal-400"
                     >
                       {showConfirmPressure ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                     </button>
@@ -380,26 +380,26 @@ export default function CreateAgencyAccount() {
             {currentStep === 2 && (
               <div className="space-y-6">
                 <div>
-                  <h2 className="text-3xl font-bold text-gray-900 mb-2">Contact Information</h2>
-                  <p className="text-gray-600">Where is your agency located?</p>
+                  <h2 className="text-3xl font-bold text-white mb-2">Contact Information</h2>
+                  <p className="text-slate-300">Where is your agency located?</p>
                 </div>
                 <div className="grid grid-cols-3 gap-4">
                   <div className="col-span-1">
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Code <span className="text-red-500">*</span>
+                    <label className="block text-sm font-medium text-teal-200 mb-2">
+                      Code <span className="text-red-400">*</span>
                     </label>
                     <Input
                       name="countryCode"
                       value={formData.countryCode}
                       onChange={handleChange}
                       placeholder="+213"
-                      className="py-6 rounded-xl border-gray-200"
+                      className="py-6 rounded-xl bg-white/5 border border-teal-400/30 text-slate-100 placeholder:text-slate-400 focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400/30"
                       required
                     />
                   </div>
                   <div className="col-span-2">
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Phone Number <span className="text-red-500">*</span>
+                    <label className="block text-sm font-medium text-teal-200 mb-2">
+                      Phone Number <span className="text-red-400">*</span>
                     </label>
                     <Input
                       type="tel"
@@ -407,65 +407,65 @@ export default function CreateAgencyAccount() {
                       value={formData.phoneNumber}
                       onChange={handleChange}
                       placeholder="XXX XXX XXX"
-                      className="py-6 rounded-xl border-gray-200"
+                      className="py-6 rounded-xl bg-white/5 border border-teal-400/30 text-slate-100 placeholder:text-slate-400 focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400/30"
                       required
                     />
                   </div>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Country <span className="text-red-500">*</span>
+                  <label className="block text-sm font-medium text-teal-200 mb-2">
+                    Country <span className="text-red-400">*</span>
                   </label>
                   <Input
                     name="country"
                     value={formData.country}
                     onChange={handleChange}
                     placeholder="Algeria"
-                    className="py-6 rounded-xl border-gray-200"
+                    className="py-6 rounded-xl bg-white/5 border border-teal-400/30 text-slate-100 placeholder:text-slate-400 focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400/30"
                     required
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    City <span className="text-red-500">*</span>
+                  <label className="block text-sm font-medium text-teal-200 mb-2">
+                    City <span className="text-red-400">*</span>
                   </label>
                   <Input
                     name="city"
                     value={formData.city}
                     onChange={handleChange}
                     placeholder="Algiers"
-                    className="py-6 rounded-xl border-gray-200"
+                    className="py-6 rounded-xl bg-white/5 border border-teal-400/30 text-slate-100 placeholder:text-slate-400 focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400/30"
                     required
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Street Address <span className="text-red-500">*</span>
+                  <label className="block text-sm font-medium text-teal-200 mb-2">
+                    Street Address <span className="text-red-400">*</span>
                   </label>
                   <Input
                     name="streetAddress"
                     value={formData.streetAddress}
                     onChange={handleChange}
                     placeholder="123 Main Street"
-                    className="py-6 rounded-xl border-gray-200"
+                    className="py-6 rounded-xl bg-white/5 border border-teal-400/30 text-slate-100 placeholder:text-slate-400 focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400/30"
                     required
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Postal Code <span className="text-red-500">*</span>
+                  <label className="block text-sm font-medium text-teal-200 mb-2">
+                    Postal Code <span className="text-red-400">*</span>
                   </label>
                   <Input
                     name="postalCode"
                     value={formData.postalCode}
                     onChange={handleChange}
                     placeholder="16000"
-                    className="py-6 rounded-xl border-gray-200"
+                    className="py-6 rounded-xl bg-white/5 border border-teal-400/30 text-slate-100 placeholder:text-slate-400 focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400/30"
                     required
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-teal-200 mb-2">
                     Website URL
                   </label>
                   <Input
@@ -474,7 +474,7 @@ export default function CreateAgencyAccount() {
                     value={formData.websiteUrl}
                     onChange={handleChange}
                     placeholder="https://youragency.com"
-                    className="py-6 rounded-xl border-gray-200"
+                    className="py-6 rounded-xl bg-white/5 border border-teal-400/30 text-slate-100 placeholder:text-slate-400 focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400/30"
                   />
                 </div>
               </div>
@@ -484,24 +484,24 @@ export default function CreateAgencyAccount() {
             {currentStep === 3 && (
               <div className="space-y-6">
                 <div>
-                  <h2 className="text-3xl font-bold text-gray-900 mb-2">Company Details</h2>
-                  <p className="text-gray-600">Tell us about your agency</p>
+                  <h2 className="text-3xl font-bold text-white mb-2">Company Details</h2>
+                  <p className="text-slate-300">Tell us about your agency</p>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Business Registration Number <span className="text-red-500">*</span>
+                  <label className="block text-sm font-medium text-teal-200 mb-2">
+                    Business Registration Number <span className="text-red-400">*</span>
                   </label>
                   <Input
                     name="businessRegistrationNumber"
                     value={formData.businessRegistrationNumber}
                     onChange={handleChange}
                     placeholder="REG123456"
-                    className="py-6 rounded-xl border-gray-200"
+                    className="py-6 rounded-xl bg-white/5 border border-teal-400/30 text-slate-100 placeholder:text-slate-400 focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400/30"
                     required
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-teal-200 mb-2">
                     Industry
                   </label>
                   <Input
@@ -509,29 +509,29 @@ export default function CreateAgencyAccount() {
                     value={formData.industry}
                     onChange={handleChange}
                     placeholder="e.g., Advertising"
-                    className="py-6 rounded-xl border-gray-200"
+                    className="py-6 rounded-xl bg-white/5 border border-teal-400/30 text-slate-100 placeholder:text-slate-400 focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400/30"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-teal-200 mb-2">
                     Company Size
                   </label>
                   <select
                     name="companySize"
                     value={formData.companySize}
                     onChange={handleChange}
-                    className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:border-emerald-500 focus:outline-none appearance-none bg-white"
+                    className="w-full px-4 py-3 rounded-xl border-2 border-teal-400/30 focus:border-cyan-400 focus:outline-none appearance-none bg-white/5 text-slate-100"
                   >
-                    <option value="">Select company size</option>
-                    <option value="1-10">1-10 employees</option>
-                    <option value="11-50">11-50 employees</option>
-                    <option value="51-200">51-200 employees</option>
-                    <option value="201-500">201-500 employees</option>
-                    <option value="500+">500+ employees</option>
+                    <option value="" className="bg-slate-900">Select company size</option>
+                    <option value="1-10" className="bg-slate-900">1-10 employees</option>
+                    <option value="11-50" className="bg-slate-900">11-50 employees</option>
+                    <option value="51-200" className="bg-slate-900">51-200 employees</option>
+                    <option value="201-500" className="bg-slate-900">201-500 employees</option>
+                    <option value="500+" className="bg-slate-900">500+ employees</option>
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-teal-200 mb-2">
                     Year Established
                   </label>
                   <Input
@@ -542,7 +542,7 @@ export default function CreateAgencyAccount() {
                     placeholder="YYYY"
                     min="1900"
                     max={new Date().getFullYear()}
-                    className="py-6 rounded-xl border-gray-200"
+                    className="py-6 rounded-xl bg-white/5 border border-teal-400/30 text-slate-100 placeholder:text-slate-400 focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400/30"
                   />
                 </div>
               </div>
@@ -552,31 +552,31 @@ export default function CreateAgencyAccount() {
             {currentStep === 4 && (
               <div className="space-y-6">
                 <div>
-                  <h2 className="text-3xl font-bold text-gray-900 mb-2">Services Offered</h2>
-                  <p className="text-gray-600">Select all services your agency provides</p>
+                  <h2 className="text-3xl font-bold text-white mb-2">Services Offered</h2>
+                  <p className="text-slate-300">Select all services your agency provides</p>
                 </div>
                 {availableServices.length === 0 ? (
-                  <p className="text-gray-500">Loading services...</p>
+                  <p className="text-slate-400">Loading services...</p>
                 ) : (
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     {availableServices.map((service) => (
                       <label
                         key={service._id}
-                        className="flex items-start gap-3 p-4 border rounded-lg cursor-pointer hover:bg-emerald-50"
+                        className="flex items-start gap-3 p-4 border border-teal-400/30 rounded-lg cursor-pointer hover:bg-teal-500/10 transition-colors"
                       >
                         <input
                           type="checkbox"
                           checked={selectedServiceIds.includes(service._id)}
                           onChange={() => handleServiceToggle(service._id)}
-                          className="mt-1 w-5 h-5 text-emerald-600 rounded focus:ring-emerald-500"
+                          className="mt-1 w-5 h-5 text-teal-500 rounded focus:ring-teal-500 bg-slate-800 border-slate-600"
                         />
-                        <span className="font-medium">{service.name}</span>
+                        <span className="font-medium text-slate-200">{service.name}</span>
                       </label>
                     ))}
                   </div>
                 )}
                 {selectedServiceIds.length === 0 && (
-                  <p className="text-sm text-red-500">Please select at least one service.</p>
+                  <p className="text-sm text-red-400">Please select at least one service.</p>
                 )}
               </div>
             )}
@@ -585,40 +585,40 @@ export default function CreateAgencyAccount() {
             {currentStep === 5 && (
               <div className="space-y-6">
                 <div>
-                  <h2 className="text-3xl font-bold text-gray-900 mb-2">Representative Information</h2>
-                  <p className="text-gray-600">Who is the main contact person?</p>
+                  <h2 className="text-3xl font-bold text-white mb-2">Representative Information</h2>
+                  <p className="text-slate-300">Who is the main contact person?</p>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Full Name <span className="text-red-500">*</span>
+                  <label className="block text-sm font-medium text-teal-200 mb-2">
+                    Full Name <span className="text-red-400">*</span>
                   </label>
                   <Input
                     name="fullName"
                     value={formData.fullName}
                     onChange={handleChange}
                     placeholder="John Doe"
-                    className="py-6 rounded-xl border-gray-200"
+                    className="py-6 rounded-xl bg-white/5 border border-teal-400/30 text-slate-100 placeholder:text-slate-400 focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400/30"
                     required
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Job Title <span className="text-red-500">*</span>
+                  <label className="block text-sm font-medium text-teal-200 mb-2">
+                    Job Title <span className="text-red-400">*</span>
                   </label>
                   <Input
                     name="jobTitle"
                     value={formData.jobTitle}
                     onChange={handleChange}
                     placeholder="CEO / Manager"
-                    className="py-6 rounded-xl border-gray-200"
+                    className="py-6 rounded-xl bg-white/5 border border-teal-400/30 text-slate-100 placeholder:text-slate-400 focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400/30"
                     required
                   />
                 </div>
-                <div className="border-t border-gray-200 pt-6 mt-6">
-                  <h3 className="text-lg font-bold text-gray-900 mb-4">Social Media (Optional)</h3>
+                <div className="border-t border-slate-700 pt-6 mt-6">
+                  <h3 className="text-lg font-bold text-white mb-4">Social Media (Optional)</h3>
                   <div className="space-y-4">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                      <label className="block text-sm font-medium text-teal-200 mb-2">
                         Facebook URL
                       </label>
                       <Input
@@ -627,11 +627,11 @@ export default function CreateAgencyAccount() {
                         value={formData.facebookUrl}
                         onChange={handleChange}
                         placeholder="https://facebook.com/youragency"
-                        className="py-6 rounded-xl border-gray-200"
+                        className="py-6 rounded-xl bg-white/5 border border-teal-400/30 text-slate-100 placeholder:text-slate-400 focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400/30"
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                      <label className="block text-sm font-medium text-teal-200 mb-2">
                         LinkedIn URL
                       </label>
                       <Input
@@ -640,27 +640,27 @@ export default function CreateAgencyAccount() {
                         value={formData.linkedinUrl}
                         onChange={handleChange}
                         placeholder="https://linkedin.com/company/youragency"
-                        className="py-6 rounded-xl border-gray-200"
+                        className="py-6 rounded-xl bg-white/5 border border-teal-400/30 text-slate-100 placeholder:text-slate-400 focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400/30"
                       />
                     </div>
                   </div>
                 </div>
-                <div className="flex items-start gap-3 p-4 bg-emerald-50 rounded-xl border-2 border-emerald-200">
+                <div className="flex items-start gap-3 p-4 bg-teal-500/10 rounded-xl border-2 border-teal-500/30">
                   <input
                     type="checkbox"
                     name="agreeToTerms"
                     checked={formData.agreeToTerms}
                     onChange={handleChange}
-                    className="mt-1 w-5 h-5 text-emerald-600 border-gray-300 rounded focus:ring-emerald-500"
+                    className="mt-1 w-5 h-5 text-teal-500 border-slate-600 rounded focus:ring-teal-500 bg-slate-800"
                     required
                   />
-                  <label className="text-sm text-gray-700">
+                  <label className="text-sm text-slate-200">
                     I agree to the{' '}
-                    <a href="/terms" className="text-emerald-600 hover:text-emerald-700 font-medium">
+                    <a href="/terms" className="text-teal-400 hover:text-teal-300 font-medium">
                       Terms and Conditions
                     </a>{' '}
                     and{' '}
-                    <a href="/privacy" className="text-emerald-600 hover:text-emerald-700 font-medium">
+                    <a href="/privacy" className="text-teal-400 hover:text-teal-300 font-medium">
                       Privacy Policy
                     </a>
                   </label>
@@ -672,19 +672,19 @@ export default function CreateAgencyAccount() {
             {currentStep === 6 && (
               <div className="space-y-6">
                 <div>
-                  <h2 className="text-3xl font-bold text-gray-900 mb-2">Upload Documents</h2>
-                  <p className="text-gray-600">Verify your agency with official files</p>
+                  <h2 className="text-3xl font-bold text-white mb-2">Upload Documents</h2>
+                  <p className="text-slate-300">Verify your agency with official files</p>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-teal-200 mb-2">
                     Agency Logo (JPG, PNG, GIF, WEBP)
                   </label>
                   <div
-                    className="border-2 border-dashed border-gray-300 rounded-xl p-6 text-center cursor-pointer hover:border-emerald-400 transition-colors"
+                    className="border-2 border-dashed border-teal-400/40 rounded-xl p-6 text-center cursor-pointer hover:border-cyan-400 hover:bg-white/5 transition-colors"
                     onClick={() => logoInputRef.current?.click()}
                   >
-                    <Upload className="w-8 h-8 text-gray-400 mx-auto" />
-                    <p className="mt-2 text-gray-600">
+                    <Upload className="w-8 h-8 text-teal-400 mx-auto" />
+                    <p className="mt-2 text-slate-300">
                       {logoFile ? logoFile.name : 'Click to upload logo'}
                     </p>
                     <input
@@ -697,15 +697,15 @@ export default function CreateAgencyAccount() {
                   </div>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-teal-200 mb-2">
                     Business Registration Document (PDF, DOC, DOCX, JPG, PNG)
                   </label>
                   <div
-                    className="border-2 border-dashed border-gray-300 rounded-xl p-6 text-center cursor-pointer hover:border-emerald-400 transition-colors"
+                    className="border-2 border-dashed border-teal-400/40 rounded-xl p-6 text-center cursor-pointer hover:border-cyan-400 hover:bg-white/5 transition-colors"
                     onClick={() => rcInputRef.current?.click()}
                   >
-                    <Upload className="w-8 h-8 text-gray-400 mx-auto" />
-                    <p className="mt-2 text-gray-600">
+                    <Upload className="w-8 h-8 text-teal-400 mx-auto" />
+                    <p className="mt-2 text-slate-300">
                       {rcDocumentFile ? rcDocumentFile.name : 'Click to upload registration document'}
                     </p>
                     <input
@@ -717,7 +717,7 @@ export default function CreateAgencyAccount() {
                     />
                   </div>
                 </div>
-                <p className="text-xs text-gray-500">
+                <p className="text-xs text-slate-400">
                   Max file size: Logo (5MB), Document (10MB)
                 </p>
               </div>
@@ -730,7 +730,7 @@ export default function CreateAgencyAccount() {
                   type="button"
                   onClick={() => setCurrentStep(currentStep - 1)}
                   variant="outline"
-                  className="flex-1 py-6 rounded-xl border-gray-200"
+                  className="flex-1 py-6 rounded-xl border-slate-700 text-slate-300 hover:bg-slate-800"
                 >
                   Previous
                 </Button>
@@ -739,7 +739,7 @@ export default function CreateAgencyAccount() {
                 <Button
                   type="button"
                   onClick={() => setCurrentStep(currentStep + 1)}
-                  className="flex-1 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white py-6 rounded-xl"
+                  className="flex-1 bg-gradient-to-r from-teal-500 to-cyan-500 hover:from-teal-600 hover:to-cyan-600 text-white py-6 rounded-xl shadow-lg shadow-teal-500/20"
                 >
                   Next
                 </Button>
@@ -747,7 +747,7 @@ export default function CreateAgencyAccount() {
                 <Button
                   type="submit"
                   disabled={loading}
-                  className="flex-1 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white py-6 rounded-xl"
+                  className="flex-1 bg-gradient-to-r from-teal-500 to-cyan-500 hover:from-teal-600 hover:to-cyan-600 text-white py-6 rounded-xl shadow-lg shadow-teal-500/20 disabled:opacity-50"
                 >
                   {loading ? 'Creating Account...' : 'Create Account'}
                 </Button>
@@ -756,11 +756,11 @@ export default function CreateAgencyAccount() {
           </form>
         </div>
 
-        <p className="text-center mt-6 text-gray-600">
+        <p className="text-center mt-6 text-slate-300">
           Already have an account?{' '}
           <button
             onClick={() => router.push('/login')}
-            className="text-emerald-600 hover:text-emerald-700 font-medium"
+            className="text-teal-400 hover:text-teal-300 font-medium"
           >
             Sign in
           </button>

@@ -24,6 +24,7 @@ import {
   AlertCircle,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import Logo from '@/components/ui/logo'
 
 interface DashboardLayoutProps {
   children: React.ReactNode
@@ -96,10 +97,7 @@ export default function DashboardLayout({ children, userType }: DashboardLayoutP
           {/* Logo */}
           <div className="p-6 border-b border-gray-200">
             <div className="flex items-center justify-between">
-              <Link href="/" className="flex items-center gap-2">
-                <Building2 className="w-8 h-8 text-teal-600" />
-                <span className="text-xl font-bold text-gray-900">AdBridgeDZ</span>
-              </Link>
+              <Logo href="/" size="md" showHoverEffects={false} />
               <button
                 onClick={() => setSidebarOpen(false)}
                 className="lg:hidden text-gray-400 hover:text-gray-600"
