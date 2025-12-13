@@ -14,6 +14,18 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
+
+// ------------------
+// REQUEST LOGGING (for debugging)
+// ------------------
+app.use((req, res, next) => {
+  console.log(`${new Date().toISOString()} - ${req.method} ${req.path}`);
+  if (req.method === 'POST' || req.method === 'PUT') {
+    console.log('Body:', req.body);
+  }
+  next();
+});
+
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 app.use('/api/companies', companyRoutes);
 app.use('/api/posts', postRoutes);

@@ -103,7 +103,6 @@ export const initializeMockData = () => {
     localStorage.setItem(STORAGE_KEYS.AGENCIES, JSON.stringify(mockAgencies))
   }
 
-  // Initialize reviews
   if (!localStorage.getItem(STORAGE_KEYS.REVIEWS)) {
     const mockReviews = [
       {
