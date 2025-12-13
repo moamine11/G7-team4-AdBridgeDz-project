@@ -33,6 +33,8 @@ const companySchema = new mongoose.Schema({
   phonenumber: { type: Number, required: true }, 
   isVerified: { type: Boolean, default: false },
   verificationToken: { type: String }, 
+  resetPasswordToken: { type: String },
+  resetPasswordExpires: { type: Date },
   createdAt: { type: Date, default: Date.now },
   updatedAt: { type: Date, default: Date.now } ,
 });

@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { Eye, EyeOff, Mail, Lock, ChevronDown, Loader2 } from 'lucide-react';
+import AuthNavbar from '@/components/ui/auth-navbar';
 
 type UserType = 'company' | 'agency' | null;
 
@@ -134,28 +135,30 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="h-[100vh] bg-gradient-to-br from-slate-900 via-blue-950 to-teal-900 flex items-center justify-center p-4">
-      <div className="w-full max-w-6xl mx-auto">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-0 bg-white/5 backdrop-blur-sm rounded-3xl overflow-hidden shadow-2xl">
+    <div className="h-screen bg-gradient-to-br from-slate-900 via-blue-950 to-teal-900 flex flex-col overflow-hidden">
+      <AuthNavbar variant="transparent" showGetStarted={true} />
+      <div className="flex-1 flex items-center justify-center p-2 min-h-0">
+        <div className="w-full max-w-6xl mx-auto h-full flex items-center">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-0 bg-white/5 backdrop-blur-sm rounded-xl overflow-hidden shadow-2xl w-full h-full max-h-[90vh]">
           {/* Left: Form */}
-          <div className="bg-white p-8 lg:p-12 flex flex-col justify-center">
-            <div className="max-w-md mx-auto w-full max-h-[590]">
-              <h1 className="text-3xl font-bold text-slate-800 mb-2">Welcome Back</h1>
-              <p className="text-slate-600 mb-8">
-                Sign in to manage your campaigns or ad inventory.
+          <div className="bg-white p-4 lg:p-5 flex flex-col justify-center overflow-hidden">
+            <div className="max-w-md mx-auto w-full">
+              <h1 className="text-lg font-bold text-slate-800 mb-0.5">Welcome Back</h1>
+              <p className="text-slate-600 mb-3 text-[11px]">
+                Sign in to manage your campaigns or ad inventory
               </p>
 
-              <div className="space-y-5">
+              <div className="space-y-2.5">
                 {/* Account Type */}
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-2">
+                  <label className="block text-[11px] font-medium text-slate-700 mb-1">
                     Account Type
                   </label>
                   <div className="relative">
                     <select
                       value={userType || ''}
                       onChange={(e) => setUserType(e.target.value as UserType)}
-                      className="w-full bg-slate-50 border border-slate-200 text-slate-800 rounded-lg px-4 py-3 pr-10 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500 appearance-none"
+                      className="w-full bg-slate-50 border border-slate-200 text-slate-800 rounded-lg px-3 py-1.5 pr-8 text-xs focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500 appearance-none"
                     >
                       <option value="" disabled>
                         Select account type
@@ -163,18 +166,18 @@ export default function LoginPage() {
                       <option value="company">Advertiser</option>
                       <option value="agency">Agency / Billboard Provider</option>
                     </select>
-                    <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 w-5 h-5 pointer-events-none" />
+                    <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 w-3.5 h-3.5 pointer-events-none" />
                   </div>
                 </div>
 
                 {/* Email */}
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-2">
+                  <label className="block text-[11px] font-medium text-slate-700 mb-1">
                     Email
                   </label>
                   <div className="relative">
-                    <div className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400">
-                      <Mail className="w-5 h-5" />
+                    <div className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400">
+                      <Mail className="w-3.5 h-3.5" />
                     </div>
                     <input
                       type="email"
@@ -182,19 +185,19 @@ export default function LoginPage() {
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
                       onKeyPress={handleKeyPress}
-                      className="w-full bg-slate-50 border border-slate-200 text-slate-800 placeholder-slate-400 rounded-lg pl-12 pr-4 py-3 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+                      className="w-full bg-slate-50 border border-slate-200 text-slate-800 placeholder-slate-400 rounded-lg pl-9 pr-3 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
                     />
                   </div>
                 </div>
 
                 {/* Password */}
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-2">
+                  <label className="block text-[11px] font-medium text-slate-700 mb-1">
                     Password
                   </label>
                   <div className="relative">
-                    <div className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400">
-                      <Lock className="w-5 h-5" />
+                    <div className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400">
+                      <Lock className="w-3.5 h-3.5" />
                     </div>
                     <input
                       type={showPassword ? 'text' : 'password'}
@@ -202,25 +205,25 @@ export default function LoginPage() {
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
                       onKeyPress={handleKeyPress}
-                      className="w-full bg-slate-50 border border-slate-200 text-slate-800 placeholder-slate-400 rounded-lg pl-12 pr-12 py-3 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+                      className="w-full bg-slate-50 border border-slate-200 text-slate-800 placeholder-slate-400 rounded-lg pl-9 pr-9 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
                     />
                     <button
                       type="button"
                       onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                      className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
                     >
                       {showPassword ? (
-                        <EyeOff className="w-5 h-5" />
+                        <EyeOff className="w-3.5 h-3.5" />
                       ) : (
-                        <Eye className="w-5 h-5" />
+                        <Eye className="w-3.5 h-3.5" />
                       )}
                     </button>
                   </div>
                 </div>
 
                 {/* Forgot Password */}
-                <div className="text-right">
-                  <a href="/forgot-password" className="text-teal-600 hover:text-teal-700 text-sm font-medium">
+                <div className="text-right -mt-1">
+                  <a href="/forgot-password" className="text-teal-600 hover:text-teal-700 text-[10px] font-medium">
                     Forgot password?
                   </a>
                 </div>
@@ -229,11 +232,11 @@ export default function LoginPage() {
                 <button
                   onClick={handleLogin}
                   disabled={loading || !userType}
-                  className="w-full bg-teal-600 hover:bg-teal-700 text-white font-semibold py-3 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="w-full bg-teal-600 hover:bg-teal-700 text-white font-semibold py-2 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-xs"
                 >
                   {loading ? (
                     <span className="flex items-center justify-center">
-                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" />
                       Signing In...
                     </span>
                   ) : (
@@ -242,21 +245,21 @@ export default function LoginPage() {
                 </button>
 
                 {/* Divider */}
-                <div className="relative my-6">
+                <div className="relative my-2">
                   <div className="absolute inset-0 flex items-center">
                     <div className="w-full border-t border-slate-200"></div>
                   </div>
                   <div className="relative flex justify-center">
-                    <span className="bg-white px-4 text-slate-500 text-sm">Or continue with</span>
+                    <span className="bg-white px-2 text-slate-500 text-[10px]">Or continue with</span>
                   </div>
                 </div>
 
                 {/* Google Sign-In */}
-                <div id="googleSignInButton" className="w-full"></div>
+                <div id="googleSignInButton" className="w-full scale-80 origin-center"></div>
 
                 {/* Register Link */}
-                <div className="text-center pt-4">
-                  <p className="text-slate-600 text-sm">
+                <div className="text-center pt-0.5">
+                  <p className="text-slate-600 text-[10px]">
                     Don't have an account?{' '}
                     <a href="/account-type" className="text-teal-600 hover:text-teal-700 font-medium">
                       Create one
@@ -268,17 +271,17 @@ export default function LoginPage() {
           </div>
 
           {/* Right: Illustration */}
-          <div className="hidden lg:flex bg-gradient-to-br from-slate-900 via-blue-950 to-teal-900 p-12 flex-col items-center justify-center relative overflow-hidden">
+          <div className="hidden lg:flex bg-gradient-to-br from-slate-900 via-blue-950 to-teal-900 p-4 flex-col items-center justify-center relative overflow-hidden">
             {/* Animated background elements */}
             <div className="absolute inset-0 opacity-20">
-              <div className="absolute top-10 left-10 w-32 h-32 bg-teal-500 rounded-full blur-3xl animate-pulse"></div>
-              <div className="absolute bottom-20 right-10 w-40 h-40 bg-cyan-500 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1s' }}></div>
+              <div className="absolute top-10 left-10 w-20 h-20 bg-teal-500 rounded-full blur-3xl animate-pulse"></div>
+              <div className="absolute bottom-20 right-10 w-28 h-28 bg-cyan-500 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1s' }}></div>
             </div>
 
             <div className="relative z-10 text-center max-w-md">
               {/* Isometric Map Illustration */}
-              <div className="mb-8 relative">
-                <svg viewBox="0 0 400 300" className="w-full h-auto">
+              <div className="mb-3 relative">
+                <svg viewBox="0 0 400 300" className="w-full h-auto max-h-[200px]">
                   {/* Base platform */}
                   <path
                     d="M 200 240 L 320 180 L 320 100 L 200 40 L 80 100 L 80 180 Z"
@@ -341,15 +344,16 @@ export default function LoginPage() {
                 </svg>
               </div>
 
-              <h2 className="text-3xl font-bold text-white mb-4">
+              <h2 className="text-lg font-bold text-white mb-1.5">
                 Powering Algerian Advertising
               </h2>
-              <p className="text-slate-300 text-base leading-relaxed">
-                Connect advertisers with high-impact outdoor ad spaces across Algeria — fast, transparent, and trusted.
+              <p className="text-slate-300 text-xs leading-relaxed">
+                Connect advertisers with high-impact outdoor ad spaces — fast, transparent, and trusted.
               </p>
             </div>
           </div>
         </div>
+      </div>
       </div>
     </div>
   );

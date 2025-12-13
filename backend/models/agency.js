@@ -42,7 +42,9 @@ const agencySchema = new Schema({
   },
   agreeToTerms: { type: Boolean, required: true },
   isVerified: { type: Boolean, default: false }, 
-  verificationToken: { type: String }, 
+  verificationToken: { type: String },
+  resetPasswordToken: { type: String },
+  resetPasswordExpires: { type: Date },
   dateCreated: { type: Date, default: Date.now }
 });
 const Agency = mongoose.model('Agency', agencySchema);

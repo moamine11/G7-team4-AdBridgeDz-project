@@ -92,6 +92,30 @@ const sendVerificationEmail = async (company, token) => {
   });
 };
 
+const sendPasswordResetEmail = async (company, token) => {
+  const transporter = nodemailer.createTransport({
+    host: process.env.SMTP_HOST,
+    port: Number(process.env.SMTP_PORT),
+    secure: process.env.SMTP_SECURE === 'true',
+    auth: {
+      user: process.env.SMTP_USER,
+      pass: process.env.SMTP_PASS
+    }
+  });
+
+  const url = `${process.env.FRONTEND_URL}/reset-password?token=${token}&id=${company._id}&userType=company`;
+  await transporter.sendMail({
+    from: `"MarketingWeb" <${process.env.SMTP_USER}>`,
+    to: company.email,
+    subject: "Reset Your Password",
+    html: `<p>Hi ${company.name},</p>
+           <p>You requested to reset your password. Click the link below to reset it:</p>
+           <a href="${url}">${url}</a>
+           <p>This link will expire in 1 hour.</p>
+           <p>If you didn't request this, please ignore this email.</p>`
+  });
+};
+
 // --- REGISTER ROUTE (MODIFIED for Cloudinary URL/ID storage) ---
 router.post('/register', upload.single('logo'), async (req, res) => {
   try {
@@ -196,14 +220,25 @@ router.post('/register', upload.single('logo'), async (req, res) => {
 router.get('/verify-email', async (req, res) => {
   try {
     const { token, id } = req.query;
-    if (!token || !id) return res.status(400).send("Invalid request");
+    if (!token || !id) {
+      return res.status(400).json({ error: "Invalid request. Token and ID are required." });
+    }
     const company = await Company.findById(id);
-    if (!company || company.verificationToken !== token) return res.status(400).send("Invalid or expired token");
+    if (!company) {
+      return res.status(404).json({ error: "Company not found." });
+    }
+    if (company.verificationToken !== token) {
+      return res.status(400).json({ error: "Invalid or expired token." });
+    }
+    if (company.isVerified) {
+      return res.status(400).json({ error: "Email already verified." });
+    }
     company.isVerified = true;
     company.verificationToken = undefined;
     await company.save();
-    res.send("Email verified successfully! You can now log in.");
+    res.json({ message: "Email verified successfully! You can now log in." });
   } catch (err) {
+    console.error('Verification error:', err);
     res.status(500).json({ error: "Server error" });
   }
 });
@@ -304,6 +339,100 @@ router.post('/resend-verification', async (req, res) => {
     await company.save();
     await sendVerificationEmail(company, verificationToken);
     res.json({ message: 'Verification email sent' });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Forgot Password - Request reset
+router.post('/forgot-password', async (req, res) => {
+  try {
+    const { email } = req.body;
+    if (!email) {
+      return res.status(400).json({ error: 'Email is required' });
+    }
+
+    const company = await Company.findOne({ email });
+    // Don't reveal if email exists for security
+    if (!company) {
+      return res.json({ message: 'If that email exists, a password reset link has been sent.' });
+    }
+
+    // Generate reset token
+    const resetToken = crypto.randomBytes(32).toString('hex');
+    company.resetPasswordToken = resetToken;
+    company.resetPasswordExpires = Date.now() + 3600000; // 1 hour
+    await company.save();
+
+    await sendPasswordResetEmail(company, resetToken);
+    res.json({ message: 'If that email exists, a password reset link has been sent.' });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Reset Password - Verify token and reset password
+router.post('/reset-password', async (req, res) => {
+  try {
+    const { token, id, password } = req.body;
+    
+    if (!token || !id || !password) {
+      return res.status(400).json({ error: 'Token, ID, and password are required' });
+    }
+
+    if (password.length < 6) {
+      return res.status(400).json({ error: 'Password must be at least 6 characters long' });
+    }
+
+    const company = await Company.findById(id);
+    if (!company) {
+      return res.status(404).json({ error: 'Company not found' });
+    }
+
+    if (company.resetPasswordToken !== token) {
+      return res.status(400).json({ error: 'Invalid or expired reset token' });
+    }
+
+    if (!company.resetPasswordExpires || company.resetPasswordExpires < Date.now()) {
+      return res.status(400).json({ error: 'Reset token has expired' });
+    }
+
+    // Hash new password
+    const hashedPassword = await bcrypt.hash(password, 10);
+    company.password = hashedPassword;
+    company.resetPasswordToken = undefined;
+    company.resetPasswordExpires = undefined;
+    await company.save();
+
+    res.json({ message: 'Password has been reset successfully' });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Verify reset token
+router.get('/verify-reset-token', async (req, res) => {
+  try {
+    const { token, id } = req.query;
+    
+    if (!token || !id) {
+      return res.status(400).json({ error: 'Token and ID are required' });
+    }
+
+    const company = await Company.findById(id);
+    if (!company) {
+      return res.status(404).json({ error: 'Company not found' });
+    }
+
+    if (company.resetPasswordToken !== token) {
+      return res.status(400).json({ error: 'Invalid reset token' });
+    }
+
+    if (!company.resetPasswordExpires || company.resetPasswordExpires < Date.now()) {
+      return res.status(400).json({ error: 'Reset token has expired' });
+    }
+
+    res.json({ message: 'Token is valid' });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
