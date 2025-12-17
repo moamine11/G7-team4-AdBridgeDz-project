@@ -22,6 +22,9 @@ const companySchema = new mongoose.Schema({
   companySize: { type: String  },  
   yearEstablished: { type: Number }, 
 
+  // Media stored in Cloudinary; keep public_id for cleanup/replace flows
+  cloudinaryPublicId: { type: String },
+
   userType: { 
     type: String, 
     enum: ['company', 'agency'], 

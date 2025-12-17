@@ -1,8 +1,20 @@
-require('dotenv').config();
+const path = require('path');
+const fs = require('fs');
+const dotenv = require('dotenv');
+
+// Prefer .env.local for local/secret credentials (e.g., Atlas), fallback to .env
+const envPath = path.join(__dirname, '.env');
+const envLocalPath = path.join(__dirname, '.env.local');
+if (fs.existsSync(envPath)) {
+    dotenv.config({ path: envPath });
+}
+if (fs.existsSync(envLocalPath)) {
+    dotenv.config({ path: envLocalPath, override: true });
+}
+
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
-const path = require('path');
 
 const companyRoutes = require('./routes/companies');
 const postRoutes = require('./routes/posts');

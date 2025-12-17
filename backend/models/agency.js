@@ -17,6 +17,9 @@ const agencySchema = new Schema({
   businessRegistrationNumber: { type: String, required: true },
   rcDocument: { type: String }, 
   logo: { type: String },
+
+  // Media stored in Cloudinary; keep public_id for cleanup/replace flows
+  logoPublicId: { type: String },
   industry: { type: String},
   companySize: { type: String },
   yearEstablished: { type: Number },
@@ -45,7 +48,8 @@ const agencySchema = new Schema({
   verificationToken: { type: String },
   resetPasswordToken: { type: String },
   resetPasswordExpires: { type: Date },
-  dateCreated: { type: Date, default: Date.now }
+  dateCreated: { type: Date, default: Date.now },
+  updatedAt: { type: Date, default: Date.now }
 });
 const Agency = mongoose.model('Agency', agencySchema);
 module.exports = Agency;
