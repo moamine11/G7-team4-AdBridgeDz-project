@@ -1,0 +1,12 @@
+html,
+body {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  background-color: #151d2e;  /* Same as your dashboard background */
+  color: #cbd5e1;             /* Optional: sets default text color */
+}
+
+#root {
+  height: 100%;
+}
