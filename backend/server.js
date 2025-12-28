@@ -20,7 +20,8 @@ const companyRoutes = require('./routes/companies');
 const postRoutes = require('./routes/posts');
 const agencyRoutes = require('./routes/agencies');
 const serviceRoutes = require('./routes/services');
-const adminRoutes = require("./routes/admins");
+const adminRoutes = require('./routes/admins');
+const authRoutes = require('./routes/auth');
 
 const app = express();
 app.use(cors());

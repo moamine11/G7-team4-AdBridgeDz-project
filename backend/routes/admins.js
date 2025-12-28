@@ -4,8 +4,8 @@ const adminController = require("../controllers/admin");
 router.get("/companies", adminController.getAllCompanies);
 router.delete("/companies/:id", adminController.deleteCompanyById);
 router.delete("/companies", adminController.deleteCompanyByEmail);
-
 router.get("/agencies", adminController.getAllAgencies);
 router.delete("/agencies/:id", adminController.deleteAgencyById);
 router.delete("/agencies", adminController.deleteAgencyByEmail);
+router.patch("/agencies/:id/verify", adminController.toggleAgencyVerification);
 module.exports = router;
