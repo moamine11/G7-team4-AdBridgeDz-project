@@ -40,6 +40,17 @@ type Company = {
   joinedDate: string;
 };
 
+type TopAgency = {
+  _id: string;
+  agencyName: string;
+  email: string;
+  bookingCount: number;
+  isVerified: boolean;
+  country: string;
+  city: string;
+  servicesOffered: Array<{ _id: string; name: string }>;
+};
+
 const AdminDashboard = () => {
   const [activeTab, setActiveTab] = useState<"agencies" | "companies">(
     "companies"
@@ -49,9 +60,16 @@ const AdminDashboard = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [isLoadingCompanies, setIsLoadingCompanies] = useState(true);
   const [isLoadingAgencies, setIsLoadingAgencies] = useState(true);
+  const [isLoadingTopAgencies, setIsLoadingTopAgencies] = useState(true);
 
   const [agencies, setAgencies] = useState<Agency[]>([]);
   const [companies, setCompanies] = useState<Company[]>([]);
+  const [topAgencies, setTopAgencies] = useState<TopAgency[]>([]);
+  
+  // Top agencies filters
+  const [topAgenciesSearch, setTopAgenciesSearch] = useState("");
+  const [topAgenciesStatus, setTopAgenciesStatus] = useState("all");
+  const [topAgenciesLimit, setTopAgenciesLimit] = useState(5);
 
   useEffect(() => {
     const fetchCompanies = async () => {
@@ -111,6 +129,29 @@ const AdminDashboard = () => {
     };
 
     fetchAgencies();
+  }, []);
+
+  useEffect(() => {
+    const fetchTopAgencies = async () => {
+      try {
+        setIsLoadingTopAgencies(true);
+        const response = await fetch("http://localhost:5000/api/admin/agencies/top-by-bookings");
+
+        if (!response.ok) {
+          throw new Error(`Failed to fetch top agencies: ${response.status}`);
+        }
+
+        const data = await response.json();
+        setTopAgencies(data);
+      } catch (error: any) {
+        console.error("Error fetching top agencies:", error.message);
+        setTopAgencies([]);
+      } finally {
+        setIsLoadingTopAgencies(false);
+      }
+    };
+
+    fetchTopAgencies();
   }, []);
 
   const verifiedAgenciesCount = agencies.filter(
@@ -235,6 +276,17 @@ const AdminDashboard = () => {
       company.industry.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
+  const filteredTopAgencies = topAgencies.filter((agency) => {
+    const matchesSearch =
+      agency.agencyName.toLowerCase().includes(topAgenciesSearch.toLowerCase()) ||
+      agency.email.toLowerCase().includes(topAgenciesSearch.toLowerCase());
+    const matchesStatus =
+      topAgenciesStatus === "all" ||
+      (topAgenciesStatus === "verified" && agency.isVerified) ||
+      (topAgenciesStatus === "unverified" && !agency.isVerified);
+    return matchesSearch && matchesStatus;
+  }).slice(0, topAgenciesLimit);
+
   const styles = {
     container: {
       minHeight: "100vh",
@@ -276,6 +328,13 @@ const AdminDashboard = () => {
       padding: "64px 0",
       color: "#475569",
       fontSize: "14px",
+    },
+    sectionTitle: {
+      color: "#f1f5f9",
+      fontSize: "24px",
+      fontWeight: "600",
+      marginBottom: "24px",
+      marginTop: "48px",
     },
   };
 
@@ -592,10 +651,253 @@ const AdminDashboard = () => {
             )}
           </motion.div>
         </AnimatePresence>
+
+        {/* Top Agencies Section */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.4, duration: 0.5 }}
+        >
+          <h2 style={styles.sectionTitle}>🏆 Top Agencies by Bookings</h2>
+
+          {/* Filters for Top Agencies */}
+          <div style={{ marginBottom: "24px", display: "flex", gap: "16px", flexWrap: "wrap" }}>
+            <input
+              type="text"
+              placeholder="Search top agencies..."
+              value={topAgenciesSearch}
+              onChange={(e) => setTopAgenciesSearch(e.target.value)}
+              style={{
+                flex: 1,
+                minWidth: "200px",
+                padding: "12px 16px",
+                background: "#1e293b",
+                border: "1px solid #334155",
+                borderRadius: "8px",
+                color: "#f1f5f9",
+                fontSize: "14px",
+              }}
+            />
+            <select
+              value={topAgenciesStatus}
+              onChange={(e) => setTopAgenciesStatus(e.target.value)}
+              style={{
+                padding: "12px 16px",
+                background: "#1e293b",
+                border: "1px solid #334155",
+                borderRadius: "8px",
+                color: "#f1f5f9",
+                fontSize: "14px",
+              }}
+            >
+              <option value="all">All Status</option>
+              <option value="verified">Verified Only</option>
+              <option value="unverified">Unverified Only</option>
+            </select>
+            <select
+              value={topAgenciesLimit}
+              onChange={(e) => setTopAgenciesLimit(Number(e.target.value))}
+              style={{
+                padding: "12px 16px",
+                background: "#1e293b",
+                border: "1px solid #334155",
+                borderRadius: "8px",
+                color: "#f1f5f9",
+                fontSize: "14px",
+              }}
+            >
+              <option value={3}>Top 3</option>
+              <option value={5}>Top 5</option>
+              <option value={10}>Top 10</option>
+              <option value={20}>Top 20</option>
+            </select>
+          </div>
+
+          {isLoadingTopAgencies ? (
+            <div style={{ textAlign: "center", padding: "40px 0" }}>
+              <div
+                style={{
+                  width: "40px",
+                  height: "40px",
+                  border: "3px solid #1e293b",
+                  borderTopColor: "#22d3ee",
+                  borderRadius: "50%",
+                  margin: "0 auto 16px",
+                  animation: "spin 1s linear infinite",
+                }}
+              />
+              <p style={{ color: "#94a3b8" }}>Loading top agencies...</p>
+            </div>
+          ) : filteredTopAgencies.length > 0 ? (
+            <motion.div variants={containerVariants} initial="hidden" animate="visible">
+              {filteredTopAgencies.map((agency, index) => (
+                <motion.div
+                  key={agency._id}
+                  variants={itemVariants}
+                  initial="hidden"
+                  animate="visible"
+                  whileHover={{ scale: 1.02, transition: { duration: 0.2 } }}
+                  style={{
+                    background: "linear-gradient(135deg, #1e293b 0%, #0f172a 100%)",
+                    borderRadius: "12px",
+                    padding: "24px",
+                    marginBottom: "16px",
+                    border: "1px solid #334155",
+                    position: "relative",
+                    overflow: "hidden",
+                  }}
+                >
+                  {/* Rank Badge */}
+                  <div
+                    style={{
+                      position: "absolute",
+                      top: "16px",
+                      right: "16px",
+                      width: "48px",
+                      height: "48px",
+                      borderRadius: "50%",
+                      background: index === 0 ? "#fbbf24" : index === 1 ? "#94a3b8" : index === 2 ? "#f97316" : "#334155",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      fontSize: "20px",
+                      fontWeight: "700",
+                      color: "#0a0e1a",
+                      boxShadow: "0 4px 12px rgba(0,0,0,0.3)",
+                    }}
+                  >
+                    {index === 0 ? "🥇" : index === 1 ? "🥈" : index === 2 ? "🥉" : `#${index + 1}`}
+                  </div>
+
+                  <div style={{ display: "flex", gap: "24px", alignItems: "start" }}>
+                    <div style={{ flex: 1 }}>
+                      <h3 style={{ color: "#f1f5f9", fontSize: "20px", fontWeight: "600", marginBottom: "8px" }}>
+                        {agency.agencyName}
+                      </h3>
+                      <p style={{ color: "#64748b", fontSize: "14px", marginBottom: "12px" }}>
+                        {agency.email}
+                      </p>
+
+                      {/* Booking Count - Highlighted */}
+                      <div
+                        style={{
+                          display: "inline-flex",
+                          alignItems: "center",
+                          gap: "8px",
+                          padding: "8px 16px",
+                          background: "#22d3ee20",
+                          border: "1px solid #22d3ee",
+                          borderRadius: "8px",
+                          marginBottom: "12px",
+                        }}
+                      >
+                        <span style={{ fontSize: "24px" }}>📅</span>
+                        <div>
+                          <div style={{ fontSize: "12px", color: "#64748b" }}>Total Bookings</div>
+                          <div style={{ fontSize: "20px", fontWeight: "700", color: "#22d3ee" }}>
+                            {agency.bookingCount}
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Status and Location */}
+                      <div style={{ display: "flex", gap: "12px", flexWrap: "wrap", marginBottom: "12px" }}>
+                        <span
+                          style={{
+                            display: "inline-block",
+                            padding: "4px 12px",
+                            borderRadius: "12px",
+                            fontSize: "12px",
+                            background: agency.isVerified ? "#22d3ee20" : "#64748b20",
+                            color: agency.isVerified ? "#22d3ee" : "#64748b",
+                          }}
+                        >
+                          {agency.isVerified ? "✓ Verified" : "Unverified"}
+                        </span>
+                        <span
+                          style={{
+                            display: "inline-block",
+                            padding: "4px 12px",
+                            borderRadius: "12px",
+                            fontSize: "12px",
+                            background: "#334155",
+                            color: "#94a3b8",
+                          }}
+                        >
+                          📍 {agency.city}, {agency.country}
+                        </span>
+                      </div>
+
+                      {/* Services */}
+                      {agency.servicesOffered && agency.servicesOffered.length > 0 && (
+                        <div>
+                          <div style={{ fontSize: "12px", color: "#64748b", marginBottom: "6px" }}>
+                            Services Offered:
+                          </div>
+                          <div style={{ display: "flex", gap: "6px", flexWrap: "wrap" }}>
+                            {agency.servicesOffered.slice(0, 3).map((service) => (
+                              <span
+                                key={service._id}
+                                style={{
+                                  padding: "4px 10px",
+                                  background: "#0f172a",
+                                  border: "1px solid #334155",
+                                  borderRadius: "6px",
+                                  fontSize: "11px",
+                                  color: "#94a3b8",
+                                }}
+                              >
+                                {service.name}
+                              </span>
+                            ))}
+                            {agency.servicesOffered.length > 3 && (
+                              <span
+                                style={{
+                                  padding: "4px 10px",
+                                  background: "#0f172a",
+                                  border: "1px solid #334155",
+                                  borderRadius: "6px",
+                                  fontSize: "11px",
+                                  color: "#64748b",
+                                }}
+                              >
+                                +{agency.servicesOffered.length - 3} more
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </motion.div>
+              ))}
+            </motion.div>
+          ) : (
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 0.3 }}
+              style={styles.emptyState}
+            >
+              <motion.div
+                animate={{
+                  rotate: [0, 10, -10, 10, 0],
+                  transition: { duration: 0.5, repeat: Infinity, repeatDelay: 2 },
+                }}
+                style={{ fontSize: "40px", marginBottom: "16px" }}
+              >
+                🏆
+              </motion.div>
+              <p>No top agencies found</p>
+              <p style={{ fontSize: "12px", color: "#64748b", marginTop: "8px" }}>
+                Try adjusting your filters
+              </p>
+            </motion.div>
+          )}
+        </motion.div>
       </div>
     </div>
   );
 };
-
 
 export default AdminDashboard;

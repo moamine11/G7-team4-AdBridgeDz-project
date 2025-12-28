@@ -123,3 +123,48 @@ exports.toggleAgencyVerification = async (req, res) => {
     res.status(500).json({ message: "Server error" });
   }
 };
+
+// Top Agencies by Bookings
+
+router.get('/admin/agencies/top-by-bookings', async (req, res) => {
+  try {
+    // Aggregate agencies by booking count
+    const topAgencies = await Agency.aggregate([
+      {
+        $lookup: {
+          from: 'bookings', // your bookings collection name
+          localField: '_id',
+          foreignField: 'agencyId', // field in booking that references agency
+          as: 'bookings'
+        }
+      },
+      {
+        $addFields: {
+          bookingCount: { $size: '$bookings' }
+        }
+      },
+      {
+        $sort: { bookingCount: -1 }
+      },
+      {
+        $limit: 20 
+      },
+      {
+        $project: {
+          _id: 1,
+          agencyName: 1,
+          email: 1,
+          bookingCount: 1,
+          isVerified: 1,
+          country: 1,
+          city: 1,
+          servicesOffered: 1
+        }
+      }
+    ]);
+
+    res.json(topAgencies);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
