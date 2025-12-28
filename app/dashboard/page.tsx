@@ -13,12 +13,14 @@ import CompanyProfileSection from './components/CompanyProfileSection'; // NEW: 
 import { CompanyEditProfileModal } from './components/CompanyEditProfileModal'; // NEW: For editing own Company profile
 import Logo from '@/components/ui/logo';
 
-const API_BASE_URL = 'http://localhost:5000/api';
+const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:5000';
+const API_BASE_URL = `${BACKEND_URL.replace(/\/$/, '')}/api`;
 
 const CompanyDashboard = () => {
     const router = useRouter();
     const [currentPage, setCurrentPage] = useState('categories');
     const [companyProfile, setCompanyProfile] = useState<any>(null);
+    const [error, setError] = useState<string | null>(null);
     const [selectedCategory, setSelectedCategory] = useState<any>(null);
     const [selectedPost, setSelectedPost] = useState<any>(null);
     const [selectedAgency, setSelectedAgency] = useState<any>(null);
@@ -31,6 +33,7 @@ const CompanyDashboard = () => {
 
     const fetchProfile = async () => {
         try {
+            setError(null);
             const token = localStorage.getItem('token');
             if (!token) {
                 router.push('/login');
@@ -45,14 +48,34 @@ const CompanyDashboard = () => {
             });
 
             if (!response.ok) {
-                throw new Error('Failed to fetch profile');
+                if (response.status === 401 || response.status === 403) {
+                    localStorage.removeItem('token');
+                    localStorage.removeItem('userType');
+                    router.push('/login');
+                    return;
+                }
+
+                let message = 'Failed to fetch profile';
+                try {
+                    const data = await response.json();
+                    message = data?.error || message;
+                } catch {
+                    // ignore json parse failures
+                }
+                throw new Error(message);
             }
 
             const data = await response.json();
             setCompanyProfile(data);
         } catch (error) {
             console.error('Error fetching profile:', error);
-            router.push('/login');
+            const message =
+                error instanceof TypeError
+                    ? `Backend not reachable. Set NEXT_PUBLIC_BACKEND_URL (or start backend on ${API_BASE_URL}).`
+                    : error instanceof Error
+                    ? error.message
+                    : 'Unexpected error fetching profile';
+            setError(message);
         } finally {
             setLoading(false);
         }
@@ -97,6 +120,25 @@ const CompanyDashboard = () => {
                 <div className="text-center">
                     <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-cyan-400 mx-auto"></div>
                     <p className="mt-4 text-gray-400">Loading Company Profile...</p>
+                </div>
+            </div>
+        );
+    }
+
+    if (error) {
+        return (
+            <div className="min-h-screen flex items-center justify-center bg-slate-900 px-4">
+                <div className="w-full max-w-xl bg-slate-900/60 border border-slate-800 rounded-2xl p-6 text-center">
+                    <h2 className="text-xl font-bold text-white mb-2">Couldn’t load your profile</h2>
+                    <p className="text-gray-400 mb-6 break-words">{error}</p>
+                    <div className="flex items-center justify-center gap-3">
+                        <Button onClick={() => { setLoading(true); fetchProfile(); }} className="bg-cyan-600 hover:bg-cyan-700">
+                            Retry
+                        </Button>
+                        <Button variant="outline" onClick={() => router.push('/login')} className="border-slate-700 text-gray-200">
+                            Go to login
+                        </Button>
+                    </div>
                 </div>
             </div>
         );

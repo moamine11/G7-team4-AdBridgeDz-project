@@ -9,7 +9,8 @@ interface CompanyProfileSectionProps {
   onEditClick: () => void;
 }
 
-const API_BASE_URL = 'http://localhost:5000/api';
+const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:5000';
+const API_BASE_URL = `${BACKEND_URL.replace(/\/$/, '')}/api`;
 
 // Detail Card - Enhanced with dark blue theme
 const ProfileDetailCard = ({ Icon, label, value }: { Icon: any, label: string, value: string | number | undefined }) => (

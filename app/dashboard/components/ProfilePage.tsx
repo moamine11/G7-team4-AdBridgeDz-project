@@ -24,7 +24,8 @@ interface ProfilePageProps {
   onBack: () => void;
 }
 
-const API_BASE_URL = 'http://localhost:5000/api';
+const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:5000';
+const API_BASE_URL = `${BACKEND_URL.replace(/\/$/, '')}/api`;
 
 // --- Helper Components (Enhanced Design) ---
 const ProfileDetailCard = ({
