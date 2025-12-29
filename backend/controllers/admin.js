@@ -126,15 +126,15 @@ exports.toggleAgencyVerification = async (req, res) => {
 
 // Top Agencies by Bookings
 
-router.get('/admin/agencies/top-by-bookings', async (req, res) => {
+exports.getTopAgenciesByBookings = async (req, res) => {
   try {
     // Aggregate agencies by booking count
     const topAgencies = await Agency.aggregate([
       {
         $lookup: {
-          from: 'bookings', // your bookings collection name
+          from: 'bookings', // MongoDB collection name (lowercase, plural)
           localField: '_id',
-          foreignField: 'agencyId', // field in booking that references agency
+          foreignField: 'agency', // The field name in your Booking model
           as: 'bookings'
         }
       },
@@ -163,8 +163,9 @@ router.get('/admin/agencies/top-by-bookings', async (req, res) => {
       }
     ]);
 
-    res.json(topAgencies);
+    res.status(200).json(topAgencies);
   } catch (error) {
+    console.error('Error fetching top agencies:', error);
     res.status(500).json({ message: error.message });
   }
-});
+};

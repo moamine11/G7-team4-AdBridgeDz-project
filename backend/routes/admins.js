@@ -8,4 +8,5 @@ router.get("/agencies", adminController.getAllAgencies);
 router.delete("/agencies/:id", adminController.deleteAgencyById);
 router.delete("/agencies", adminController.deleteAgencyByEmail);
 router.patch("/agencies/:id/verify", adminController.toggleAgencyVerification);
+router.get("/agencies/top-by-bookings", adminController.getTopAgenciesByBookings);
 module.exports = router;
