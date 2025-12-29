@@ -12,6 +12,7 @@ const Agency = require('../models/agency');
 const Post = require('../models/post');
 const Booking = require('../models/booking');
 const { OAuth2Client } = require('google-auth-library');
+const { addDays, ensureTrialFields, getSubscriptionInfo } = require('../utils/subscription');
 // --- CLOUDINARY IMPORTS ---
 const cloudinary = require('cloudinary').v2;
 const { CloudinaryStorage } = require('multer-storage-cloudinary');
@@ -63,6 +64,59 @@ const authMiddleware = async (req, res, next) => {
     next();
   } catch (error) {
     res.status(401).json({ error: 'Invalid token' });
+  }
+};
+
+const TRIAL_DAYS = 30;
+
+const backfillTrialFieldsIfMissing = async (agencyDoc) => {
+  if (!agencyDoc) return null;
+
+  const now = new Date();
+  const patch = {};
+  const baseStart = agencyDoc.trialStartedAt || agencyDoc.dateCreated || now;
+
+  if (!agencyDoc.trialStartedAt) patch.trialStartedAt = baseStart;
+  if (!agencyDoc.trialEndsAt) patch.trialEndsAt = addDays(baseStart, TRIAL_DAYS);
+  if (!agencyDoc.subscriptionPlan) patch.subscriptionPlan = 'Trial';
+
+  if (Object.keys(patch).length > 0) {
+    // Use direct update to avoid legacy/invalid documents failing validation on save().
+    await Agency.updateOne(
+      { _id: agencyDoc._id },
+      { $set: { ...patch, updatedAt: now } }
+    );
+
+    // Mutate local doc so downstream logic sees the updated values.
+    Object.assign(agencyDoc, patch);
+  }
+
+  return agencyDoc;
+};
+
+const requireActiveTrialOrSubscription = async (req, res, next) => {
+  try {
+    const agency = await Agency.findById(req.agencyId).select(
+      'trialStartedAt trialEndsAt subscriptionEndsAt subscriptionPlan dateCreated'
+    );
+    if (!agency) return res.status(404).json({ error: 'Agency not found' });
+
+    ensureTrialFields(agency, { trialDays: TRIAL_DAYS });
+    await backfillTrialFieldsIfMissing(agency);
+
+    const subscription = getSubscriptionInfo(agency, { trialDays: TRIAL_DAYS });
+    if (subscription.status === 'expired') {
+      return res.status(402).json({
+        error: 'Trial expired. Subscription required.',
+        code: 'SUBSCRIPTION_EXPIRED',
+        subscription,
+      });
+    }
+
+    req.subscription = subscription;
+    next();
+  } catch (error) {
+    res.status(500).json({ error: error.message });
   }
 };
 
@@ -163,7 +217,12 @@ router.post('/register', uploadLogo, async (req, res) => {
             industry, companySize, yearEstablished: yearEstablished ? parseInt(yearEstablished) : undefined,
             fullName, jobTitle, servicesOffered: parsedServices, facebookUrl, linkedinUrl,
             agreeToTerms: agreeToTerms === 'true' || agreeToTerms === true, isVerified: false, verificationToken,
-            signUpMethod: 'local'
+          signUpMethod: 'local',
+
+          // Trial starts immediately on signup (verification still required for login).
+          trialStartedAt: new Date(),
+          trialEndsAt: addDays(new Date(), TRIAL_DAYS),
+          subscriptionPlan: 'Trial'
         });
 
         await agency.save();
@@ -171,10 +230,13 @@ router.post('/register', uploadLogo, async (req, res) => {
 
         const token = jwt.sign({ agencyId: agency._id }, process.env.JWT_SECRET, { expiresIn: '30d' });
 
+        const subscription = getSubscriptionInfo(agency, { trialDays: TRIAL_DAYS });
+
         res.status(201).json({
             message: 'Agency registered successfully. Please check your email to verify your account.',
             token,
-            agency: { id: agency._id, agencyName: agency.agencyName, email: agency.email, logo: agency.logo, servicesOffered: agency.servicesOffered }
+          agency: { id: agency._id, agencyName: agency.agencyName, email: agency.email, logo: agency.logo, servicesOffered: agency.servicesOffered },
+          subscription
         });
     } catch (error) {
         console.error('Registration error:', error);
@@ -237,7 +299,7 @@ router.put('/profile', authMiddleware, uploadLogo, async (req, res) => {
 
 
 // --- CREATE POST ROUTE (UPDATED for Cloudinary URL) ---
-router.post('/posts', authMiddleware, uploadPostImage, async (req, res) => {
+router.post('/posts', authMiddleware, requireActiveTrialOrSubscription, uploadPostImage, async (req, res) => {
     try {
         const { title, description, priceRange, category } = req.body;
         
@@ -274,7 +336,7 @@ router.post('/posts', authMiddleware, uploadPostImage, async (req, res) => {
 });
 
 // --- UPDATE POST ROUTE (UPDATED for Cloudinary Deletion) ---
-router.put('/posts/:id', authMiddleware, uploadPostImage, async (req, res) => {
+router.put('/posts/:id', authMiddleware, requireActiveTrialOrSubscription, uploadPostImage, async (req, res) => {
     try {
         const postId = req.params.id;
         const { title, description, priceRange, category } = req.body;
@@ -321,7 +383,7 @@ router.put('/posts/:id', authMiddleware, uploadPostImage, async (req, res) => {
 
 
 // 3. DELETE/INACTIVATE POST STATUS (UPDATED for Cloudinary Deletion)
-router.put('/posts/:id/status', authMiddleware, async (req, res) => {
+router.put('/posts/:id/status', authMiddleware, requireActiveTrialOrSubscription, async (req, res) => {
     try {
         const postId = req.params.id;
         const { isActive } = req.body; 
@@ -371,7 +433,7 @@ router.post('/google-auth', async (req, res) => {
     const payload = ticket.getPayload();
     const { email, sub: googleId } = payload;
     
-    let agency = await Agency.findOne({ email });
+    let agency = await Agency.findOne({ email: (email || '').trim().toLowerCase() });
     if (!agency) {
       return res.status(404).json({
         error: 'No account found with this email. Please register first.'
@@ -388,8 +450,13 @@ router.post('/google-auth', async (req, res) => {
       agency.isVerified = true;
       await agency.save();
     }
+
+    ensureTrialFields(agency, { trialDays: TRIAL_DAYS });
+    await backfillTrialFieldsIfMissing(agency);
     
     const token = jwt.sign({ agencyId: agency._id }, process.env.JWT_SECRET, { expiresIn: '30d' });
+
+    const subscription = getSubscriptionInfo(agency, { trialDays: TRIAL_DAYS });
 
     res.json({
       message: "Google login successful",
@@ -401,6 +468,8 @@ router.post('/google-auth', async (req, res) => {
         country: agency.country,
         phoneNumber: agency.phoneNumber,
       }
+      ,
+      subscription
     });
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -474,11 +543,12 @@ router.post('/resend-verification', async (req, res) => {
 router.post('/forgot-password', async (req, res) => {
   try {
     const { email } = req.body;
-    if (!email) {
+    const normalizedEmail = String(email || '').trim().toLowerCase();
+    if (!normalizedEmail) {
       return res.status(400).json({ error: 'Email is required' });
     }
 
-    const agency = await Agency.findOne({ email });
+    const agency = await Agency.findOne({ email: normalizedEmail });
     // Don't reveal if email exists for security
     if (!agency) {
       return res.json({ message: 'If that email exists, a password reset link has been sent.' });
@@ -486,11 +556,33 @@ router.post('/forgot-password', async (req, res) => {
 
     // Generate reset token
     const resetToken = crypto.randomBytes(32).toString('hex');
-    agency.resetPasswordToken = resetToken;
-    agency.resetPasswordExpires = Date.now() + 3600000; // 1 hour
-    await agency.save();
+    // Use direct update to avoid legacy documents failing validation on save().
+    await Agency.updateOne(
+      { _id: agency._id },
+      {
+        $set: {
+          resetPasswordToken: resetToken,
+          resetPasswordExpires: Date.now() + 3600000,
+          updatedAt: Date.now(),
+        },
+      }
+    );
 
-    await sendPasswordResetEmail(agency, resetToken);
+    // If SMTP isn't configured in dev, don't hard-fail the request.
+    const hasSmtp = Boolean(
+      process.env.SMTP_HOST &&
+      process.env.SMTP_PORT &&
+      process.env.SMTP_USER &&
+      process.env.SMTP_PASS &&
+      process.env.FRONTEND_URL
+    );
+
+    if (hasSmtp) {
+      await sendPasswordResetEmail(agency, resetToken);
+    } else {
+      console.warn('[agencies/forgot-password] SMTP not configured; skipping email send.');
+    }
+
     res.json({ message: 'If that email exists, a password reset link has been sent.' });
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -568,14 +660,21 @@ router.get('/verify-reset-token', async (req, res) => {
 router.post('/login', async (req, res) => {
   try {
     const { email, password } = req.body;
-    const agency = await Agency.findOne({ email }).select('+password');
+    const normalizedEmail = (email || '').trim().toLowerCase();
+    const normalizedPassword = String(password || '').trim();
+    const agency = await Agency.findOne({ email: normalizedEmail }).select('+password');
     if (!agency) return res.status(401).json({ error: 'Invalid credentials' });
     if (!agency.isVerified) return res.status(401).json({ error: 'Email not verified. Please check your email.' });
     
-    const isValid = await bcrypt.compare(password, agency.password);
+    const isValid = await bcrypt.compare(normalizedPassword, agency.password);
     if (!isValid) return res.status(401).json({ error: 'Invalid credentials' });
+
+    ensureTrialFields(agency, { trialDays: TRIAL_DAYS });
+    await backfillTrialFieldsIfMissing(agency);
     
     const token = jwt.sign({ agencyId: agency._id }, process.env.JWT_SECRET, { expiresIn: '30d' });
+
+    const subscription = getSubscriptionInfo(agency, { trialDays: TRIAL_DAYS });
 
     res.json({
       message: 'Login successful',
@@ -586,8 +685,68 @@ router.post('/login', async (req, res) => {
         email: agency.email, 
         country: agency.country,
         logo: agency.logo 
-      }
+      },
+      subscription
     });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+
+router.get('/subscription', authMiddleware, async (req, res) => {
+  try {
+    const agency = await Agency.findById(req.agencyId).select(
+      'trialStartedAt trialEndsAt subscriptionEndsAt subscriptionPlan dateCreated'
+    );
+    if (!agency) return res.status(404).json({ error: 'Agency not found' });
+
+    ensureTrialFields(agency, { trialDays: TRIAL_DAYS });
+    await backfillTrialFieldsIfMissing(agency);
+
+    const subscription = getSubscriptionInfo(agency, { trialDays: TRIAL_DAYS });
+    res.json({ subscription });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+
+router.post('/subscription/activate', authMiddleware, async (req, res) => {
+  try {
+    const { planName } = req.body || {};
+    const agency = await Agency.findById(req.agencyId).select(
+      'trialStartedAt trialEndsAt subscriptionEndsAt subscriptionPlan dateCreated'
+    );
+    if (!agency) return res.status(404).json({ error: 'Agency not found' });
+
+    ensureTrialFields(agency, { trialDays: TRIAL_DAYS });
+    await backfillTrialFieldsIfMissing(agency);
+
+    const now = new Date();
+    const base = agency.subscriptionEndsAt && new Date(agency.subscriptionEndsAt).getTime() > now.getTime()
+      ? new Date(agency.subscriptionEndsAt)
+      : now;
+
+    const newSubscriptionEndsAt = addDays(base, TRIAL_DAYS);
+    const newPlanName = (planName || agency.subscriptionPlan || 'Standard').toString();
+
+    await Agency.updateOne(
+      { _id: agency._id },
+      {
+        $set: {
+          subscriptionEndsAt: newSubscriptionEndsAt,
+          subscriptionPlan: newPlanName,
+          updatedAt: now,
+        },
+      }
+    );
+
+    agency.subscriptionEndsAt = newSubscriptionEndsAt;
+    agency.subscriptionPlan = newPlanName;
+
+    const subscription = getSubscriptionInfo(agency, { trialDays: TRIAL_DAYS });
+    res.json({ message: 'Subscription activated (mock).', subscription });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -654,7 +813,7 @@ router.put('/booking/:id/status', authMiddleware, async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 });
-router.put('/posts/:id/status', authMiddleware, async (req, res) => {
+router.put('/posts/:id/status', authMiddleware, requireActiveTrialOrSubscription, async (req, res) => {
     try {
         const postId = req.params.id;
         const { isActive } = req.body; // Expecting boolean true/false

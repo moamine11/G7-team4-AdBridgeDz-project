@@ -4,7 +4,17 @@ import { useState, useEffect } from 'react';
 import { Eye, EyeOff, Mail, Lock, ChevronDown, Loader2 } from 'lucide-react';
 import AuthNavbar from '@/components/ui/auth-navbar';
 
-type UserType = 'company' | 'agency' | null;
+type UserType = 'company' | 'agency' | 'admin' | null;
+
+type SubscriptionStatus = 'trial' | 'active' | 'expired';
+type SubscriptionInfo = {
+  status: SubscriptionStatus;
+  planName?: string;
+  daysRemaining?: number;
+  endsAt?: string | null;
+  trialEndsAt?: string | null;
+  subscriptionEndsAt?: string | null;
+};
 
 declare global {
   interface Window {
@@ -19,6 +29,10 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [userType, setUserType] = useState<UserType>('company');
   const [loading, setLoading] = useState(false);
+
+  const [planModalOpen, setPlanModalOpen] = useState(false);
+  const [subscriptionInfo, setSubscriptionInfo] = useState<SubscriptionInfo | null>(null);
+  const [activatingSubscription, setActivatingSubscription] = useState(false);
 
   const API_BASE_URL = 'http://localhost:5000/api';
   const GOOGLE_CLIENT_ID = '847708558168-12ljci267ehd9eonebevvos968u1o6md.apps.googleusercontent.com';
@@ -43,7 +57,6 @@ export default function LoginPage() {
           {
             theme: 'outline',
             size: 'large',
-            width: '100%',
             text: 'signin_with',
             shape: 'rectangular',
             logo_alignment: 'left',
@@ -61,7 +74,12 @@ export default function LoginPage() {
 
   const handleGoogleLogin = async (response: any) => {
     if (!userType) {
-      alert('Please select your account type (Company or Agency) first.');
+      alert('Please select your account type first.');
+      return;
+    }
+
+    if (userType === 'admin') {
+      alert('Google login is not available for Admin accounts.');
       return;
     }
 
@@ -85,7 +103,24 @@ export default function LoginPage() {
 
       localStorage.setItem('token', data.token);
       localStorage.setItem('userType', userType);
-      window.location.href = userType === 'agency' ? '/Agencydashboard' : '/dashboard';
+
+      if (userType === 'agency') {
+        // Prefer server-provided subscription info; fallback to status endpoint.
+        let subscription: SubscriptionInfo | null = data.subscription || null;
+        if (!subscription) {
+          const statusRes = await fetch(`${API_BASE_URL}/agencies/subscription`, {
+            headers: { Authorization: `Bearer ${data.token}` },
+          });
+          const statusData = await statusRes.json();
+          subscription = statusData?.subscription || null;
+        }
+
+        setSubscriptionInfo(subscription);
+        setPlanModalOpen(true);
+        return;
+      }
+
+      window.location.href = '/dashboard';
     } catch (error) {
       console.error(error);
       alert('Something went wrong with Google login.');
@@ -96,35 +131,95 @@ export default function LoginPage() {
 
   const handleLogin = async () => {
     if (!userType) {
-      alert('Please select your account type (Company or Agency) first.');
+      alert('Please select your account type first.');
       return;
     }
 
     setLoading(true);
 
     try {
-      const endpoint = userType === 'company' ? 'companies' : 'agencies';
-      const res = await fetch(`${API_BASE_URL}/${endpoint}/login`, {
+      const emailToSend = email.trim();
+      const res = await fetch(
+        userType === 'admin'
+          ? `${API_BASE_URL}/auth/login`
+          : `${API_BASE_URL}/${userType === 'company' ? 'companies' : 'agencies'}/login`,
+        {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password }),
-      });
+          body: JSON.stringify({ email: emailToSend, password }),
+        }
+      );
 
       const data = await res.json();
 
       if (!res.ok) {
-        alert(data.error || 'Login failed');
+        alert(data.error || data.message || 'Login failed');
         return;
       }
 
       localStorage.setItem('token', data.token);
       localStorage.setItem('userType', userType);
-      window.location.href = userType === 'agency' ? '/Agencydashboard' : '/dashboard';
+
+      if (userType === 'agency') {
+        let subscription: SubscriptionInfo | null = data.subscription || null;
+        if (!subscription) {
+          const statusRes = await fetch(`${API_BASE_URL}/agencies/subscription`, {
+            headers: { Authorization: `Bearer ${data.token}` },
+          });
+          const statusData = await statusRes.json();
+          subscription = statusData?.subscription || null;
+        }
+
+        setSubscriptionInfo(subscription);
+        setPlanModalOpen(true);
+        return;
+      }
+
+      window.location.href = userType === 'admin' ? '/admin/dashboard' : '/dashboard';
     } catch (error) {
       console.error(error);
       alert('Network error. Please try again.');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleContinueToDashboard = () => {
+    setPlanModalOpen(false);
+    window.location.href = '/Agencydashboard';
+  };
+
+  const handleActivateSubscription = async () => {
+    const token = localStorage.getItem('token');
+    if (!token) {
+      alert('Missing session token. Please log in again.');
+      setPlanModalOpen(false);
+      return;
+    }
+
+    setActivatingSubscription(true);
+    try {
+      const res = await fetch(`${API_BASE_URL}/agencies/subscription/activate`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ planName: 'Standard' }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        alert(data.error || 'Failed to activate subscription');
+        return;
+      }
+
+      setSubscriptionInfo(data.subscription || null);
+    } catch (error) {
+      console.error(error);
+      alert('Network error. Please try again.');
+    } finally {
+      setActivatingSubscription(false);
     }
   };
 
@@ -165,6 +260,7 @@ export default function LoginPage() {
                       </option>
                       <option value="company">Advertiser</option>
                       <option value="agency">Agency / Billboard Provider</option>
+                      <option value="admin">Admin</option>
                     </select>
                     <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 w-3.5 h-3.5 pointer-events-none" />
                   </div>
@@ -255,7 +351,9 @@ export default function LoginPage() {
                 </div>
 
                 {/* Google Sign-In */}
-                <div id="googleSignInButton" className="w-full scale-80 origin-center"></div>
+                {userType !== 'admin' && (
+                  <div id="googleSignInButton" className="w-full scale-80 origin-center"></div>
+                )}
 
                 {/* Register Link */}
                 <div className="text-center pt-0.5">
@@ -355,6 +453,75 @@ export default function LoginPage() {
         </div>
       </div>
       </div>
+
+      {planModalOpen && userType === 'agency' && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
+          <div className="w-full max-w-md rounded-xl bg-white shadow-2xl border border-slate-200 overflow-hidden">
+            <div className="p-5">
+              <h2 className="text-base font-bold text-slate-900">Your Plan</h2>
+              <p className="mt-1 text-xs text-slate-600">
+                {subscriptionInfo?.status === 'active'
+                  ? 'Your subscription is active.'
+                  : subscriptionInfo?.status === 'trial'
+                  ? 'You are currently on a free trial.'
+                  : 'Your free trial has expired.'}
+              </p>
+
+              <div className="mt-4 rounded-lg bg-slate-50 border border-slate-200 p-4">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-medium text-slate-700">Plan</span>
+                  <span className="text-xs font-semibold text-slate-900">
+                    {subscriptionInfo?.planName || 'Trial'}
+                  </span>
+                </div>
+                <div className="mt-2 flex items-center justify-between">
+                  <span className="text-xs font-medium text-slate-700">Days remaining</span>
+                  <span className="text-xs font-semibold text-slate-900">
+                    {typeof subscriptionInfo?.daysRemaining === 'number'
+                      ? subscriptionInfo.daysRemaining
+                      : '—'}
+                  </span>
+                </div>
+                <div className="mt-2 text-[11px] text-slate-600 leading-relaxed">
+                  This is a simple trial/subscription placeholder flow. Payment is not integrated yet.
+                </div>
+              </div>
+
+              <div className="mt-4 flex gap-2">
+                {subscriptionInfo?.status === 'expired' ? (
+                  <button
+                    onClick={handleActivateSubscription}
+                    disabled={activatingSubscription}
+                    className="flex-1 bg-teal-600 hover:bg-teal-700 text-white font-semibold py-2 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-xs"
+                  >
+                    {activatingSubscription ? (
+                      <span className="flex items-center justify-center">
+                        <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" />
+                        Activating...
+                      </span>
+                    ) : (
+                      'Activate Subscription (Mock)'
+                    )}
+                  </button>
+                ) : (
+                  <button
+                    onClick={handleContinueToDashboard}
+                    className="flex-1 bg-teal-600 hover:bg-teal-700 text-white font-semibold py-2 rounded-lg transition-colors text-xs"
+                  >
+                    Continue to Dashboard
+                  </button>
+                )}
+              </div>
+
+              {subscriptionInfo?.status === 'expired' && (
+                <div className="mt-3 text-[11px] text-slate-600">
+                  Trial expired blocks creating/updating posts until activated.
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

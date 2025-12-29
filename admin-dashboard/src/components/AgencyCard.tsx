@@ -8,15 +8,17 @@ interface Agency {
   logo?: string;
   userType?: string;
   verificationToken?: string;
+  daysLeftInSubscription?: number;
 }
 
 interface AgencyCardProps {
   agency: Agency;
-  onDelete: (id: string) => void;
-  onToggleVerification: () => void;
+  mode: 'request' | 'account';
+  onAccept?: (id: string) => void;
+  onReject?: (id: string) => void;
 }
 
-const AgencyCard = ({ agency, onDelete, onToggleVerification }: AgencyCardProps) => {
+const AgencyCard = ({ agency, mode, onAccept, onReject }: AgencyCardProps) => {
   const styles = {
     card: {
       background: '#151d2e',
@@ -43,6 +45,7 @@ const AgencyCard = ({ agency, onDelete, onToggleVerification }: AgencyCardProps)
       color: agency.isVerified ? '#10b981' : '#fbbf24'
     },
     email: { fontSize: '14px', color: '#94a3b8', marginBottom: '4px' },
+    meta: { fontSize: '12px', color: '#64748b', marginTop: '6px' },
     verifyBtn: {
       background: agency.isVerified
         ? 'rgba(16, 185, 129, 0.15)'
@@ -84,33 +87,36 @@ const AgencyCard = ({ agency, onDelete, onToggleVerification }: AgencyCardProps)
           </span>
         </div>
         <p style={styles.email}>{agency.email}</p>
+        {mode === 'account' && (
+          <div style={styles.meta}>
+            Subscription: {typeof agency.daysLeftInSubscription === 'number' ? `${agency.daysLeftInSubscription} day(s) left` : 'N/A'}
+          </div>
+        )}
       </div>
-      <div style={{ display: 'flex', alignItems: 'center' }}>
-        <button
-          onClick={onToggleVerification}
-          style={styles.verifyBtn}
-          onMouseOver={(e) => {
-            e.currentTarget.style.background = agency.isVerified
-              ? 'rgba(16, 185, 129, 0.25)'
-              : 'rgba(251, 191, 36, 0.25)';
-          }}
-          onMouseOut={(e) => {
-            e.currentTarget.style.background = agency.isVerified
-              ? 'rgba(16, 185, 129, 0.15)'
-              : 'rgba(251, 191, 36, 0.15)';
-          }}
-        >
-          {agency.isVerified ? <><XCircle size={16} /> Unverify</> : <><CheckCircle size={16} /> Verify</>}
-        </button>
-        <button
-          onClick={() => onDelete(agency._id)}
-          style={styles.deleteBtn}
-          onMouseOver={(e) => e.currentTarget.style.background = 'rgba(239, 68, 68, 0.2)'}
-          onMouseOut={(e) => e.currentTarget.style.background = 'rgba(239, 68, 68, 0.1)'}
-        >
-          <Trash2 size={16} />
-        </button>
-      </div>
+      {mode === 'request' && (
+        <div style={{ display: 'flex', alignItems: 'center' }}>
+          <button
+            onClick={() => onAccept?.(agency._id)}
+            style={styles.verifyBtn}
+            onMouseOver={(e) => {
+              e.currentTarget.style.background = 'rgba(16, 185, 129, 0.25)';
+            }}
+            onMouseOut={(e) => {
+              e.currentTarget.style.background = 'rgba(16, 185, 129, 0.15)';
+            }}
+          >
+            <CheckCircle size={16} /> Accept
+          </button>
+          <button
+            onClick={() => onReject?.(agency._id)}
+            style={styles.deleteBtn}
+            onMouseOver={(e) => (e.currentTarget.style.background = 'rgba(239, 68, 68, 0.2)')}
+            onMouseOut={(e) => (e.currentTarget.style.background = 'rgba(239, 68, 68, 0.1)')}
+          >
+            <Trash2 size={16} />
+          </button>
+        </div>
+      )}
     </div>
   );
 };

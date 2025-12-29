@@ -44,7 +44,10 @@ app.use('/api/companies', companyRoutes);
 app.use('/api/posts', postRoutes);
 app.use('/api/agencies', agencyRoutes);
 app.use('/api/services', serviceRoutes);
-app.use("/admin", adminRoutes);
+app.use('/api/auth', authRoutes);
+app.use('/api/admin', adminRoutes);
+// Legacy mount (older clients)
+app.use('/admin', adminRoutes);
 mongoose.connect(process.env.MONGO_URI, {
     serverSelectionTimeoutMS: 10000, // Timeout after 10s instead of 30s
     socketTimeoutMS: 45000, // Close sockets after 45s of inactivity

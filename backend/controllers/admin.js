@@ -1,5 +1,20 @@
 const Company = require("../models/company");
 const Agency = require("../models/agency");
+const Booking = require("../models/booking");
+
+const DEFAULT_SUBSCRIPTION_DAYS = 30;
+
+function computeSubscriptionEndsAt(baseDate) {
+  const base = baseDate ? new Date(baseDate) : new Date();
+  return new Date(base.getTime() + DEFAULT_SUBSCRIPTION_DAYS * 24 * 60 * 60 * 1000);
+}
+
+function computeDaysLeft(subscriptionEndsAt) {
+  const end = new Date(subscriptionEndsAt);
+  const diffMs = end.getTime() - Date.now();
+  const days = Math.ceil(diffMs / (24 * 60 * 60 * 1000));
+  return Math.max(0, days);
+}
 
 // Companies
 
@@ -7,6 +22,73 @@ exports.getAllCompanies = async (req, res) => {
   try {
     const companies = await Company.find();
     res.status(200).json(companies);
+  } catch (error) {
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
+exports.getPendingCompanies = async (req, res) => {
+  try {
+    const companies = await Company.find({ isVerified: false })
+      .select("name email industrySector createdAt isVerified")
+      .lean();
+
+    const normalized = companies.map((c) => {
+      const subscriptionEndsAt = computeSubscriptionEndsAt(c.createdAt);
+      return {
+        ...c,
+        subscriptionEndsAt,
+        daysLeftInSubscription: computeDaysLeft(subscriptionEndsAt),
+      };
+    });
+
+    res.status(200).json(normalized);
+  } catch (error) {
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
+exports.getVerifiedCompanies = async (req, res) => {
+  try {
+    const companies = await Company.find({ isVerified: true })
+      .select("name email industrySector createdAt isVerified")
+      .lean();
+
+    const normalized = companies.map((c) => {
+      const subscriptionEndsAt = computeSubscriptionEndsAt(c.createdAt);
+      return {
+        ...c,
+        subscriptionEndsAt,
+        daysLeftInSubscription: computeDaysLeft(subscriptionEndsAt),
+      };
+    });
+
+    res.status(200).json(normalized);
+  } catch (error) {
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
+exports.verifyCompany = async (req, res) => {
+  try {
+    const { id } = req.params;
+    if (!id.match(/^[0-9a-fA-F]{24}$/)) {
+      return res.status(400).json({ message: "Invalid ID format" });
+    }
+
+    const company = await Company.findById(id);
+    if (!company) {
+      return res.status(404).json({ message: "Company not found" });
+    }
+
+    company.isVerified = true;
+    await company.save();
+
+    res.status(200).json({
+      success: true,
+      message: "Company accepted successfully",
+      verified: true,
+    });
   } catch (error) {
     res.status(500).json({ message: "Server error" });
   }
@@ -58,6 +140,48 @@ exports.getAllAgencies = async (req, res) => {
   try {
     const agencies = await Agency.find();
     res.status(200).json(agencies);
+  } catch (error) {
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
+exports.getPendingAgencies = async (req, res) => {
+  try {
+    const agencies = await Agency.find({ isVerified: false })
+      .select("agencyName email isVerified country city dateCreated")
+      .lean();
+
+    const normalized = agencies.map((a) => {
+      const subscriptionEndsAt = computeSubscriptionEndsAt(a.dateCreated);
+      return {
+        ...a,
+        subscriptionEndsAt,
+        daysLeftInSubscription: computeDaysLeft(subscriptionEndsAt),
+      };
+    });
+
+    res.status(200).json(normalized);
+  } catch (error) {
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
+exports.getVerifiedAgencies = async (req, res) => {
+  try {
+    const agencies = await Agency.find({ isVerified: true })
+      .select("agencyName email isVerified country city dateCreated")
+      .lean();
+
+    const normalized = agencies.map((a) => {
+      const subscriptionEndsAt = computeSubscriptionEndsAt(a.dateCreated);
+      return {
+        ...a,
+        subscriptionEndsAt,
+        daysLeftInSubscription: computeDaysLeft(subscriptionEndsAt),
+      };
+    });
+
+    res.status(200).json(normalized);
   } catch (error) {
     res.status(500).json({ message: "Server error" });
   }
@@ -124,47 +248,75 @@ exports.toggleAgencyVerification = async (req, res) => {
   }
 };
 
-// Top Agencies by Bookings
-
-router.get('/admin/agencies/top-by-bookings', async (req, res) => {
+exports.getTopAgenciesByBookings = async (req, res) => {
   try {
-    // Aggregate agencies by booking count
-    const topAgencies = await Agency.aggregate([
+    const limit = Math.min(50, Math.max(1, Number(req.query.limit) || 5));
+
+    const top = await Booking.aggregate([
+      { $group: { _id: "$agency", bookingCount: { $sum: 1 } } },
+      { $sort: { bookingCount: -1 } },
+      { $limit: limit },
       {
         $lookup: {
-          from: 'bookings', // your bookings collection name
-          localField: '_id',
-          foreignField: 'agencyId', // field in booking that references agency
-          as: 'bookings'
-        }
+          from: "agencies",
+          localField: "_id",
+          foreignField: "_id",
+          as: "agency",
+        },
       },
-      {
-        $addFields: {
-          bookingCount: { $size: '$bookings' }
-        }
-      },
-      {
-        $sort: { bookingCount: -1 }
-      },
-      {
-        $limit: 20 
-      },
+      { $unwind: "$agency" },
       {
         $project: {
-          _id: 1,
-          agencyName: 1,
-          email: 1,
+          _id: "$agency._id",
+          agencyName: "$agency.agencyName",
+          email: "$agency.email",
           bookingCount: 1,
-          isVerified: 1,
-          country: 1,
-          city: 1,
-          servicesOffered: 1
-        }
-      }
+          isVerified: "$agency.isVerified",
+          country: "$agency.country",
+          city: "$agency.city",
+          servicesOffered: "$agency.servicesOffered",
+        },
+      },
     ]);
 
-    res.json(topAgencies);
+    res.status(200).json(top);
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    res.status(500).json({ message: "Server error" });
   }
-});
+};
+
+exports.getTopCompaniesByBookings = async (req, res) => {
+  try {
+    const limit = Math.min(50, Math.max(1, Number(req.query.limit) || 5));
+
+    const top = await Booking.aggregate([
+      { $group: { _id: "$company", bookingCount: { $sum: 1 } } },
+      { $sort: { bookingCount: -1 } },
+      { $limit: limit },
+      {
+        $lookup: {
+          from: "companies",
+          localField: "_id",
+          foreignField: "_id",
+          as: "company",
+        },
+      },
+      { $unwind: "$company" },
+      {
+        $project: {
+          _id: "$company._id",
+          name: "$company.name",
+          email: "$company.email",
+          bookingCount: 1,
+          isVerified: "$company.isVerified",
+          industrySector: "$company.industrySector",
+          location: "$company.location",
+        },
+      },
+    ]);
+
+    res.status(200).json(top);
+  } catch (error) {
+    res.status(500).json({ message: "Server error" });
+  }
+};

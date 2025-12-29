@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { Building2, LayoutGrid, FileText, Calendar, Settings, LogOut, Plus, Loader2, BarChart3 } from 'lucide-react';
+import { Building2, LayoutGrid, FileText, Calendar, Settings, LogOut, Plus, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { PostFormModal } from './PostFormModal'; 
 import OverviewSection from './OverviewSection';
@@ -82,7 +82,6 @@ const AgencyDashboardLayout = () => {
         { id: 'inventory', label: 'Inventory', icon: FileText },
         { id: 'bookings', label: 'Bookings', icon: Calendar },
         { id: 'profile', label: 'Profile', icon: Settings },
-        { id: 'analytics', label: 'Analytics', icon: BarChart3, disabled: true },
     ];
 
     if (loading) {

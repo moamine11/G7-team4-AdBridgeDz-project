@@ -25,13 +25,16 @@ export default function LoginPage() {
     e.preventDefault();
     setError("");
 
-    if (!email.includes("@") || !email.includes(".")) {
+    const normalizedEmail = email.trim().toLowerCase();
+    const normalizedPassword = password.trim();
+
+    if (!normalizedEmail.includes("@") || !normalizedEmail.includes(".")) {
       setError("Please enter a valid email address");
       emailRef.current?.focus();
       return;
     }
 
-    if (password.length < 6) {
+    if (normalizedPassword.length < 6) {
       setError("Password must be at least 6 characters");
       return;
     }
@@ -40,8 +43,8 @@ export default function LoginPage() {
     
     try {
       const response = await axios.post(`${API_BASE_URL}/auth/login`, {
-        email,
-        password
+        email: normalizedEmail,
+        password: normalizedPassword
       }, {
         headers: {
           'Content-Type': 'application/json'

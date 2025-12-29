@@ -9,8 +9,17 @@ const JWT_EXPIRES_IN = '7d';
 exports.login = async (req, res) => {
     try {
         const { email, password } = req.body;
+        const normalizedEmail = String(email || '').trim().toLowerCase();
+        const normalizedPassword = String(password || '');
 
-        const admin = await Admin.findOne({ email }).select('+password');
+        if (!normalizedEmail || !normalizedPassword) {
+            return res.status(400).json({
+                success: false,
+                message: 'Email and password are required'
+            });
+        }
+
+        const admin = await Admin.findOne({ email: normalizedEmail }).select('+password');
         if (!admin) {
             return res.status(401).json({
                 success: false,
@@ -25,7 +34,7 @@ exports.login = async (req, res) => {
             });
         }
 
-        const isPasswordValid = await admin.comparePassword(password);
+        const isPasswordValid = await admin.comparePassword(normalizedPassword);
         if (!isPasswordValid) {
             return res.status(401).json({
                 success: false,

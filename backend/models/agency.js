@@ -48,6 +48,14 @@ const agencySchema = new Schema({
   verificationToken: { type: String },
   resetPasswordToken: { type: String },
   resetPasswordExpires: { type: Date },
+
+  // --- Subscription / Trial (Agency) ---
+  // A simple trial + paid-until model used for gating features.
+  trialStartedAt: { type: Date },
+  trialEndsAt: { type: Date },
+  subscriptionEndsAt: { type: Date },
+  subscriptionPlan: { type: String, default: 'Trial' },
+
   dateCreated: { type: Date, default: Date.now },
   updatedAt: { type: Date, default: Date.now }
 });
