@@ -8,16 +8,16 @@ const API_BASE_URL = 'http://localhost:5000/api';
 
 const BookingSection = ({ agencyData }: { agencyData: any }) => {
     // FIX: Explicitly type the state as an array of any type or use the detailed interface if available
-  const [bookings, setBookings] = useState<any[]>([]); 
-  const [loading, setLoading] = useState(true);
-  const [filterStatus, setFilterStatus] = useState('All');
+ const [bookings, setBookings] = useState<any[]>([]); 
+ const [loading, setLoading] = useState(true);
+ const [filterStatus, setFilterStatus] = useState('All');
 
-  useEffect(() => {
-    fetchBookings();
-  }, [agencyData]);
+ useEffect(() => {
+ fetchBookings();
+ }, [agencyData]);
 
-  const fetchBookings = async () => {
-    if (!agencyData?._id) return;
+ const fetchBookings = async () => {
+ if (!agencyData?._id) return;
 
     try {
       const token = localStorage.getItem('token'); 
@@ -31,11 +31,10 @@ const BookingSection = ({ agencyData }: { agencyData: any }) => {
       if (!response.ok) {
         // FIX: If the response is not OK, throw an error to be caught below
         const errorBody = await response.json();
-        throw new Error(errorBody.error || 'Failed to fetch bookings. Server responded with error.');
-      }
+ throw new Error(errorBody.error || 'Failed to fetch bookings. Server responded with error.');
+ }
 
       const data = await response.json();
-      // FIX: Ensure we set the state to an array, even if the response is empty/null
       setBookings(Array.isArray(data) ? data : []); 
     } catch (error: any) {
       console.error('Error fetching bookings:', error);

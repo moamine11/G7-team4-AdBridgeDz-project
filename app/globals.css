@@ -130,9 +130,3 @@
     @apply text-foreground;
   }
 }
-/* Optional: Tweak Google button styling */
-#googleSignInButton > div {
-  font-family: inherit !important;
-  box-shadow: none !important;
-  border-radius: 0.75rem !important;
-}

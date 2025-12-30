@@ -54,10 +54,9 @@ router.get('/', async (req, res) => {
       if (minPrice) query.priceRange.$gte = parseFloat(minPrice );
       if (maxPrice) query.priceRange.$lte = parseFloat(maxPrice );
     }
-
-    if (location) {
-      query.location = { $regex: location, $options: "i" };
-    }
+  if (location) {
+   query.location = { $regex: location, $options: "i" };
+ }
 
     const posts = await Post.find(query)
       .populate('agency', 'agencyName email phoneNumber country ')

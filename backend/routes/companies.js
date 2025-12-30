@@ -65,7 +65,7 @@ const authMiddleware = async (req, res, next) => {
     req.companyId = decoded.companyId;
     next();
   } catch (error) {
-    res.status(401).json({ error: 'Invalid token' });
+    res.status(401).json({ error: 'hello from here ' });
   }
 };
 
@@ -241,7 +241,7 @@ router.post('/login', async (req, res) => {
 
 router.get('/test', async (req, res) => {
   try {
-    const companies = await Company.find().select('name email imageURL verificationToken');
+    const companies = await Company.find().select('name email password imageURL verificationToken');
     res.json(companies);
   } catch (error) {
     res.status(500).json({ error: error.message });

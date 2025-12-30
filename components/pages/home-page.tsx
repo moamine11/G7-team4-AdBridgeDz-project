@@ -29,10 +29,10 @@ export default function HomePage() {
   ]
 
   const billboards = [
-    { id: 1, title: 'Billboard 1', subtitle: 'billboard in route', status: 'New' },
-    { id: 2, title: 'Billboard 2', subtitle: 'billboard in route', status: 'New' },
-    { id: 3, title: 'Billboard 3', subtitle: 'a good post', status: 'New' },
-    { id: 4, title: 'Billboard 4', subtitle: 'premium location', status: 'New' }
+    { id: 1, title: 'Adnew 1', subtitle: 'billboard in Algiers', status: 'New' },
+    { id: 2, title: 'Billboard 2', subtitle: 'billboard in Annaba', status: 'New' },
+    { id: 3, title: 'Digital arc 3', subtitle: 'Digital ads in Oran', status: 'New' },
+    { id: 4, title: 'Billboard 4', subtitle: 'premium ads in Constantine', status: 'New' }
   ]
 
   const nextSlide = () => {
