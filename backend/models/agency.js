@@ -13,9 +13,21 @@ const agencySchema = new Schema({
   country: { type: String, required: true },
   city: { type: String, required: true },
   streetAddress: { type: String, required: true },
+  // Optional precise coordinates (preferred over city lookup when present)
+  locationLat: { type: Number },
+  locationLng: { type: Number },
   postalCode: { type: Number, required: true },
   businessRegistrationNumber: { type: String, required: true },
-  rcDocument: { type: String }, 
+  // Verification documents (PDF/images)
+  rcDocument: { type: String },
+  rcDocumentPublicId: { type: String },
+  // Preferred naming: NIF/NIS proof
+  nifNisDocument: { type: String },
+  nifNisDocumentPublicId: { type: String },
+
+  // Legacy naming kept for backward compatibility
+  otherDocument: { type: String },
+  otherDocumentPublicId: { type: String },
   logo: { type: String },
 
   // Media stored in Cloudinary; keep public_id for cleanup/replace flows
@@ -45,6 +57,7 @@ const agencySchema = new Schema({
   },
   agreeToTerms: { type: Boolean, required: true },
   isVerified: { type: Boolean, default: false }, 
+  verifiedAt: { type: Date },
   verificationToken: { type: String },
   resetPasswordToken: { type: String },
   resetPasswordExpires: { type: Date },

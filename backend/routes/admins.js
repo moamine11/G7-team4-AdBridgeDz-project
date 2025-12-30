@@ -27,4 +27,9 @@ router.patch("/agencies/:id/verify", adminController.toggleAgencyVerification);
 // Top lists
 router.get("/agencies/top-by-bookings", adminController.getTopAgenciesByBookings);
 router.get("/companies/top-by-bookings", adminController.getTopCompaniesByBookings);
+
+// Analytics
+router.get('/analytics/overview', adminController.getAnalyticsOverview);
+router.get('/analytics/bookings-daily', adminController.getBookingsDaily);
+router.get('/analytics/top-cities', adminController.getTopCities);
 module.exports = router;

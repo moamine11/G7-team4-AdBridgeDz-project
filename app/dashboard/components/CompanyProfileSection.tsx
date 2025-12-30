@@ -174,16 +174,25 @@ const CompanyProfileSection = ({ companyProfile, onEditClick }: CompanyProfileSe
 
       if (!mapElement) return;
 
+      const hasCoords =
+        typeof companyProfile?.locationLat === 'number' &&
+        typeof companyProfile?.locationLng === 'number' &&
+        Number.isFinite(companyProfile.locationLat) &&
+        Number.isFinite(companyProfile.locationLng);
+
       const location = companyProfile?.location?.toLowerCase().trim() || '';
-      const coords = wilayaCoordinates[location] || { lat: 36.7538, lng: 3.0588 };
+      const coords = hasCoords
+        ? { lat: companyProfile.locationLat, lng: companyProfile.locationLng }
+        : wilayaCoordinates[location] || { lat: 36.7538, lng: 3.0588 };
 
       mapInstance = L.map('map', {
         zoomControl: true,
         attributionControl: false
       }).setView([coords.lat, coords.lng], 13);
 
-      L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
         maxZoom: 19,
+        subdomains: 'abc'
       }).addTo(mapInstance);
 
       const customIcon = L.divIcon({

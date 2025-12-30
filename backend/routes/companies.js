@@ -451,7 +451,7 @@ router.get('/profile', authMiddleware, async (req, res) => {
 // --- PROFILE UPDATE ROUTE (MODIFIED for Cloudinary deletion) ---
 router.put('/profile', authMiddleware, upload.single('logo'), async (req, res) => {
   try {
-    const updateFields = ['name', 'websiteURL', 'location', 'phonenumber', 'socialMedia', 'industrySector', 'companySize', 'yearEstablished'];
+    const updateFields = ['name', 'websiteURL', 'location', 'locationLat', 'locationLng', 'phonenumber', 'socialMedia', 'industrySector', 'companySize', 'yearEstablished'];
     const updateData = {};
 
     // Fetch existing company data first to get the old public ID
@@ -478,7 +478,12 @@ router.put('/profile', authMiddleware, upload.single('logo'), async (req, res) =
             updateData[field] = req.body[field];
           }
         } else {
-          updateData[field] = req.body[field];
+          if (field === 'locationLat' || field === 'locationLng') {
+            const n = parseFloat(req.body[field]);
+            if (!Number.isNaN(n)) updateData[field] = n;
+          } else {
+            updateData[field] = req.body[field];
+          }
         }
       }
     }

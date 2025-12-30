@@ -33,8 +33,12 @@ const companySchema = new mongoose.Schema({
   },
 
   location: { type: String, required: true },
+  // Optional precise coordinates (preferred over text lookup when present)
+  locationLat: { type: Number },
+  locationLng: { type: Number },
   phonenumber: { type: Number, required: true }, 
   isVerified: { type: Boolean, default: false },
+  verifiedAt: { type: Date },
   verificationToken: { type: String }, 
   resetPasswordToken: { type: String },
   resetPasswordExpires: { type: Date },

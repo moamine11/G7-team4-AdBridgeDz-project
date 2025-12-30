@@ -136,3 +136,14 @@
   box-shadow: none !important;
   border-radius: 0.75rem !important;
 }
+
+/* Leaflet: ensure tiles/controls clip to rounded containers */
+.leaflet-container {
+  overflow: hidden;
+  border-radius: inherit;
+}
+
+.leaflet-top,
+.leaflet-bottom {
+  z-index: 500;
+}

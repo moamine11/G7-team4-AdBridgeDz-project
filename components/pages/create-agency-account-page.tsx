@@ -38,6 +38,9 @@ export default function CreateAgencyAccount() {
   const [availableServices, setAvailableServices] = useState<{ _id: string; name: string }[]>([]);
   const [selectedServiceIds, setSelectedServiceIds] = useState<string[]>([]);
 
+  const [rcDocumentFile, setRcDocumentFile] = useState<File | null>(null);
+  const [nifNisDocumentFile, setNifNisDocumentFile] = useState<File | null>(null);
+
   const [formData, setFormData] = useState({
     agencyName: '',
     email: '',
@@ -150,6 +153,11 @@ export default function CreateAgencyAccount() {
       return;
     }
 
+    if (!rcDocumentFile || !nifNisDocumentFile) {
+      alert('Please upload both verification documents (RC + second document).');
+      return;
+    }
+
     setLoading(true);
     const body = new FormData();
 
@@ -165,6 +173,9 @@ export default function CreateAgencyAccount() {
     selectedServiceIds.forEach((id) => {
       body.append('servicesOffered', id);
     });
+
+    body.append('rcDocument', rcDocumentFile);
+    body.append('nifNisDocument', nifNisDocumentFile);
 
     try {
       const res = await fetch('http://localhost:5000/api/agencies/register', {
@@ -425,6 +436,34 @@ export default function CreateAgencyAccount() {
                 {errors.businessRegistrationNumber && (
                   <p className="text-xs text-red-400 mt-1.5">{errors.businessRegistrationNumber}</p>
                 )}
+              </div>
+
+              <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-teal-200 mb-1.5">
+                    RC Document (PDF or image) <span className="text-red-400">*</span>
+                  </label>
+                  <Input
+                    type="file"
+                    accept="application/pdf,image/*"
+                    className={inputStyles}
+                    required
+                    onChange={(e) => setRcDocumentFile(e.target.files?.[0] || null)}
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-teal-200 mb-1.5">
+                    NIF/NIS Document (PDF or image) <span className="text-red-400">*</span>
+                  </label>
+                  <Input
+                    type="file"
+                    accept="application/pdf,image/*"
+                    className={inputStyles}
+                    required
+                    onChange={(e) => setNifNisDocumentFile(e.target.files?.[0] || null)}
+                  />
+                </div>
               </div>
             </section>
 

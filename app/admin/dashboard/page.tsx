@@ -8,11 +8,36 @@ import { Button } from '@/components/ui/button'
 
 const API_BASE_URL = 'http://localhost:5000/api'
 
+type AnalyticsOverview = {
+  companiesTotal: number
+  agenciesTotal: number
+  companiesPending: number
+  agenciesPending: number
+  bookingsTotal: number
+  bookingsLast7Days: number
+  bookingsLast30Days: number
+}
+
+type BookingsDaily = {
+  days: number
+  start: string
+  series: Array<{ date: string; count: number }>
+}
+
+type TopCities = {
+  topAgencyCities: Array<{ city: string; count: number }>
+  topCompanyLocations: Array<{ location: string; count: number }>
+  topBookingCitiesByAgency: Array<{ city: string; count: number }>
+}
+
 type PendingAgency = {
   _id: string
   agencyName: string
   email: string
   isVerified: boolean
+  businessRegistrationNumber?: string
+  rcDocument?: string
+  nifNisDocument?: string
   daysLeftInSubscription?: number
 }
 
@@ -44,6 +69,10 @@ export default function AdminDashboardPage() {
   const [signupTab, setSignupTab] = useState<'companies' | 'agencies'>('companies')
   const [accountsTab, setAccountsTab] = useState<'companies' | 'agencies'>('companies')
 
+  const [analyticsOverview, setAnalyticsOverview] = useState<AnalyticsOverview | null>(null)
+  const [bookingsDaily, setBookingsDaily] = useState<BookingsDaily | null>(null)
+  const [topCities, setTopCities] = useState<TopCities | null>(null)
+
   const [pendingCompanies, setPendingCompanies] = useState<PendingCompany[]>([])
   const [pendingAgencies, setPendingAgencies] = useState<PendingAgency[]>([])
   const [accountsCompanies, setAccountsCompanies] = useState<PendingCompany[]>([])
@@ -53,6 +82,7 @@ export default function AdminDashboardPage() {
   const [topAgencies, setTopAgencies] = useState<TopAgency[]>([])
 
   const [loading, setLoading] = useState({
+    analytics: true,
     pendingCompanies: true,
     pendingAgencies: true,
     accountsCompanies: true,
@@ -99,6 +129,25 @@ export default function AdminDashboardPage() {
           return true
         }
         return false
+      }
+
+      try {
+        setLoading((p) => ({ ...p, analytics: true }))
+        const [overviewRes, dailyRes, citiesRes] = await Promise.all([
+          fetch(`${API_BASE_URL}/admin/analytics/overview`, { headers: authHeaders }),
+          fetch(`${API_BASE_URL}/admin/analytics/bookings-daily?days=14`, { headers: authHeaders }),
+          fetch(`${API_BASE_URL}/admin/analytics/top-cities?limit=5`, { headers: authHeaders }),
+        ])
+
+        if (handleAuthFailure(overviewRes.status) || handleAuthFailure(dailyRes.status) || handleAuthFailure(citiesRes.status)) {
+          return
+        }
+
+        setAnalyticsOverview(overviewRes.ok ? await overviewRes.json() : null)
+        setBookingsDaily(dailyRes.ok ? await dailyRes.json() : null)
+        setTopCities(citiesRes.ok ? await citiesRes.json() : null)
+      } finally {
+        setLoading((p) => ({ ...p, analytics: false }))
       }
 
       try {
@@ -164,6 +213,7 @@ export default function AdminDashboardPage() {
 
     run().catch(() => {
       setLoading({
+        analytics: false,
         pendingCompanies: false,
         pendingAgencies: false,
         accountsCompanies: false,
@@ -221,10 +271,14 @@ export default function AdminDashboardPage() {
 
   const listRowClass = 'flex items-center justify-between gap-4 rounded-xl border border-slate-800 bg-slate-950/40 p-4'
 
+  const statCardClass = 'rounded-2xl border border-slate-800 bg-slate-950/40 p-4'
+  const statLabelClass = 'text-xs text-gray-400'
+  const statValueClass = 'text-2xl font-bold text-white'
+
   return (
     <div className="min-h-screen bg-slate-900 text-white">
       {/* Navbar */}
-      <header className="bg-slate-950/80 backdrop-blur sticky top-0 z-40 border-b border-cyan-500/20">
+      <header className="bg-slate-950/80 backdrop-blur sticky top-0 z-[1100] border-b border-cyan-500/20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             <div className="flex items-center">
@@ -246,6 +300,118 @@ export default function AdminDashboardPage() {
       </header>
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
+        {/* Analytics */}
+        <section className={sectionCardClass}>
+          <div className={sectionHeaderClass}>
+            <h2 className="text-lg font-bold">Analytics</h2>
+            <div className="text-xs text-gray-400">Bookings and account health</div>
+          </div>
+          <div className={sectionBodyClass}>
+            {loading.analytics ? (
+              <div className="text-sm text-gray-400">Loading…</div>
+            ) : !analyticsOverview ? (
+              <div className="text-sm text-gray-400">Analytics unavailable</div>
+            ) : (
+              <>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                  <div className={statCardClass}>
+                    <div className={statLabelClass}>Verified companies</div>
+                    <div className={statValueClass}>
+                      {analyticsOverview.companiesTotal - analyticsOverview.companiesPending}
+                    </div>
+                    <div className="text-xs text-gray-500">Pending: {analyticsOverview.companiesPending}</div>
+                  </div>
+                  <div className={statCardClass}>
+                    <div className={statLabelClass}>Verified agencies</div>
+                    <div className={statValueClass}>
+                      {analyticsOverview.agenciesTotal - analyticsOverview.agenciesPending}
+                    </div>
+                    <div className="text-xs text-gray-500">Pending: {analyticsOverview.agenciesPending}</div>
+                  </div>
+                  <div className={statCardClass}>
+                    <div className={statLabelClass}>Bookings (7 days)</div>
+                    <div className={statValueClass}>{analyticsOverview.bookingsLast7Days}</div>
+                    <div className="text-xs text-gray-500">Total: {analyticsOverview.bookingsTotal}</div>
+                  </div>
+                  <div className={statCardClass}>
+                    <div className={statLabelClass}>Bookings (30 days)</div>
+                    <div className={statValueClass}>{analyticsOverview.bookingsLast30Days}</div>
+                    <div className="text-xs text-gray-500">Momentum snapshot</div>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+                  <div className={statCardClass}>
+                    <div className="text-sm font-semibold text-white mb-2">Bookings trend (last 14 days)</div>
+                    {!bookingsDaily?.series?.length ? (
+                      <div className="text-sm text-gray-400">No data</div>
+                    ) : (
+                      <div className="space-y-2">
+                        {(() => {
+                          const max = Math.max(1, ...bookingsDaily.series.map((s) => s.count))
+                          return bookingsDaily.series.map((s) => (
+                            <div key={s.date} className="flex items-center gap-3">
+                              <div className="w-24 text-xs text-gray-400 shrink-0">{s.date}</div>
+                              <div className="flex-1 h-2 rounded-full bg-slate-800 overflow-hidden">
+                                <div
+                                  className="h-full bg-cyan-500/70"
+                                  style={{ width: `${Math.round((s.count / max) * 100)}%` }}
+                                />
+                              </div>
+                              <div className="w-10 text-right text-xs text-gray-300 shrink-0">{s.count}</div>
+                            </div>
+                          ))
+                        })()}
+                      </div>
+                    )}
+                  </div>
+
+                  <div className={statCardClass}>
+                    <div className="text-sm font-semibold text-white mb-2">Top locations</div>
+                    {!topCities ? (
+                      <div className="text-sm text-gray-400">No data</div>
+                    ) : (
+                      <div className="space-y-3">
+                        <div>
+                          <div className="text-xs text-gray-400 mb-1">Agencies (verified) by city</div>
+                          {topCities.topAgencyCities?.length ? (
+                            <div className="space-y-1">
+                              {topCities.topAgencyCities.map((r) => (
+                                <div key={r.city} className="flex items-center justify-between text-sm">
+                                  <div className="text-gray-200 truncate pr-2">{r.city || 'Unknown'}</div>
+                                  <div className="text-cyan-400 font-semibold">{r.count}</div>
+                                </div>
+                              ))}
+                            </div>
+                          ) : (
+                            <div className="text-sm text-gray-400">No cities</div>
+                          )}
+                        </div>
+
+                        <div>
+                          <div className="text-xs text-gray-400 mb-1">Bookings by agency city</div>
+                          {topCities.topBookingCitiesByAgency?.length ? (
+                            <div className="space-y-1">
+                              {topCities.topBookingCitiesByAgency.map((r) => (
+                                <div key={r.city} className="flex items-center justify-between text-sm">
+                                  <div className="text-gray-200 truncate pr-2">{r.city || 'Unknown'}</div>
+                                  <div className="text-cyan-400 font-semibold">{r.count}</div>
+                                </div>
+                              ))}
+                            </div>
+                          ) : (
+                            <div className="text-sm text-gray-400">No bookings</div>
+                          )}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </>
+            )}
+          </div>
+        </section>
+
         {/* New signup requests */}
         <section className={sectionCardClass}>
           <div className={sectionHeaderClass}>
@@ -306,6 +472,35 @@ export default function AdminDashboardPage() {
                   <div className="min-w-0">
                     <div className="font-semibold truncate">{a.agencyName}</div>
                     <div className="text-sm text-gray-400 truncate">{a.email}</div>
+                    <div className="text-xs text-gray-500 mt-1 flex flex-wrap items-center gap-x-3 gap-y-1">
+                      {a.businessRegistrationNumber ? (
+                        <span className="truncate">RC: {a.businessRegistrationNumber}</span>
+                      ) : null}
+                      {a.rcDocument ? (
+                        <a
+                          href={a.rcDocument}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="text-cyan-400 hover:text-cyan-300 underline underline-offset-4"
+                        >
+                          View RC
+                        </a>
+                      ) : (
+                        <span>RC doc missing</span>
+                      )}
+                      {a.nifNisDocument ? (
+                        <a
+                          href={a.nifNisDocument}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="text-cyan-400 hover:text-cyan-300 underline underline-offset-4"
+                        >
+                          View NIF/NIS
+                        </a>
+                      ) : (
+                        <span>NIF/NIS doc missing</span>
+                      )}
+                    </div>
                   </div>
                   <div className="flex items-center gap-2 shrink-0">
                     <Button className={acceptBtnClass} onClick={() => acceptAgency(a._id)}>

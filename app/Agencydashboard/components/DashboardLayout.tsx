@@ -95,7 +95,7 @@ const AgencyDashboardLayout = () => {
     return (
         <div className="min-h-screen bg-slate-900 text-white">
             {/* --- Top Navigation Header (Replaces Sidebar) --- */}
-          <header className="bg-[#0a1628] shadow-2xl sticky top-0 z-40 border-b border-cyan-500/20">
+          <header className="bg-[#0a1628] shadow-2xl sticky top-0 z-[1100] border-b border-cyan-500/20">
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
            {/* Logo Section */}

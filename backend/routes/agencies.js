@@ -43,6 +43,29 @@ const createCloudinaryStorage = (folderName, allowedFormats) => {
     });
 };
 
+// Storage for agency registration (logo + verification documents).
+// - `logo`: image-only with a safe resize transformation.
+// - `rcDocument` + `nifNisDocument`: accept PDF/images without transformations.
+const registerStorage = new CloudinaryStorage({
+  cloudinary,
+  params: (req, file) => {
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
+    const isLogo = file.fieldname === 'logo';
+    const isVerificationDoc =
+      file.fieldname === 'rcDocument' || file.fieldname === 'nifNisDocument' || file.fieldname === 'otherDocument';
+
+    return {
+      folder: isLogo ? 'agency/logos' : 'agency/verification-documents',
+      allowed_formats: isLogo
+        ? ['jpg', 'jpeg', 'png', 'gif', 'webp']
+        : ['pdf', 'jpg', 'jpeg', 'png', 'webp'],
+      resource_type: isLogo ? 'image' : 'auto',
+      transformation: isLogo ? [{ width: 800, crop: 'limit' }] : undefined,
+      public_id: `${file.fieldname}-${uniqueSuffix}`,
+    };
+  },
+});
+
 // --- STORAGE CONFIGURATION FOR ALL FILES ---
 // NOTE: We define single-file upload instances only for simplicity and stability.
 const logoStorage = createCloudinaryStorage('logos', ['jpg', 'jpeg', 'png', 'gif', 'webp']);
@@ -50,6 +73,18 @@ const postImageStorage = createCloudinaryStorage('posts', ['jpg', 'jpeg', 'png',
 
 const uploadLogo = multer({ storage: logoStorage, limits: { fileSize: 5 * 1024 * 1024 } }).single('logo');
 const uploadPostImage = multer({ storage: postImageStorage, limits: { fileSize: 5 * 1024 * 1024 } }).single('image');
+
+const uploadAgencyRegister = multer({
+  storage: registerStorage,
+  limits: { fileSize: 10 * 1024 * 1024 },
+}).fields([
+  { name: 'logo', maxCount: 1 },
+  { name: 'rcDocument', maxCount: 1 },
+  // Preferred field name
+  { name: 'nifNisDocument', maxCount: 1 },
+  // Legacy field name (backward compat)
+  { name: 'otherDocument', maxCount: 1 },
+]);
 
 // --- END STORAGE CONFIGURATION ---
 
@@ -126,9 +161,28 @@ const destroyCloudinaryResource = async (publicId) => {
         try {
             await cloudinary.uploader.destroy(publicId);
         } catch (error) {
-            console.error(`Cloudinary deletion failed for ID ${publicId}:`, error);
+            // Cloudinary stores non-images under different resource types.
+            try {
+              await cloudinary.uploader.destroy(publicId, { resource_type: 'raw' });
+            } catch (rawError) {
+              try {
+                await cloudinary.uploader.destroy(publicId, { resource_type: 'video' });
+              } catch (videoError) {
+                console.error(`Cloudinary deletion failed for ID ${publicId}:`, error);
+              }
+            }
         }
     }
+};
+
+const destroyUploadedRegisterFiles = async (files) => {
+  if (!files) return;
+  const all = [];
+  if (files.logo?.[0]) all.push(files.logo[0]);
+  if (files.rcDocument?.[0]) all.push(files.rcDocument[0]);
+  if (files.nifNisDocument?.[0]) all.push(files.nifNisDocument[0]);
+  if (files.otherDocument?.[0]) all.push(files.otherDocument[0]);
+  await Promise.all(all.map((f) => destroyCloudinaryResource(f.filename)));
 };
 
 const sendVerificationEmail = async (agency, token) => {
@@ -178,8 +232,8 @@ const sendPasswordResetEmail = async (agency, token) => {
   });
 };
 
-// --- REGISTER ROUTE (SIMPLIFIED for single logo upload only) ---
-router.post('/register', uploadLogo, async (req, res) => {
+// --- REGISTER ROUTE (logo + 2 verification docs) ---
+router.post('/register', uploadAgencyRegister, async (req, res) => {
     try {
         const { 
             agencyName, email, userType, password, phoneNumber, countryCode, websiteUrl, country, city, streetAddress, 
@@ -189,14 +243,23 @@ router.post('/register', uploadLogo, async (req, res) => {
 
         if (!agreeToTerms || agreeToTerms !== 'true' && agreeToTerms !== true) {
             // Clean up if agreement is missing
-            if (req.file) await destroyCloudinaryResource(req.file.filename);
+          await destroyUploadedRegisterFiles(req.files);
             return res.status(400).json({ error: 'You must agree to the Terms and Conditions' });
         }
 
         const existingAgency = await Agency.findOne({ email });
         if (existingAgency) {
-            if (req.file) await destroyCloudinaryResource(req.file.filename);
+            await destroyUploadedRegisterFiles(req.files);
             return res.status(400).json({ error: 'Email already exists' });
+        }
+
+        const logoFile = req.files?.logo?.[0];
+        const rcFile = req.files?.rcDocument?.[0];
+        const nifNisFile = req.files?.nifNisDocument?.[0] || req.files?.otherDocument?.[0];
+
+        if (!rcFile || !nifNisFile) {
+          await destroyUploadedRegisterFiles(req.files);
+          return res.status(400).json({ error: 'Both verification documents are required (RC + NIF/NIS).' });
         }
 
         const hashedPassword = await bcrypt.hash(password, 10);
@@ -205,14 +268,29 @@ router.post('/register', uploadLogo, async (req, res) => {
         let parsedServices = servicesOffered ? (typeof servicesOffered === 'string' ? JSON.parse(servicesOffered) : servicesOffered) : [];
 
         // Store Cloudinary URLs and Public IDs
-        const logoUrl = req.file ? req.file.path : undefined;
-        const logoPublicId = req.file ? req.file.filename : undefined;
-        // RC document fields will be null/undefined here, assuming it's done later/separately if needed
+        const logoUrl = logoFile ? logoFile.path : undefined;
+        const logoPublicId = logoFile ? logoFile.filename : undefined;
+
+        const rcDocumentUrl = rcFile.path;
+        const rcDocumentPublicId = rcFile.filename;
+        const nifNisDocumentUrl = nifNisFile.path;
+        const nifNisDocumentPublicId = nifNisFile.filename;
+
+        // If the legacy field name was used, also keep legacy fields populated.
+        const legacyOtherDocumentUrl = req.files?.otherDocument?.[0]?.path;
+        const legacyOtherDocumentPublicId = req.files?.otherDocument?.[0]?.filename;
 
         const agency = new Agency({
             agencyName, email, userType: userType || 'agency', password: hashedPassword,
             phoneNumber, countryCode, websiteUrl, country, city, streetAddress, postalCode, businessRegistrationNumber,
-            // rcDocument fields omitted for simplicity in this stable version
+            rcDocument: rcDocumentUrl,
+            rcDocumentPublicId,
+            nifNisDocument: nifNisDocumentUrl,
+            nifNisDocumentPublicId,
+
+            // Legacy fields (optional, for older clients / existing admin views)
+            otherDocument: legacyOtherDocumentUrl || undefined,
+            otherDocumentPublicId: legacyOtherDocumentPublicId || undefined,
             logo: logoUrl, logoPublicId,                      
             industry, companySize, yearEstablished: yearEstablished ? parseInt(yearEstablished) : undefined,
             fullName, jobTitle, servicesOffered: parsedServices, facebookUrl, linkedinUrl,
@@ -240,7 +318,7 @@ router.post('/register', uploadLogo, async (req, res) => {
         });
     } catch (error) {
         console.error('Registration error:', error);
-        if (req.file) await destroyCloudinaryResource(req.file.filename);
+        await destroyUploadedRegisterFiles(req.files);
         res.status(500).json({ error: error.message });
     }
 });
@@ -254,7 +332,7 @@ router.put('/profile', authMiddleware, uploadLogo, async (req, res) => {
         const { 
             agencyName, email, phoneNumber, websiteUrl, country, city, streetAddress, postalCode, 
             businessRegistrationNumber, industry, companySize, yearEstablished, fullName, 
-            jobTitle, servicesOffered, facebookUrl, linkedinUrl 
+      jobTitle, servicesOffered, facebookUrl, linkedinUrl, locationLat, locationLng 
         } = req.body;
 
         const updateData = { updatedAt: Date.now() };
@@ -269,6 +347,16 @@ router.put('/profile', authMiddleware, uploadLogo, async (req, res) => {
             fullName, jobTitle, facebookUrl, linkedinUrl,
             servicesOffered: servicesOffered ? JSON.parse(servicesOffered) : oldAgency.servicesOffered
         });
+
+        if (locationLat !== undefined && locationLat !== '') {
+          const lat = parseFloat(locationLat);
+          if (!Number.isNaN(lat)) updateData.locationLat = lat;
+        }
+
+        if (locationLng !== undefined && locationLng !== '') {
+          const lng = parseFloat(locationLng);
+          if (!Number.isNaN(lng)) updateData.locationLng = lng;
+        }
 
         // CRITICAL FIX: Handle Logo Update (If new file uploaded via uploadLogo middleware)
         if (req.file) {

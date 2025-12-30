@@ -22,6 +22,7 @@ const agencyRoutes = require('./routes/agencies');
 const serviceRoutes = require('./routes/services');
 const adminRoutes = require('./routes/admins');
 const authRoutes = require('./routes/auth');
+const geocodeRoutes = require('./routes/geocode');
 
 const app = express();
 app.use(cors());
@@ -46,6 +47,7 @@ app.use('/api/agencies', agencyRoutes);
 app.use('/api/services', serviceRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api/geocode', geocodeRoutes);
 // Legacy mount (older clients)
 app.use('/admin', adminRoutes);
 mongoose.connect(process.env.MONGO_URI, {

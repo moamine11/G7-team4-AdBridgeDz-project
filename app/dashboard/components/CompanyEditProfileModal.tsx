@@ -19,6 +19,7 @@ import {
   Mail,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { LocationPicker } from '@/components/ui/location-picker';
 
 interface CompanyEditProfileModalProps {
   companyData: any;
@@ -51,6 +52,14 @@ export function CompanyEditProfileModal({
     name: companyData?.name || '',
     phonenumber: companyData?.phonenumber || '',
     location: companyData?.location || '',
+    locationLat:
+      companyData?.locationLat !== undefined && companyData?.locationLat !== null
+        ? String(companyData.locationLat)
+        : '',
+    locationLng:
+      companyData?.locationLng !== undefined && companyData?.locationLng !== null
+        ? String(companyData.locationLng)
+        : '',
     websiteURL: companyData?.websiteURL || '',
     industrySector: companyData?.industrySector || '',
     companySize: companyData?.companySize || '',
@@ -111,6 +120,8 @@ export function CompanyEditProfileModal({
       submissionData.append('name', formData.name);
       submissionData.append('phonenumber', formData.phonenumber);
       if (formData.location) submissionData.append('location', formData.location);
+      if (formData.locationLat) submissionData.append('locationLat', formData.locationLat);
+      if (formData.locationLng) submissionData.append('locationLng', formData.locationLng);
       if (formData.websiteURL) submissionData.append('websiteURL', formData.websiteURL);
       if (formData.industrySector) submissionData.append('industrySector', formData.industrySector);
       if (formData.companySize) submissionData.append('companySize', formData.companySize);
@@ -264,6 +275,23 @@ export function CompanyEditProfileModal({
                 onChange={handleChange}
                 placeholder="Algiers, Algeria"
               />
+              <div className="md:col-span-2">
+                <LocationPicker
+                  value={{
+                    label: formData.location || '',
+                    lat: formData.locationLat ? Number(formData.locationLat) : null,
+                    lng: formData.locationLng ? Number(formData.locationLng) : null,
+                  }}
+                  onChange={(next) => {
+                    setFormData((prev) => ({
+                      ...prev,
+                      location: next.label || prev.location,
+                      locationLat: next.lat !== null ? String(next.lat) : prev.locationLat,
+                      locationLng: next.lng !== null ? String(next.lng) : prev.locationLng,
+                    }));
+                  }}
+                />
+              </div>
               <InputWithIcon
                 Icon={Globe}
                 label="Website"
