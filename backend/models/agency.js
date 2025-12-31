@@ -8,15 +8,30 @@ const agencySchema = new Schema({
   googleId: { type: String, default: null }, 
   signUpMethod: { type: String, enum: ['local', 'google'], default: 'local' }, 
   phoneNumber: { type: Number, required: true },
-  countryCode: { type: String},
+  countryCode: { type: String, required: true },
   websiteUrl: { type: String },
-  country: { type: String },
-  city: { type: String },
-  streetAddress: { type: String },
-  postalCode: { type: Number },
+  country: { type: String, required: true },
+  city: { type: String, required: true },
+  streetAddress: { type: String, required: true },
+  // Optional precise coordinates (preferred over city lookup when present)
+  locationLat: { type: Number },
+  locationLng: { type: Number },
+  postalCode: { type: Number, required: true },
   businessRegistrationNumber: { type: String, required: true },
-  rcDocument: { type: String }, 
+  // Verification documents (PDF/images)
+  rcDocument: { type: String },
+  rcDocumentPublicId: { type: String },
+  // Preferred naming: NIF/NIS proof
+  nifNisDocument: { type: String },
+  nifNisDocumentPublicId: { type: String },
+
+  // Legacy naming kept for backward compatibility
+  otherDocument: { type: String },
+  otherDocumentPublicId: { type: String },
   logo: { type: String },
+
+  // Media stored in Cloudinary; keep public_id for cleanup/replace flows
+  logoPublicId: { type: String },
   industry: { type: String},
   companySize: { type: String },
   yearEstablished: { type: Number },
@@ -42,8 +57,20 @@ const agencySchema = new Schema({
   },
   agreeToTerms: { type: Boolean, required: true },
   isVerified: { type: Boolean, default: false }, 
-  verificationToken: { type: String }, 
-  dateCreated: { type: Date, default: Date.now }
+  verifiedAt: { type: Date },
+  verificationToken: { type: String },
+  resetPasswordToken: { type: String },
+  resetPasswordExpires: { type: Date },
+
+  // --- Subscription / Trial (Agency) ---
+  // A simple trial + paid-until model used for gating features.
+  trialStartedAt: { type: Date },
+  trialEndsAt: { type: Date },
+  subscriptionEndsAt: { type: Date },
+  subscriptionPlan: { type: String, default: 'Trial' },
+
+  dateCreated: { type: Date, default: Date.now },
+  updatedAt: { type: Date, default: Date.now }
 });
 const Agency = mongoose.model('Agency', agencySchema);
 module.exports = Agency;

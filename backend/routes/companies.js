@@ -6,19 +6,38 @@ const crypto = require('crypto');
 const nodemailer = require('nodemailer');
 const multer = require('multer');
 const path = require('path');
+const fs = require('fs'); // Added for local cleanup context/use
 const Company = require('../models/company');
 const Booking = require('../models/booking');
 const { OAuth2Client } = require('google-auth-library');
+// --- NEW CLOUDINARY IMPORTS ---
+const cloudinary = require('cloudinary').v2;
+const { CloudinaryStorage } = require('multer-storage-cloudinary');
+// --- END CLOUDINARY IMPORTS ---
+
 const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
+// --- CLOUDINARY CONFIGURATION (NEW) ---
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET
+});
 
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, 'uploads/logos/');
-  },
-  filename: (req, file, cb) => {
-    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-    cb(null, 'logo-' + uniqueSuffix + path.extname(file.originalname));
+// Configure Cloudinary storage for company logos
+const storage = new CloudinaryStorage({
+  cloudinary: cloudinary,
+  params: {
+    folder: 'company-logos',
+    allowed_formats: ['jpg', 'jpeg', 'png', 'gif', 'webp'],
+    transformation: [{ width: 500, height: 500, crop: 'limit' }],
+    // public_id is now dynamically generated, referencing company ID for easy cleanup
+    public_id: (req, file) => {
+      const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+      // Use companyId if available during update, otherwise use a generic prefix
+      const companyId = req.companyId || 'new-company';
+      return `logo-${companyId}-${uniqueSuffix}`;
+    }
   }
 });
 
@@ -31,10 +50,11 @@ const fileFilter = (req, file, cb) => {
 };
 
 const upload = multer({
-  storage,
+  storage, // Using Cloudinary storage
   fileFilter,
   limits: { fileSize: 5 * 1024 * 1024 } // 5MB
 });
+// --- END CLOUDINARY CONFIGURATION ---
 
 
 const authMiddleware = async (req, res, next) => {
@@ -48,7 +68,6 @@ const authMiddleware = async (req, res, next) => {
     res.status(401).json({ error: 'Invalid token' });
   }
 };
-
 
 
 const sendVerificationEmail = async (company, token) => {
@@ -73,9 +92,31 @@ const sendVerificationEmail = async (company, token) => {
   });
 };
 
-// ========================
-// Registration with logo upload
-// ========================
+const sendPasswordResetEmail = async (company, token) => {
+  const transporter = nodemailer.createTransport({
+    host: process.env.SMTP_HOST,
+    port: Number(process.env.SMTP_PORT),
+    secure: process.env.SMTP_SECURE === 'true',
+    auth: {
+      user: process.env.SMTP_USER,
+      pass: process.env.SMTP_PASS
+    }
+  });
+
+  const url = `${process.env.FRONTEND_URL}/reset-password?token=${token}&id=${company._id}&userType=company`;
+  await transporter.sendMail({
+    from: `"MarketingWeb" <${process.env.SMTP_USER}>`,
+    to: company.email,
+    subject: "Reset Your Password",
+    html: `<p>Hi ${company.name},</p>
+           <p>You requested to reset your password. Click the link below to reset it:</p>
+           <a href="${url}">${url}</a>
+           <p>This link will expire in 1 hour.</p>
+           <p>If you didn't request this, please ignore this email.</p>`
+  });
+};
+
+// --- REGISTER ROUTE (MODIFIED for Cloudinary URL/ID storage) ---
 router.post('/register', upload.single('logo'), async (req, res) => {
   try {
     const {
@@ -93,21 +134,26 @@ router.post('/register', upload.single('logo'), async (req, res) => {
       agreesToTerms 
     } = req.body;
 
-   
+    
     if (!agreesToTerms || agreesToTerms !== 'true' && agreesToTerms !== true) {
       return res.status(400).json({ error: 'You must agree to the Terms and Conditions' });
     }
 
-   
+    
     const existingCompany = await Company.findOne({ email });
     if (existingCompany) {
+      // Clean up uploaded file if registration fails
+      if (req.file) await cloudinary.uploader.destroy(req.file.filename);
       return res.status(400).json({ error: 'Company already exists with this email' });
     }
 
     let imageURL = '';
+    let cloudinaryPublicId = ''; // New field for Cloudinary public ID
+    
     if (req.file) {
-      
-      imageURL = `${process.env.BACKEND_URL}/uploads/logos/${req.file.filename}`;
+      // Cloudinary URL is req.file.path; Public ID is req.file.filename
+      imageURL = req.file.path;
+      cloudinaryPublicId = req.file.filename;
     } else if (typeof req.body.imageURL === 'string') {
       imageURL = req.body.imageURL;
     }
@@ -121,7 +167,7 @@ router.post('/register', upload.single('logo'), async (req, res) => {
       try {
         parsedSocialMedia = typeof socialMedia === 'string' ? JSON.parse(socialMedia) : socialMedia;
       } catch (e) {
-       
+        
       }
     }
 
@@ -131,6 +177,7 @@ router.post('/register', upload.single('logo'), async (req, res) => {
       userType,
       password: hashedPassword,
       imageURL,
+      cloudinaryPublicId, // Store Public ID
       websiteURL,
       location,
       phonenumber,
@@ -157,10 +204,13 @@ router.post('/register', upload.single('logo'), async (req, res) => {
 
   } catch (error) {
     console.error('Registration error:', error);
- 
-    if (req.file) {
-      const fs = require('fs');
-      fs.unlink(req.file.path, () => {});
+    // Clean up uploaded file if registration fails
+    if (req.file && req.file.filename) {
+        try {
+            await cloudinary.uploader.destroy(req.file.filename);
+        } catch (deleteError) {
+            console.error('Error deleting Cloudinary file:', deleteError);
+        }
     }
     res.status(500).json({ error: error.message });
   }
@@ -170,15 +220,26 @@ router.post('/register', upload.single('logo'), async (req, res) => {
 router.get('/verify-email', async (req, res) => {
   try {
     const { token, id } = req.query;
-    if (!token || !id) return res.status(400).send("Invalid request");
+    if (!token || !id) {
+      return res.status(400).json({ error: "Invalid request. Token and ID are required." });
+    }
     const company = await Company.findById(id);
-    if (!company || company.verificationToken !== token) return res.status(400).send("Invalid or expired token");
+    if (!company) {
+      return res.status(404).json({ error: "Company not found." });
+    }
+    if (company.verificationToken !== token) {
+      return res.status(400).json({ error: "Invalid or expired token." });
+    }
+    if (company.isVerified) {
+      return res.status(400).json({ error: "Email already verified." });
+    }
     company.isVerified = true;
     company.verificationToken = undefined;
     await company.save();
-    res.send("Email verified successfully! You can now log in.");
+    res.json({ message: "Email verified successfully! You can now log in." });
   } catch (err) {
-    res.status(500).send("Server error");
+    console.error('Verification error:', err);
+    res.status(500).json({ error: "Server error" });
   }
 });
 
@@ -215,7 +276,7 @@ router.post('/login', async (req, res) => {
 
 router.get('/test', async (req, res) => {
   try {
-    const companies = await Company.find().select('name email verificationToken');
+    const companies = await Company.find().select('name email imageURL verificationToken');
     res.json(companies);
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -283,6 +344,100 @@ router.post('/resend-verification', async (req, res) => {
   }
 });
 
+// Forgot Password - Request reset
+router.post('/forgot-password', async (req, res) => {
+  try {
+    const { email } = req.body;
+    if (!email) {
+      return res.status(400).json({ error: 'Email is required' });
+    }
+
+    const company = await Company.findOne({ email });
+    // Don't reveal if email exists for security
+    if (!company) {
+      return res.json({ message: 'If that email exists, a password reset link has been sent.' });
+    }
+
+    // Generate reset token
+    const resetToken = crypto.randomBytes(32).toString('hex');
+    company.resetPasswordToken = resetToken;
+    company.resetPasswordExpires = Date.now() + 3600000; // 1 hour
+    await company.save();
+
+    await sendPasswordResetEmail(company, resetToken);
+    res.json({ message: 'If that email exists, a password reset link has been sent.' });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Reset Password - Verify token and reset password
+router.post('/reset-password', async (req, res) => {
+  try {
+    const { token, id, password } = req.body;
+    
+    if (!token || !id || !password) {
+      return res.status(400).json({ error: 'Token, ID, and password are required' });
+    }
+
+    if (password.length < 6) {
+      return res.status(400).json({ error: 'Password must be at least 6 characters long' });
+    }
+
+    const company = await Company.findById(id);
+    if (!company) {
+      return res.status(404).json({ error: 'Company not found' });
+    }
+
+    if (company.resetPasswordToken !== token) {
+      return res.status(400).json({ error: 'Invalid or expired reset token' });
+    }
+
+    if (!company.resetPasswordExpires || company.resetPasswordExpires < Date.now()) {
+      return res.status(400).json({ error: 'Reset token has expired' });
+    }
+
+    // Hash new password
+    const hashedPassword = await bcrypt.hash(password, 10);
+    company.password = hashedPassword;
+    company.resetPasswordToken = undefined;
+    company.resetPasswordExpires = undefined;
+    await company.save();
+
+    res.json({ message: 'Password has been reset successfully' });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Verify reset token
+router.get('/verify-reset-token', async (req, res) => {
+  try {
+    const { token, id } = req.query;
+    
+    if (!token || !id) {
+      return res.status(400).json({ error: 'Token and ID are required' });
+    }
+
+    const company = await Company.findById(id);
+    if (!company) {
+      return res.status(404).json({ error: 'Company not found' });
+    }
+
+    if (company.resetPasswordToken !== token) {
+      return res.status(400).json({ error: 'Invalid reset token' });
+    }
+
+    if (!company.resetPasswordExpires || company.resetPasswordExpires < Date.now()) {
+      return res.status(400).json({ error: 'Reset token has expired' });
+    }
+
+    res.json({ message: 'Token is valid' });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 router.get('/profile', authMiddleware, async (req, res) => {
   try {
     const company = await Company.findById(req.companyId).select('-password');
@@ -293,15 +448,27 @@ router.get('/profile', authMiddleware, async (req, res) => {
   }
 });
 
+// --- PROFILE UPDATE ROUTE (MODIFIED for Cloudinary deletion) ---
 router.put('/profile', authMiddleware, upload.single('logo'), async (req, res) => {
   try {
-    const updateFields = ['name', 'websiteURL', 'location', 'phonenumber', 'socialMedia', 'industrySector', 'companySize', 'yearEstablished'];
+    const updateFields = ['name', 'websiteURL', 'location', 'locationLat', 'locationLng', 'phonenumber', 'socialMedia', 'industrySector', 'companySize', 'yearEstablished'];
     const updateData = {};
 
+    // Fetch existing company data first to get the old public ID
+    const company = await Company.findById(req.companyId);
+    if (!company) return res.status(404).json({ error: 'Company not found' });
+    
+    let oldPublicId = company.cloudinaryPublicId;
+    
+    // Cloudinary Logo Handling
     if (req.file) {
-      updateData.imageURL = `${process.env.BACKEND_URL}/uploads/logos/${req.file.filename}`;
+      // req.file.path contains the absolute Cloudinary URL
+      updateData.imageURL = req.file.path; 
+      // req.file.filename contains the Cloudinary public_id
+      updateData.cloudinaryPublicId = req.file.filename; 
     }
 
+    // Handle other fields from body
     for (const field of updateFields) {
       if (req.body[field] !== undefined) {
         if (field === 'socialMedia') {
@@ -311,24 +478,47 @@ router.put('/profile', authMiddleware, upload.single('logo'), async (req, res) =
             updateData[field] = req.body[field];
           }
         } else {
-          updateData[field] = req.body[field];
+          if (field === 'locationLat' || field === 'locationLng') {
+            const n = parseFloat(req.body[field]);
+            if (!Number.isNaN(n)) updateData[field] = n;
+          } else {
+            updateData[field] = req.body[field];
+          }
         }
       }
     }
 
     updateData.updatedAt = Date.now();
 
-    const company = await Company.findByIdAndUpdate(
+    const updatedCompany = await Company.findByIdAndUpdate(
       req.companyId,
       updateData,
       { new: true, runValidators: true }
     ).select('-password');
 
-    res.json({ message: 'Profile updated successfully', company });
+    // Delete old image from Cloudinary if a new one was uploaded and an old public ID exists
+    if (req.file && oldPublicId) {
+        try {
+            await cloudinary.uploader.destroy(oldPublicId);
+        } catch (deleteError) {
+            console.error('Error deleting old Cloudinary image:', deleteError);
+        }
+    }
+
+    res.json({ message: 'Profile updated successfully', company: updatedCompany });
   } catch (error) {
+    // If update failed, clean up the newly uploaded file from Cloudinary
+    if (req.file && req.file.filename) {
+        try {
+            await cloudinary.uploader.destroy(req.file.filename);
+        } catch (deleteError) {
+            console.error('Error deleting failed Cloudinary upload:', deleteError);
+        }
+    }
     res.status(500).json({ error: error.message });
   }
 });
+
 
 router.get('/bookings', authMiddleware, async (req, res) => {
   try {
@@ -341,6 +531,7 @@ router.get('/bookings', authMiddleware, async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 });
+
 
 router.get('/bookings/:id', authMiddleware, async (req, res) => {
   try {

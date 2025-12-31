@@ -5,6 +5,7 @@ import { useState, useEffect } from 'react'
 import { usePathname } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
+import Logo from '@/components/ui/logo'
 
 export default function Navbar() {
   const [open, setOpen] = useState(false)
@@ -20,16 +21,15 @@ export default function Navbar() {
   }, [])
 
   const navLinks = [
-    { href: '/', label: 'Home' },
-    { href: '/channels', label: 'Explore' },
-    { href: '/dashboard/bookings', label: 'Bookings' },
-    { href: '/profile-company', label: 'Profile' },
+    { href: '/#how-it-works', label: 'How it Works' },
+    { href: '/#contact', label: 'Contact' },
   ]
 
   const isActive = (href: string) => {
     if (href === '/') {
       return pathname === '/'
     }
+    // Handle anchor links - check if we're on home page
     if (href.startsWith('/#')) {
       return pathname === '/' || pathname === ''
     }
@@ -37,103 +37,139 @@ export default function Navbar() {
   }
 
   return (
-    <header className="fixed top-6 left-0 right-0 z-50 flex justify-center px-4">
-      <nav
-        className={cn(
-          "relative flex items-center justify-between w-full max-w-5xl h-16 px-4 rounded-full transition-all duration-300",
-          scrolled || open
-            ? "bg-gradient-to-br from-blue-900/70 via-slate-900/80 to-blue-800/70 backdrop-blur-2xl border border-blue-200/20 shadow-2xl"
-            : "bg-gradient-to-br from-blue-900/60 via-slate-900/70 to-blue-800/60 backdrop-blur-xl border border-blue-200/10 shadow-xl"
-        )}
-      >
-        {/* Left: Navigation Links (Desktop) */}
-        <div className="hidden md:flex items-center gap-6 flex-1 justify-start">
-          {navLinks.map((link) => (
-            <Link
-              key={link.href}
-              href={link.href}
-              className={cn(
-                "relative text-sm font-medium transition-colors duration-200",
-                isActive(link.href)
-                  ? "text-blue-400 font-semibold"
-                  : "text-slate-300 hover:text-white"
-              )}
-            >
-              {link.label}
-              {isActive(link.href) && (
-                <span className="absolute -bottom-1 left-0 right-0 h-0.5 bg-gradient-to-r from-blue-400 to-teal-400 rounded-full" />
-              )}
+    <header
+      className={cn(
+        "sticky top-0 z-50 transition-all duration-300",
+        scrolled
+          ? "bg-gradient-to-r from-blue-50 via-teal-50 to-white backdrop-blur-md shadow-lg border-b border-blue-100"
+          : "bg-gradient-to-r from-blue-50 via-teal-50 to-white backdrop-blur-sm border-b border-blue-100"
+      )}
+    >
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="flex items-center justify-between h-16 md:h-20">
+          {/* Logo */}
+          <Logo href="/" size="md" showHoverEffects={true} className="-ml-2" />
+
+          {/* Desktop Navigation */}
+          <nav className="hidden lg:flex items-center gap-8">
+            {navLinks.map((link) => (
+              <Link
+                key={link.href}
+                href={link.href}
+                className={cn(
+                  "relative px-3 py-2 text-sm font-medium transition-all duration-200 rounded-lg group",
+                  isActive(link.href)
+                    ? "text-teal-600 font-semibold"
+                    : "text-gray-600 hover:text-gray-900"
+                )}
+              >
+                {link.label}
+                {isActive(link.href) && (
+                  <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-teal-500 to-blue-500 rounded-full" />
+                )}
+                <span className="absolute inset-0 bg-gray-100 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 -z-10" />
+              </Link>
+            ))}
+          </nav>
+
+          {/* Desktop CTA Buttons */}
+          <div className="hidden lg:flex items-center gap-3">
+            <Link href="/account-type">
+              <Button
+                variant="ghost"
+                className="relative px-5 py-2 text-sm font-medium text-gray-700 hover:text-gray-900 group overflow-hidden rounded-full transition-all duration-300"
+              >
+                <span className="relative z-10">Get Started</span>
+                <span className="absolute inset-0 bg-gradient-to-r from-teal-500/10 to-blue-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+              </Button>
             </Link>
-          ))}
-        </div>
+            <Link href="/login">
+              <Button
+                className="relative px-6 py-2 text-sm font-semibold text-white rounded-full bg-gradient-to-r from-teal-500 to-blue-500 hover:from-teal-600 hover:to-blue-600 shadow-lg shadow-teal-500/25 hover:shadow-xl hover:shadow-teal-500/30 transition-all duration-300 transform hover:scale-105"
+              >
+                Login
+              </Button>
+            </Link>
+          </div>
 
-        {/* Center: Spacer (no logo) */}
-        <div className="flex-1 flex justify-center"></div>
-
-        {/* Right: Actions (Desktop) */}
-        <div className="hidden md:flex items-center gap-3 flex-1 justify-end">
-          <Link href="/login">
-            <Button variant="ghost" className="rounded-full text-blue-400 hover:text-white hover:bg-blue-700/20 font-semibold px-5 py-2 transition-all duration-200">
-              Login
-            </Button>
-          </Link>
-          <Link href="/account-type">
-            <Button className="rounded-full bg-gradient-to-r from-blue-600 via-teal-500 to-blue-400 hover:from-blue-700 hover:to-teal-600 text-white font-bold shadow-md hover:shadow-lg px-5 py-2 transition-all duration-200">
-              Get Started
-            </Button>
-          </Link>
-        </div>
-
-        {/* Mobile Menu Toggle (Absolute Right) */}
-        <div className="md:hidden absolute right-4">
+          {/* Mobile Menu Button */}
           <button
             onClick={() => setOpen(!open)}
-            className="p-2 text-slate-300 hover:text-white focus:outline-none"
-          >
-            {open ? (
-              <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            ) : (
-              <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-              </svg>
+            aria-label="Toggle menu"
+            className={cn(
+              "lg:hidden relative p-2 rounded-lg transition-all duration-200",
+              open
+                ? "bg-gray-100 text-gray-900"
+                : "text-gray-600 hover:bg-gray-100 hover:text-gray-900"
             )}
+          >
+            <svg
+              className="w-6 h-6 transition-transform duration-300"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              strokeWidth={2.5}
+            >
+              {open ? (
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M6 18L18 6M6 6l12 12"
+                />
+              ) : (
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M4 6h16M4 12h16M4 18h16"
+                />
+              )}
+            </svg>
           </button>
         </div>
-      </nav>
+      </div>
 
-      {/* Mobile Menu Dropdown */}
-      {open && (
-        <div className="absolute top-24 left-4 right-4 bg-slate-900/95 backdrop-blur-xl rounded-3xl p-4 shadow-xl border border-white/20 md:hidden flex flex-col gap-4 animate-in slide-in-from-top-4 fade-in duration-200">
+      {/* Mobile Menu */}
+      <div
+        className={cn(
+          "lg:hidden overflow-hidden transition-all duration-300 ease-in-out",
+          open ? "max-h-96 opacity-100" : "max-h-0 opacity-0"
+        )}
+      >
+        <div className="px-4 pb-6 pt-2 space-y-2 bg-gradient-to-b from-blue-50 via-teal-50 to-white backdrop-blur-md border-t border-blue-100">
           {navLinks.map((link) => (
             <Link
               key={link.href}
               href={link.href}
               onClick={() => setOpen(false)}
               className={cn(
-                "px-4 py-3 rounded-xl text-base font-medium transition-colors",
+                "block px-4 py-3 rounded-lg text-base font-medium transition-all duration-200",
                 isActive(link.href)
-                  ? "bg-gradient-to-r from-blue-500 to-teal-400 text-white"
-                  : "text-slate-200 hover:bg-slate-800/60"
+                  ? "text-teal-600 bg-teal-50 font-semibold"
+                  : "text-gray-700 hover:bg-gray-100 hover:text-gray-900"
               )}
             >
               {link.label}
             </Link>
           ))}
-          <div className="h-px bg-slate-700 my-2" />
-          <Link href="/login" onClick={() => setOpen(false)}>
-            <Button variant="ghost" className="w-full justify-start rounded-xl text-slate-200 hover:text-white hover:bg-slate-800/60">
-              Login
-            </Button>
-          </Link>
-          <Link href="/account-type" onClick={() => setOpen(false)}>
-            <Button className="w-full rounded-xl bg-gradient-to-r from-blue-500 to-teal-400 text-white">
-              Get Started
-            </Button>
-          </Link>
+          <div className="pt-4 space-y-2 border-t border-gray-200 mt-2">
+            <Link href="/account-type" onClick={() => setOpen(false)}>
+              <Button
+                variant="outline"
+                className="w-full justify-center rounded-full border-2 border-gray-300 hover:border-teal-500 hover:text-teal-600 font-medium transition-all duration-200"
+              >
+                Get Started
+              </Button>
+            </Link>
+            <Link href="/login" onClick={() => setOpen(false)}>
+              <Button
+                className="w-full justify-center rounded-full bg-gradient-to-r from-teal-500 to-blue-500 hover:from-teal-600 hover:to-blue-600 text-white font-semibold shadow-lg shadow-teal-500/25 transition-all duration-200"
+              >
+                Login
+              </Button>
+            </Link>
+          </div>
         </div>
-      )}
+      </div>
     </header>
   )
 }

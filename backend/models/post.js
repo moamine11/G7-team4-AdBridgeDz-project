@@ -5,9 +5,11 @@ const postSchema = new mongoose.Schema({
   category: { type: mongoose.Schema.Types.ObjectId, ref: 'Service', required: true }, 
   description: { type: String, required: true }, 
   priceRange: { type: String }, 
-  imageURL: { type: String, required: true },
+  imageURL: { type: String },
+    imagePublicId: { type: String },
   isActive: { type: Boolean, default: true },
-  createdAt: { type: Date, default: Date.now } 
+    createdAt: { type: Date, default: Date.now },
+    updatedAt: { type: Date, default: Date.now }
 });
 
 postSchema.index({ 

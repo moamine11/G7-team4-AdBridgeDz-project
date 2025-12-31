@@ -1,15 +1,27 @@
-// scripts/seedServices.js
-require('dotenv').config();
+
+const path = require('path');
+const fs = require('fs');
+const dotenv = require('dotenv');
+
+// Prefer .env.local for local/secret credentials, fallback to .env
+const envPath = path.join(__dirname, '.env');
+const envLocalPath = path.join(__dirname, '.env.local');
+if (fs.existsSync(envPath)) {
+  dotenv.config({ path: envPath });
+}
+if (fs.existsSync(envLocalPath)) {
+  dotenv.config({ path: envLocalPath, override: true });
+}
 const mongoose = require('mongoose');
 const Service = require('./models/service');
 
 const services = [
-  { name: 'Billboards', description: 'Outdoor advertising on large displays' },
-  { name: 'Digital Ads', description: 'Online advertising including banners, social, search' },
-  { name: 'TV Commercials', description: 'Broadcast and streaming video ads' },
-  { name: 'Radio Ads', description: 'Audio advertising on radio stations' },
-  { name: 'Print Media', description: 'Newspapers, magazines, flyers' },
-  { name: 'Influencer Marketing', description: 'Collaborations with social media influencers' }
+  { name: 'Outdoor (OOH)', description: 'Billboards, digital billboards (DOOH), transit ads, signage' },
+  { name: 'Digital Paid Ads', description: 'Search, social ads, display/banner, retargeting, marketplaces' },
+  { name: 'Content & Influencers', description: 'Influencers, UGC creators, organic social content, community' },
+  { name: 'Video & Production', description: 'TV/video ads, reels, product videos, photography, editing' },
+  { name: 'Audio (Radio & Streaming)', description: 'Radio, podcasts, streaming audio ads, voiceovers/jingles' },
+  { name: 'Print & Design', description: 'Print media, flyers, packaging, branding, graphic design' }
 ];
 
 async function seed() {
@@ -18,7 +30,7 @@ async function seed() {
       useUnifiedTopology: true 
   });
 
-  // Optional: Delete existing to avoid duplicates
+  
   await Service.deleteMany({});
 
   for (const svc of services) {

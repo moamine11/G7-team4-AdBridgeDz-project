@@ -1,21 +1,28 @@
-import axios from 'axios';
+// Replace with your actual backend URL
+const API_BASE_URL = 'http://localhost:5000/api';
 
-const api = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api',
-  headers: {
-    'Content-Type': 'application/json',
-  },
-});
+/**
+ * Helper to fetch data with Authorization header if a token is present.
+ */
+export async function authenticatedFetch(endpoint: string, options: RequestInit = {}) {
+    const token = localStorage.getItem('token');
+    const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+        ...(options.headers as Record<string, string>), // <--- Add this type assertion
+    };
 
-api.interceptors.request.use(
-  (config) => {
-    const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
+    if (token) { 
+        headers['Authorization'] = `Bearer ${token}`;
     }
-    return config;
-  },
-  (error) => Promise.reject(error)
-);
 
-export default api;
+    const response = await fetch(`${API_BASE_URL}/${endpoint}`, {
+        ...options,
+        headers,
+    });
+
+    if (!response.ok) {
+        throw new Error((await response.json()).error || 'API request failed');
+    }
+
+    return response;
+}

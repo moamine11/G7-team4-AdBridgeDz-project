@@ -1,14 +1,20 @@
-'use client'
+'use client';
 
-import { useState, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import Link from 'next/link'
-import { Eye, EyeOff, Mail, Lock, LogIn } from 'lucide-react'
-import { authService } from '@/lib/services/auth-service'
-import { useAuth } from '@/contexts/auth-context'
-import { useToast } from '@/components/ui/use-toast'
+import { useState, useEffect } from 'react';
+import { Eye, EyeOff, Mail, Lock, ChevronDown, Loader2 } from 'lucide-react';
+import AuthNavbar from '@/components/ui/auth-navbar';
+
+type UserType = 'company' | 'agency' | 'admin' | null;
+
+type SubscriptionStatus = 'trial' | 'active' | 'expired';
+type SubscriptionInfo = {
+  status: SubscriptionStatus;
+  planName?: string;
+  daysRemaining?: number;
+  endsAt?: string | null;
+  trialEndsAt?: string | null;
+  subscriptionEndsAt?: string | null;
+};
 
 declare global {
   interface Window {
@@ -18,281 +24,529 @@ declare global {
 }
 
 export default function LoginPage() {
-  const router = useRouter()
-  const { login } = useAuth()
-  const { toast } = useToast()
-  const loginPicture = '/login_picture.png'
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
-  const [showPassword, setShowPassword] = useState(false)
-  const [isLoading, setIsLoading] = useState(false)
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [userType, setUserType] = useState<UserType>('company');
+  const [loading, setLoading] = useState(false);
+
+  const [planModalOpen, setPlanModalOpen] = useState(false);
+  const [subscriptionInfo, setSubscriptionInfo] = useState<SubscriptionInfo | null>(null);
+  const [activatingSubscription, setActivatingSubscription] = useState(false);
+
+  const API_BASE_URL = 'http://localhost:5000/api';
+  const GOOGLE_CLIENT_ID = '847708558168-12ljci267ehd9eonebevvos968u1o6md.apps.googleusercontent.com';
 
   useEffect(() => {
-    const script = document.createElement('script')
-    script.src = 'https://accounts.google.com/gsi/client'
-    script.async = true
-    script.defer = true
-    document.body.appendChild(script)
-    window.handleCredentialResponse = handleGoogleLogin
+    const script = document.createElement('script');
+    script.src = 'https://accounts.google.com/gsi/client';
+    script.async = true;
+    script.defer = true;
+    document.body.appendChild(script);
+
+    window.handleCredentialResponse = handleGoogleLogin;
 
     script.onload = () => {
       if (window.google) {
         window.google.accounts.id.initialize({
-          client_id: '847708558168-12ljci267ehd9eonebevvos968u1o6md.apps.googleusercontent.com', 
-          callback: handleGoogleLogin
-        })
+          client_id: GOOGLE_CLIENT_ID,
+          callback: handleGoogleLogin,
+        });
         window.google.accounts.id.renderButton(
           document.getElementById('googleSignInButton'),
-          { 
-            theme: 'outline', 
+          {
+            theme: 'outline',
             size: 'large',
-            width: '100%',
             text: 'signin_with',
-            shape: 'rectangular'
+            shape: 'rectangular',
+            logo_alignment: 'left',
+            locale: 'en',
           }
-        )
+        );
       }
-    }
+    };
 
     return () => {
-      document.body.removeChild(script)
-      delete window.handleCredentialResponse
-    }
-  }, [])
+      document.body.removeChild(script);
+      delete window.handleCredentialResponse;
+    };
+  }, [userType]);
 
   const handleGoogleLogin = async (response: any) => {
-    const idToken = response.credential
-    console.log(idToken)
+    if (!userType) {
+      alert('Please select your account type first.');
+      return;
+    }
+
+    if (userType === 'admin') {
+      alert('Google login is not available for Admin accounts.');
+      return;
+    }
+
+    const idToken = response.credential;
+    setLoading(true);
 
     try {
-      const res = await fetch('http://localhost:5000/api/companies/google-auth', {
+      const endpoint = userType === 'company' ? 'companies' : 'agencies';
+      const res = await fetch(`${API_BASE_URL}/${endpoint}/google-auth`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ idToken })
-      })
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ idToken }),
+      });
 
-      const data = await res.json()
+      const data = await res.json();
 
       if (!res.ok) {
-        toast({
-          title: "Error",
-          description: data.error || 'Google login failed',
-          variant: "destructive",
-        })
-        return
-      }
-      
-      localStorage.setItem('token', data.token)
-      toast({
-        title: "Success",
-        description: "Logged in successfully with Google",
-      })
-      router.push('/channels')
-    } catch (error) {
-      console.error(error)
-      toast({
-        title: "Error",
-        description: 'Something went wrong with Google login.',
-        variant: "destructive",
-      })
-    }
-  }
-
-  const handleLogin = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setIsLoading(true)
-    
-    try {
-      // Try logging in as a company first
-      try {
-        const data = await authService.loginCompany({ email, password });
-        login(data.token, data.company, 'company');
-        toast({
-          title: "Success",
-          description: "Logged in successfully as Company",
-        });
+        alert(data.error || 'Google login failed');
         return;
-      } catch (companyError) {
-        // If company login fails, try agency login
-        try {
-          const data = await authService.loginAgency({ email, password });
-          login(data.token, data.agency, 'agency');
-          toast({
-            title: "Success",
-            description: "Logged in successfully as Agency",
-          });
-          return;
-        } catch (agencyError) {
-           // If both fail, throw an error
-           throw new Error('Invalid credentials');
-        }
       }
-    } catch (error: any) {
-      toast({
-        title: "Error",
-        description: error.message || "Failed to login. Please check your credentials.",
-        variant: "destructive",
-      });
+
+      localStorage.setItem('token', data.token);
+      localStorage.setItem('userType', userType);
+
+      if (userType === 'agency') {
+        // Prefer server-provided subscription info; fallback to status endpoint.
+        let subscription: SubscriptionInfo | null = data.subscription || null;
+        if (!subscription) {
+          const statusRes = await fetch(`${API_BASE_URL}/agencies/subscription`, {
+            headers: { Authorization: `Bearer ${data.token}` },
+          });
+          const statusData = await statusRes.json();
+          subscription = statusData?.subscription || null;
+        }
+
+        setSubscriptionInfo(subscription);
+        setPlanModalOpen(true);
+        return;
+      }
+
+      window.location.href = '/dashboard';
+    } catch (error) {
+      console.error(error);
+      alert('Something went wrong with Google login.');
     } finally {
-      setIsLoading(false)
+      setLoading(false);
     }
-  }
+  };
+
+  const handleLogin = async () => {
+    if (!userType) {
+      alert('Please select your account type first.');
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      const emailToSend = email.trim();
+      const res = await fetch(
+        userType === 'admin'
+          ? `${API_BASE_URL}/auth/login`
+          : `${API_BASE_URL}/${userType === 'company' ? 'companies' : 'agencies'}/login`,
+        {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email: emailToSend, password }),
+        }
+      );
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        alert(data.error || data.message || 'Login failed');
+        return;
+      }
+
+      localStorage.setItem('token', data.token);
+      localStorage.setItem('userType', userType);
+
+      if (userType === 'agency') {
+        let subscription: SubscriptionInfo | null = data.subscription || null;
+        if (!subscription) {
+          const statusRes = await fetch(`${API_BASE_URL}/agencies/subscription`, {
+            headers: { Authorization: `Bearer ${data.token}` },
+          });
+          const statusData = await statusRes.json();
+          subscription = statusData?.subscription || null;
+        }
+
+        setSubscriptionInfo(subscription);
+        setPlanModalOpen(true);
+        return;
+      }
+
+      window.location.href = userType === 'admin' ? '/admin/dashboard' : '/dashboard';
+    } catch (error) {
+      console.error(error);
+      alert('Network error. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleContinueToDashboard = () => {
+    setPlanModalOpen(false);
+    window.location.href = '/Agencydashboard';
+  };
+
+  const handleBackToLogin = () => {
+    // Back out of the post-login modal: clear session so the user truly returns to login.
+    localStorage.removeItem('token');
+    localStorage.removeItem('userType');
+    setSubscriptionInfo(null);
+    setPlanModalOpen(false);
+  };
+
+  const handleActivateSubscription = async () => {
+    const token = localStorage.getItem('token');
+    if (!token) {
+      alert('Missing session token. Please log in again.');
+      setPlanModalOpen(false);
+      return;
+    }
+
+    setActivatingSubscription(true);
+    try {
+      const res = await fetch(`${API_BASE_URL}/agencies/subscription/activate`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ planName: 'Standard' }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        alert(data.error || 'Failed to activate subscription');
+        return;
+      }
+
+      setSubscriptionInfo(data.subscription || null);
+    } catch (error) {
+      console.error(error);
+      alert('Network error. Please try again.');
+    } finally {
+      setActivatingSubscription(false);
+    }
+  };
+
+  const handleKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      handleLogin();
+    }
+  };
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-3 md:p-4 overflow-hidden bg-[#020618]">
-      <div className="rounded-3xl shadow-2xl w-full max-w-4xl overflow-hidden border border-white/10 h-full max-h-full flex flex-col bg-white/10 backdrop-blur-xl">
-        {/* Glassy Gradient Border Top */}
-        <div className="h-1 bg-gradient-to-r from-blue-600 via-teal-500 to-blue-400 flex-shrink-0 opacity-80"></div>
-        <div className="flex flex-col lg:flex-row flex-1 min-h-0 overflow-hidden">
-          {/* Left Side - Form Content */}
-          <div className="flex-1 p-3 lg:p-5 xl:p-7 flex flex-col justify-center bg-transparent overflow-y-auto">
+    <div className="h-screen bg-gradient-to-br from-slate-900 via-blue-950 to-teal-900 flex flex-col overflow-hidden">
+      <AuthNavbar variant="transparent" showGetStarted={true} />
+      <div className="flex-1 flex items-center justify-center p-2 min-h-0">
+        <div className="w-full max-w-6xl mx-auto h-full flex items-center">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-0 bg-white/5 backdrop-blur-sm rounded-xl overflow-hidden shadow-2xl w-full h-full max-h-[90vh]">
+          {/* Left: Form */}
+          <div className="bg-white p-4 lg:p-5 flex flex-col justify-center overflow-hidden">
             <div className="max-w-md mx-auto w-full">
-              <div className="mb-3 lg:mb-4">
-                <h1 className="text-2xl lg:text-3xl xl:text-4xl font-bold mb-1 bg-gradient-to-r from-blue-400 via-teal-400 to-blue-400 bg-clip-text text-transparent drop-shadow">
-                  Welcome Back
-                </h1>
-                <p className="text-slate-300 text-sm lg:text-base">
-                  Sign in to continue to AdBridgeDZ
-                </p>
-              </div>
+              <h1 className="text-lg font-bold text-slate-800 mb-0.5">Welcome Back</h1>
+              <p className="text-slate-600 mb-3 text-[11px]">
+                Sign in to manage your campaigns or ad inventory
+              </p>
 
-              <form onSubmit={handleLogin} className="space-y-2.5 lg:space-y-3.5">
-                {/* Email Input */}
-                <div className="space-y-1.5">
-                  <label htmlFor="email" className="text-sm font-semibold text-slate-200 flex items-center gap-2">
-                    <Mail className="w-4 h-4 text-teal-600" />
-                    Email Address
+              <div className="space-y-2.5">
+                {/* Account Type */}
+                <div>
+                  <label className="block text-[11px] font-medium text-slate-700 mb-1">
+                    Account Type
                   </label>
-                  <Input
-                    id="email"
-                    type="email"
-                    placeholder="name@example.com"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    className="w-full px-4 py-3 border-2 border-white/10 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 focus:outline-none transition-all duration-200 bg-white/10 text-slate-100 placeholder:text-slate-400 hover:border-blue-400 backdrop-blur"
-                    required
-                  />
+                  <div className="relative">
+                    <select
+                      value={userType || ''}
+                      onChange={(e) => setUserType(e.target.value as UserType)}
+                      className="w-full bg-slate-50 border border-slate-200 text-slate-800 rounded-lg px-3 py-1.5 pr-8 text-xs focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500 appearance-none"
+                    >
+                      <option value="" disabled>
+                        Select account type
+                      </option>
+                      <option value="company">Advertiser</option>
+                      <option value="agency">Agency / Billboard Provider</option>
+                      <option value="admin">Admin</option>
+                    </select>
+                    <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 w-3.5 h-3.5 pointer-events-none" />
+                  </div>
                 </div>
 
-                {/* Password Input */}
-                <div className="space-y-1.5">
-                  <label htmlFor="password" className="text-sm font-semibold text-slate-200 flex items-center gap-2">
-                    <Lock className="w-4 h-4 text-teal-600" />
+                {/* Email */}
+                <div>
+                  <label className="block text-[11px] font-medium text-slate-700 mb-1">
+                    Email
+                  </label>
+                  <div className="relative">
+                    <div className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400">
+                      <Mail className="w-3.5 h-3.5" />
+                    </div>
+                    <input
+                      type="email"
+                      placeholder="bcnriabah@gmail.com"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      onKeyPress={handleKeyPress}
+                      className="w-full bg-slate-50 border border-slate-200 text-slate-800 placeholder-slate-400 rounded-lg pl-9 pr-3 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+                    />
+                  </div>
+                </div>
+
+                {/* Password */}
+                <div>
+                  <label className="block text-[11px] font-medium text-slate-700 mb-1">
                     Password
                   </label>
                   <div className="relative">
-                    <Input
-                      id="password"
+                    <div className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400">
+                      <Lock className="w-3.5 h-3.5" />
+                    </div>
+                    <input
                       type={showPassword ? 'text' : 'password'}
-                      placeholder="Enter your password"
+                      placeholder="••••••••"
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
-                      className="w-full px-4 py-3 border-2 border-white/10 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 focus:outline-none transition-all duration-200 bg-white/10 text-slate-100 placeholder:text-slate-400 hover:border-blue-400 pr-12 backdrop-blur"
-                      required
+                      onKeyPress={handleKeyPress}
+                      className="w-full bg-slate-50 border border-slate-200 text-slate-800 placeholder-slate-400 rounded-lg pl-9 pr-9 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
                     />
                     <button
                       type="button"
                       onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-4 top-1/2 transform -translate-y-1/2 text-slate-400 hover:text-blue-400 transition-colors duration-200"
-                      aria-label={showPassword ? 'Hide password' : 'Show password'}
+                      className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
                     >
                       {showPassword ? (
-                        <EyeOff className="w-5 h-5" />
+                        <EyeOff className="w-3.5 h-3.5" />
                       ) : (
-                        <Eye className="w-5 h-5" />
+                        <Eye className="w-3.5 h-3.5" />
                       )}
                     </button>
                   </div>
                 </div>
 
-                {/* Forgot Password Link */}
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <input
-                      type="checkbox"
-                      id="remember"
-                      className="w-4 h-4 text-blue-500 border-white/20 bg-transparent rounded focus:ring-blue-500 focus:ring-2"
-                    />
-                    <label htmlFor="remember" className="text-sm text-slate-300 cursor-pointer">
-                      Remember me
-                    </label>
-                  </div>
-                  <Link 
-                    href="/forgot-password" 
-                    className="text-sm font-semibold text-blue-400 hover:text-blue-300 transition-colors duration-200"
-                  >
-                    Forgot Password?
-                  </Link>
+                {/* Forgot Password */}
+                <div className="text-right -mt-1">
+                  <a href="/forgot-password" className="text-teal-600 hover:text-teal-700 text-[10px] font-medium">
+                    Forgot password?
+                  </a>
                 </div>
 
                 {/* Login Button */}
-                <Button
-                  type="submit"
-                  disabled={isLoading}
-                  className="w-full bg-gradient-to-r from-blue-500 via-teal-500 to-blue-400 hover:from-blue-700 hover:to-teal-600 text-white font-semibold py-2.5 lg:py-3 rounded-xl text-base shadow-lg shadow-blue-500/20 hover:shadow-xl hover:shadow-blue-500/30 transition-all duration-200 flex items-center justify-center gap-2 group"
+                <button
+                  onClick={handleLogin}
+                  disabled={loading || !userType}
+                  className="w-full bg-teal-600 hover:bg-teal-700 text-white font-semibold py-2 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-xs"
                 >
-                  {isLoading ? (
-                    <span className="loading loading-spinner loading-sm"></span>
+                  {loading ? (
+                    <span className="flex items-center justify-center">
+                      <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" />
+                      Signing In...
+                    </span>
                   ) : (
-                    <>
-                      <LogIn className="w-4 h-4 lg:w-5 lg:h-5 group-hover:translate-x-1 transition-transform duration-200" />
-                      Sign In
-                    </>
+                    'Sign In'
                   )}
-                </Button>
+                </button>
 
                 {/* Divider */}
-                <div className="relative pt-2">
+                <div className="relative my-2">
                   <div className="absolute inset-0 flex items-center">
-                    <div className="w-full border-t border-white/20"></div>
+                    <div className="w-full border-t border-slate-200"></div>
                   </div>
-                  <div className="relative flex justify-center text-sm">
-                    <span className="px-2 bg-transparent text-slate-400">Or continue with</span>
+                  <div className="relative flex justify-center">
+                    <span className="bg-white px-2 text-slate-500 text-[10px]">Or continue with</span>
                   </div>
                 </div>
 
-                {/* Google Sign-In Button */}
-                <div id="googleSignInButton" className="w-full flex justify-center pt-2"></div>
+                {/* Google Sign-In */}
+                {userType !== 'admin' && (
+                  <div id="googleSignInButton" className="w-full scale-80 origin-center"></div>
+                )}
 
                 {/* Register Link */}
-                <div className="text-center pt-2">
-                  <p className="text-slate-300 text-xs lg:text-sm">
+                <div className="text-center pt-0.5">
+                  <p className="text-slate-600 text-[10px]">
                     Don't have an account?{' '}
-                    <Link 
-                      href="/account-type" 
-                      className="text-blue-400 hover:text-blue-300 font-semibold transition-colors duration-200 hover:underline"
-                    >
-                      Create Account
-                    </Link>
+                    <a href="/account-type" className="text-teal-600 hover:text-teal-700 font-medium">
+                      Create one
+                    </a>
                   </p>
                 </div>
-              </form>
+              </div>
             </div>
           </div>
 
-          {/* Right Side - Illustration */}
-          <div className="flex-1 bg-[#020618] flex items-center justify-center p-4 lg:p-6 xl:p-8 min-h-[200px] lg:min-h-0 relative overflow-hidden flex-shrink-0">
-            {/* Decorative elements */}
-            <div className="absolute top-0 right-0 w-64 h-64 bg-blue-900/30 rounded-full blur-3xl"></div>
-            <div className="absolute bottom-0 left-0 w-64 h-64 bg-blue-800/20 rounded-full blur-3xl"></div>
-            <div className="text-center w-full relative z-10">
-              <img
-                src={loginPicture}
-                alt="Login illustration"
-                className="w-full max-w-[200px] lg:max-w-xs xl:max-w-sm h-auto mx-auto object-contain drop-shadow-2xl"
-                onError={(e) => { (e.currentTarget as HTMLImageElement).src = '/Adbridgelogo.png' }}
-              />
-              <div className="mt-3 lg:mt-4 hidden lg:block">
-                <p className="text-slate-300 text-xs lg:text-sm font-medium">
-                  Connect with premium advertising spaces
-                </p>
+          {/* Right: Illustration */}
+          <div className="hidden lg:flex bg-gradient-to-br from-slate-900 via-blue-950 to-teal-900 p-4 flex-col items-center justify-center relative overflow-hidden">
+            {/* Animated background elements */}
+            <div className="absolute inset-0 opacity-20">
+              <div className="absolute top-10 left-10 w-20 h-20 bg-teal-500 rounded-full blur-3xl animate-pulse"></div>
+              <div className="absolute bottom-20 right-10 w-28 h-28 bg-cyan-500 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1s' }}></div>
+            </div>
+
+            <div className="relative z-10 text-center max-w-md">
+              {/* Isometric Map Illustration */}
+              <div className="mb-3 relative">
+                <svg viewBox="0 0 400 300" className="w-full h-auto max-h-[200px]">
+                  {/* Base platform */}
+                  <path
+                    d="M 200 240 L 320 180 L 320 100 L 200 40 L 80 100 L 80 180 Z"
+                    fill="url(#platformGradient)"
+                    stroke="#0d9488"
+                    strokeWidth="2"
+                  />
+                  
+                  {/* Grid lines */}
+                  <line x1="140" y1="140" x2="140" y2="180" stroke="#14b8a6" strokeWidth="1" opacity="0.3" />
+                  <line x1="180" y1="120" x2="180" y2="200" stroke="#14b8a6" strokeWidth="1" opacity="0.3" />
+                  <line x1="220" y1="120" x2="220" y2="200" stroke="#14b8a6" strokeWidth="1" opacity="0.3" />
+                  <line x1="260" y1="140" x2="260" y2="180" stroke="#14b8a6" strokeWidth="1" opacity="0.3" />
+
+                  {/* Map outline (Algeria) */}
+                  <path
+                    d="M 150 120 L 180 105 L 220 110 L 250 120 L 260 140 L 250 165 L 220 175 L 180 170 L 150 150 Z"
+                    fill="#0d9488"
+                    opacity="0.6"
+                  />
+
+                  {/* Location pins */}
+                  <g className="animate-bounce" style={{ animationDuration: '2s', animationDelay: '0s' }}>
+                    <circle cx="170" cy="135" r="3" fill="#06b6d4" />
+                    <line x1="170" y1="135" x2="170" y2="150" stroke="#06b6d4" strokeWidth="2" />
+                  </g>
+                  
+                  <g className="animate-bounce" style={{ animationDuration: '2s', animationDelay: '0.3s' }}>
+                    <circle cx="200" cy="125" r="3" fill="#06b6d4" />
+                    <line x1="200" y1="125" x2="200" y2="140" stroke="#06b6d4" strokeWidth="2" />
+                  </g>
+                  
+                  <g className="animate-bounce" style={{ animationDuration: '2s', animationDelay: '0.6s' }}>
+                    <circle cx="230" cy="140" r="3" fill="#06b6d4" />
+                    <line x1="230" y1="140" x2="230" y2="155" stroke="#06b6d4" strokeWidth="2" />
+                  </g>
+
+                  {/* Data cards floating */}
+                  <g opacity="0.9">
+                    <rect x="90" y="70" width="50" height="30" rx="4" fill="#1e293b" stroke="#14b8a6" strokeWidth="1" />
+                    <line x1="95" y1="78" x2="125" y2="78" stroke="#14b8a6" strokeWidth="2" />
+                    <line x1="95" y1="85" x2="115" y2="85" stroke="#0d9488" strokeWidth="2" />
+                    <line x1="95" y1="92" x2="130" y2="92" stroke="#0d9488" strokeWidth="2" />
+                  </g>
+
+                  <g opacity="0.9">
+                    <rect x="260" y="60" width="50" height="35" rx="4" fill="#1e293b" stroke="#14b8a6" strokeWidth="1" />
+                    <circle cx="285" cy="72" r="8" fill="none" stroke="#14b8a6" strokeWidth="2" />
+                    <path d="M 278 72 L 282 76 L 292 66" stroke="#14b8a6" strokeWidth="2" fill="none" />
+                    <line x1="267" y1="85" x2="303" y2="85" stroke="#0d9488" strokeWidth="2" />
+                  </g>
+
+                  {/* Gradients */}
+                  <defs>
+                    <linearGradient id="platformGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                      <stop offset="0%" style={{ stopColor: '#0f172a', stopOpacity: 0.9 }} />
+                      <stop offset="100%" style={{ stopColor: '#1e3a5f', stopOpacity: 0.9 }} />
+                    </linearGradient>
+                  </defs>
+                </svg>
               </div>
+
+              <h2 className="text-lg font-bold text-white mb-1.5">
+                Powering Algerian Advertising
+              </h2>
+              <p className="text-slate-300 text-xs leading-relaxed">
+                Connect advertisers with high-impact outdoor ad spaces — fast, transparent, and trusted.
+              </p>
             </div>
           </div>
         </div>
       </div>
+      </div>
+
+      {planModalOpen && userType === 'agency' && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
+          <div className="w-full max-w-md rounded-2xl bg-slate-950 shadow-2xl border border-cyan-500/20 overflow-hidden">
+            <div className="p-5">
+              <div className="flex items-center justify-between">
+                <h2 className="text-base font-bold text-white">Your Plan</h2>
+                <button
+                  type="button"
+                  onClick={handleBackToLogin}
+                  className="text-xs text-gray-300 hover:text-white bg-slate-900/60 hover:bg-slate-900 px-3 py-1.5 rounded-lg border border-slate-800 transition-colors"
+                >
+                  Back
+                </button>
+              </div>
+
+              <p className="mt-1 text-xs text-gray-300">
+                {subscriptionInfo?.status === 'active'
+                  ? 'Your subscription is active.'
+                  : subscriptionInfo?.status === 'trial'
+                  ? 'You are currently on a free trial.'
+                  : 'Your free trial has expired.'}
+              </p>
+
+              <div className="mt-4 rounded-xl bg-slate-900/60 border border-slate-800 p-4">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-medium text-gray-300">Plan</span>
+                  <span className="text-xs font-semibold text-white">
+                    {subscriptionInfo?.planName || 'Trial'}
+                  </span>
+                </div>
+                <div className="mt-2 flex items-center justify-between">
+                  <span className="text-xs font-medium text-gray-300">Days remaining</span>
+                  <span className="text-xs font-semibold text-white">
+                    {typeof subscriptionInfo?.daysRemaining === 'number'
+                      ? subscriptionInfo.daysRemaining
+                      : '—'}
+                  </span>
+                </div>
+                <div className="mt-2 text-[11px] text-gray-400 leading-relaxed">
+                  This is a simple trial/subscription placeholder flow. Payment is not integrated yet.
+                </div>
+              </div>
+
+              <div className="mt-4 flex gap-2">
+                <button
+                  type="button"
+                  onClick={handleBackToLogin}
+                  className="bg-slate-900/60 hover:bg-slate-900 text-gray-200 px-4 py-2 rounded-lg border border-slate-800 transition-colors text-xs"
+                >
+                  Back
+                </button>
+                {subscriptionInfo?.status === 'expired' ? (
+                  <button
+                    onClick={handleActivateSubscription}
+                    disabled={activatingSubscription}
+                    className="flex-1 bg-teal-600 hover:bg-teal-700 text-white font-semibold py-2 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-xs"
+                  >
+                    {activatingSubscription ? (
+                      <span className="flex items-center justify-center">
+                        <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" />
+                        Activating...
+                      </span>
+                    ) : (
+                      'Activate Subscription (Mock)'
+                    )}
+                  </button>
+                ) : (
+                  <button
+                    onClick={handleContinueToDashboard}
+                    className="flex-1 bg-teal-600 hover:bg-teal-700 text-white font-semibold py-2 rounded-lg transition-colors text-xs"
+                  >
+                    Continue to Dashboard
+                  </button>
+                )}
+              </div>
+
+              {subscriptionInfo?.status === 'expired' && (
+                <div className="mt-3 text-[11px] text-gray-400">
+                  Trial expired blocks creating/updating posts until activated.
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
-  )
+  );
 }

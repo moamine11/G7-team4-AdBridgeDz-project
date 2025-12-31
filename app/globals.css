@@ -130,13 +130,20 @@
     @apply text-foreground;
   }
 }
+/* Optional: Tweak Google button styling */
+#googleSignInButton > div {
+  font-family: inherit !important;
+  box-shadow: none !important;
+  border-radius: 0.75rem !important;
+}
 
-@layer utilities {
-  .scrollbar-hide {
-    -ms-overflow-style: none;
-    scrollbar-width: none;
-  }
-  .scrollbar-hide::-webkit-scrollbar {
-    display: none;
-  }
+/* Leaflet: ensure tiles/controls clip to rounded containers */
+.leaflet-container {
+  overflow: hidden;
+  border-radius: inherit;
+}
+
+.leaflet-top,
+.leaflet-bottom {
+  z-index: 500;
 }
