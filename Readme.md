@@ -6,26 +6,14 @@ AdBridgeDZ is a modern platform designed to bridge the gap between Algerian comp
 
 ## Core Features
 
-### Platform Features
-Landing page includes hero, team, and FAQ sections with multi-account access for companies and agencies, plus secure authentication via JWT, email, password reset, and Google OAuth.
+- **Platform:** Landing page, multi-account access, JWT/email/Google auth  
+- **User Management:** Profile management, admin oversight, document verification  
+- **Agency:** Service & booking dashboard, profile & document management  
+- **Company:** Search/filter agencies, location-based results, campaign management  
+- **Admin:** Next.js dashboard, user/content management, analytics, JWT-protected routes  
+- **UI/UX:** Responsive, mobile-first, Framer Motion animations, dark theme  
+- **Technical:** REST API (MVC), database seeding, Cloudinary uploads, email notifications, secure env
 
-### User Management
-Users can manage profiles, while admins oversee role-based access and agency document verification.
-
-### Agency Features
-Agencies get a dashboard for managing services, bookings, profiles, and document verifications.
-
-### Company Features
-Companies can search, filter, and discover agency services with location-based results and manage campaigns.
-
-### Admin Features
-Admins use a Next.js dashboard to manage users, moderate content, track analytics, and protect routes with JWT.
-
-### UI/UX Features
-Design is responsive and mobile-first with smooth Framer Motion animations, dark theme, and interactive elements.
-
-### Technical Features
-System uses RESTful API with MVC architecture, database seeding, Cloudinary uploads, email notifications, and secure environment setup.
 
 ## Technology Stack
 
@@ -75,10 +63,10 @@ The platform has been manually tested to ensure all features work as expected. T
 ## Getting Started
 
 ### Prerequisites
-- Node.js v18 or higher [conversation_history:1]  
-- MongoDB (local or Atlas) [conversation_history:1]  
-- Cloudinary account for file uploads [conversation_history:1]  
-- Google OAuth credentials (optional) [conversation_history:1]  
+- Node.js v18 or higher 
+- MongoDB (local or Atlas)  
+- Cloudinary account for file uploads
+- Google OAuth credentials (optional) 
 
 ### Installation
 ```bash
@@ -141,3 +129,4 @@ npm run dev
 - Email: 
 - Password: 
 
+<!-- # 🎥 Preview -->
