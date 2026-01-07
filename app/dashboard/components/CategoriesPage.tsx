@@ -15,7 +15,8 @@ interface CategoriesPageProps {
   onCategorySelect: (category: Service) => void;
 }
 
-const API_BASE_URL = 'http://localhost:5000/api';
+const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:5000';
+const API_BASE_URL = `${BACKEND_URL.replace(/\/$/, '')}/api`;
 
 const CategoriesPage = ({ onCategorySelect }: CategoriesPageProps) => {
   const [services, setServices] = useState<Service[]>([]);
@@ -43,12 +44,31 @@ const CategoriesPage = ({ onCategorySelect }: CategoriesPageProps) => {
     service.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  const categoryIcons: Record<string, string> = {
-    'Billboard & Roadside Advertising': '🛣️',
-    'Digital Outdoor Screens (DOOH)': '📺',
-    'Transit Advertising': '🚊',
-    'Social Media Marketing': '📱',
-    'Creative & Design': '🎨',
+  const categoryMeta: Record<string, { icon: string; pill: string }> = {
+    'Outdoor (OOH)': { icon: '🛣️', pill: 'outdoor' },
+    'Digital Paid Ads': { icon: '💻', pill: 'digital' },
+    'Content & Influencers': { icon: '🤳', pill: 'content' },
+    'Video & Production': { icon: '🎬', pill: 'video' },
+    'Audio (Radio & Streaming)': { icon: '🎙️', pill: 'audio' },
+    'Print & Design': { icon: '📰', pill: 'print' },
+  };
+
+  const categoryImages: Record<string, string> = {
+    'Outdoor (OOH)': '/Outdoor.jpg',
+    'Digital Paid Ads': '/Digital_Paid_Ads.jpg',
+    'Content & Influencers': '/Content_&_Influencers.jpg',
+    'Video & Production': '/Video_&_Production.jpg',
+    'Audio (Radio & Streaming)': '/Radio_&_Streaming.jpg',
+    'Print & Design': '/Print_&_Design.jpg',
+  };
+
+  const getPillLabel = (serviceName: string) => {
+    const meta = categoryMeta[serviceName];
+    if (meta) return meta.pill;
+
+    // Fallback: first word, cleaned (e.g. remove parentheses/punctuation)
+    const first = serviceName.split(' ')[0] || 'category';
+    return first.replace(/[^a-z0-9]/gi, '').toLowerCase() || 'category';
   };
 
   return (
@@ -86,20 +106,20 @@ const CategoriesPage = ({ onCategorySelect }: CategoriesPageProps) => {
               >
                 {/* Image or Placeholder */}
                 <div className="relative h-48 overflow-hidden bg-slate-800">
-                  {service.imageURL ? (
+                  {service.imageURL || categoryImages[service.name] ? (
                     <img
-                      src={service.imageURL}
+                      src={service.imageURL || categoryImages[service.name]}
                       alt={service.name}
                       className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300 opacity-80"
                     />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center">
-                      <span className="text-7xl">{categoryIcons[service.name] || '📋'}</span>
+                      <span className="text-7xl">{categoryMeta[service.name]?.icon || '📋'}</span>
                     </div>
                   )}
                   {/* Status Tag - Placeholder to mimic the design */}
                   <span className="absolute top-4 left-4 text-xs font-semibold px-3 py-1 bg-cyan-900/80 text-cyan-400 rounded-full border border-cyan-800">
-                      {service.name.split(' ')[0].toLowerCase()}
+                      {getPillLabel(service.name)}
                   </span>
                 </div>
                 

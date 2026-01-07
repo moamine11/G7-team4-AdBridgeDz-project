@@ -5,6 +5,7 @@ import { X, Save, Building2, Phone, MapPin, Globe, Calendar, Users, Briefcase, U
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
+import { LocationPicker } from '@/components/ui/location-picker';
 
 interface AgencyEditProfileModalProps {
     agencyData: any; 
@@ -43,6 +44,8 @@ export function AgencyEditProfileModal({ agencyData, onClose, onUpdateSuccess }:
         country: agencyData.country || '',
         city: agencyData.city || '',
         streetAddress: agencyData.streetAddress || '',
+        locationLat: agencyData.locationLat !== undefined && agencyData.locationLat !== null ? String(agencyData.locationLat) : '',
+        locationLng: agencyData.locationLng !== undefined && agencyData.locationLng !== null ? String(agencyData.locationLng) : '',
         postalCode: agencyData.postalCode || '',
         businessRegistrationNumber: agencyData.businessRegistrationNumber || '',
         industry: agencyData.industry || '',
@@ -185,7 +188,36 @@ export function AgencyEditProfileModal({ agencyData, onClose, onUpdateSuccess }:
                         <InputGroup Icon={Phone} label="Phone Number" name="phoneNumber" value={formData.phoneNumber} onChange={handleChange} required={true} />
                         <InputGroup Icon={Globe} label="Website URL" name="websiteUrl" value={formData.websiteUrl} onChange={handleChange} required={false} type="url" />
                         <InputGroup Icon={MapPin} label="Country" name="country" value={formData.country} onChange={handleChange} required={true} />
-                        <InputGroup Icon={MapPin} label="City/Address" name="city" value={formData.city} onChange={handleChange} required={true} />
+                        <InputGroup Icon={MapPin} label="City (Wilaya)" name="city" value={formData.city} onChange={handleChange} required={true} />
+                    </div>
+
+                    <div className="mt-4">
+                        <InputGroup Icon={MapPin} label="Street Address" name="streetAddress" value={formData.streetAddress} onChange={handleChange} required={true} />
+                    </div>
+
+                    <div className="mt-4">
+                        <LocationPicker
+                            value={{
+                                label: formData.streetAddress || '',
+                                lat: formData.locationLat ? Number(formData.locationLat) : null,
+                                lng: formData.locationLng ? Number(formData.locationLng) : null,
+                            }}
+                            onChange={(next) => {
+                                setFormData((prev) => ({
+                                    ...prev,
+                                    streetAddress: next.label || prev.streetAddress,
+                                    locationLat: next.lat !== null ? String(next.lat) : prev.locationLat,
+                                    locationLng: next.lng !== null ? String(next.lng) : prev.locationLng,
+                                }));
+                            }}
+                            onAddressResolved={(info) => {
+                                setFormData((prev) => ({
+                                    ...prev,
+                                    city: info.city ?? prev.city,
+                                    streetAddress: info.streetAddress ?? prev.streetAddress,
+                                }));
+                            }}
+                        />
                     </div>
 
                     {/* === 3. Company Details and Socials === */}

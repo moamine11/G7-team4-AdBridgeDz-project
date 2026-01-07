@@ -140,18 +140,26 @@ const ProfileSection = ({ agencyData, onUpdate, onOpenEditModal }: ProfileSectio
             const mapElement = document.getElementById('agency-map');
             if (!L || !mapElement || mapElement.querySelector('.leaflet-container')) return;
 
+            const hasCoords =
+                typeof agencyData?.locationLat === 'number' &&
+                typeof agencyData?.locationLng === 'number' &&
+                Number.isFinite(agencyData.locationLat) &&
+                Number.isFinite(agencyData.locationLng);
+
             const city = agencyData?.city?.toLowerCase().trim() || '';
-            const coords = wilayaCoordinates[city] || { lat: 36.7538, lng: 3.0588 };
+            const coords = hasCoords
+                ? { lat: agencyData.locationLat, lng: agencyData.locationLng }
+                : wilayaCoordinates[city] || { lat: 36.7538, lng: 3.0588 };
             
             mapInstance = L.map('agency-map', {
                 zoomControl: true, // Enable zoom controls
                 attributionControl: false
             }).setView([coords.lat, coords.lng], 13);
 
-            // Using dark tile layer
-            L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+            // OpenStreetMap default tiles (light)
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
                 maxZoom: 19,
-                subdomains: 'abcd'
+                subdomains: 'abc'
             }).addTo(mapInstance);
 
             const customIcon = L.divIcon({
@@ -218,7 +226,7 @@ const ProfileSection = ({ agencyData, onUpdate, onOpenEditModal }: ProfileSectio
                             {/* Map Container */}
                             <div 
                                 id="agency-map" 
-                                className="w-full h-80 rounded-lg shadow-inner shadow-black/50 border border-slate-600"
+                                className="w-full h-80 rounded-lg overflow-hidden shadow-inner shadow-black/50 border border-slate-600"
                             ></div>
                             <p className="text-sm text-gray-400 mt-3">{agencyData?.streetAddress || 'Address Not Set'}</p>
                         </div>

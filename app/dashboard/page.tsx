@@ -11,13 +11,16 @@ import ProfilePage from './components/ProfilePage';        // Used for viewing A
 import MyBookingsPage from './components/MyBookingsPage';
 import CompanyProfileSection from './components/CompanyProfileSection'; // NEW: For viewing own Company profile
 import { CompanyEditProfileModal } from './components/CompanyEditProfileModal'; // NEW: For editing own Company profile
+import Logo from '@/components/ui/logo';
 
-const API_BASE_URL = 'http://localhost:5000/api';
+const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:5000';
+const API_BASE_URL = `${BACKEND_URL.replace(/\/$/, '')}/api`;
 
 const CompanyDashboard = () => {
     const router = useRouter();
     const [currentPage, setCurrentPage] = useState('categories');
     const [companyProfile, setCompanyProfile] = useState<any>(null);
+    const [error, setError] = useState<string | null>(null);
     const [selectedCategory, setSelectedCategory] = useState<any>(null);
     const [selectedPost, setSelectedPost] = useState<any>(null);
     const [selectedAgency, setSelectedAgency] = useState<any>(null);
@@ -30,6 +33,7 @@ const CompanyDashboard = () => {
 
     const fetchProfile = async () => {
         try {
+            setError(null);
             const token = localStorage.getItem('token');
             if (!token) {
                 router.push('/login');
@@ -44,14 +48,34 @@ const CompanyDashboard = () => {
             });
 
             if (!response.ok) {
-                throw new Error('Failed to fetch profile');
+                if (response.status === 401 || response.status === 403) {
+                    localStorage.removeItem('token');
+                    localStorage.removeItem('userType');
+                    router.push('/login');
+                    return;
+                }
+
+                let message = 'Failed to fetch profile';
+                try {
+                    const data = await response.json();
+                    message = data?.error || message;
+                } catch {
+                    // ignore json parse failures
+                }
+                throw new Error(message);
             }
 
             const data = await response.json();
             setCompanyProfile(data);
         } catch (error) {
             console.error('Error fetching profile:', error);
-            router.push('/login');
+            const message =
+                error instanceof TypeError
+                    ? `Backend not reachable. Set NEXT_PUBLIC_BACKEND_URL (or start backend on ${API_BASE_URL}).`
+                    : error instanceof Error
+                    ? error.message
+                    : 'Unexpected error fetching profile';
+            setError(message);
         } finally {
             setLoading(false);
         }
@@ -59,7 +83,8 @@ const CompanyDashboard = () => {
 
     const handleLogout = () => {
         localStorage.removeItem('token');
-        router.push('/login');
+        localStorage.removeItem('userType');
+        router.push('/');
     };
 
     const handleCategorySelect = (category: any) => {
@@ -100,44 +125,36 @@ const CompanyDashboard = () => {
         );
     }
 
+    if (error) {
+        return (
+            <div className="min-h-screen flex items-center justify-center bg-slate-900 px-4">
+                <div className="w-full max-w-xl bg-slate-900/60 border border-slate-800 rounded-2xl p-6 text-center">
+                    <h2 className="text-xl font-bold text-white mb-2">Couldn’t load your profile</h2>
+                    <p className="text-gray-400 mb-6 break-words">{error}</p>
+                    <div className="flex items-center justify-center gap-3">
+                        <Button onClick={() => { setLoading(true); fetchProfile(); }} className="bg-cyan-600 hover:bg-cyan-700">
+                            Retry
+                        </Button>
+                        <Button variant="outline" onClick={() => router.push('/login')} className="border-slate-700 text-gray-200">
+                            Go to login
+                        </Button>
+                    </div>
+                </div>
+            </div>
+        );
+    }
+
     return (
         <div className="min-h-screen bg-slate-900 text-white">
             {/* Header - Styled to match the screenshot header */}
-           <header className="bg-[#0a1628] shadow-2xl sticky top-0 z-40 border-b border-cyan-500/20">
+           <header className="bg-[#0a1628] shadow-2xl sticky top-0 z-[1100] border-b border-cyan-500/20">
   <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
     <div className="flex items-center justify-between h-16">
       
-      {/* Logo Section — AdBridgeDZ with decorated "A" */}
+      {/* Logo Section */}
       <div className="flex items-center">
-        <div className="relative group cursor-pointer">
-          
-          
-          {/* Logo Container */}
-          <div className="relative flex items-center space-x-2 bg-[#0f1a2e] px-4 py-2.5 rounded-xl border border-cyan-500/30">
-            {/* Icon */}
-           
-            {/* Text Logo: AdBridgeDZ with decorated "A" */}
-            <div className="flex items-baseline space-x-1">
-              {/* Decorated 'A' */}
-              <span className="relative text-xl font-bold">
-                <span className="absolute -rotate-6 -translate-y-0.5 text-cyan-400 opacity-90 scale-110 z-10">
-                  A
-                </span>
-                <span className="text-transparent">A</span>
-              </span>
-              
-              {/* 'dBridgeDZ' */}
-              <span className="text-xl font-bold tracking-tight">
-                <span className="text-gray-300">d</span>
-                <span className="bg-gradient-to-r from-cyan-400 via-blue-400 to-cyan-300 bg-clip-text text-transparent">
-                  BridgeDZ
-                </span>
-              </span>
-            </div>
-
-            {/* Decorative Pulse Dot */}
-            <div className="w-2 h-2 bg-gradient-to-br from-cyan-400 to-blue-500 rounded-full animate-pulse"></div>
-          </div>
+        <div className="bg-[#0f1a2e] px-4 py-2.5 rounded-xl border border-cyan-500/30">
+          <Logo href="/" size="sm" showHoverEffects={false} />
         </div>
       </div>
 

@@ -6,8 +6,10 @@ const postSchema = new mongoose.Schema({
   description: { type: String, required: true }, 
   priceRange: { type: String }, 
   imageURL: { type: String },
+    imagePublicId: { type: String },
   isActive: { type: Boolean, default: true },
-  createdAt: { type: Date, default: Date.now } 
+    createdAt: { type: Date, default: Date.now },
+    updatedAt: { type: Date, default: Date.now }
 });
 
 postSchema.index({ 

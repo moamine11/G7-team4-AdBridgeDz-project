@@ -12,6 +12,7 @@ const Agency = require('../models/agency');
 const Post = require('../models/post');
 const Booking = require('../models/booking');
 const { OAuth2Client } = require('google-auth-library');
+const { addDays, ensureTrialFields, getSubscriptionInfo } = require('../utils/subscription');
 // --- CLOUDINARY IMPORTS ---
 const cloudinary = require('cloudinary').v2;
 const { CloudinaryStorage } = require('multer-storage-cloudinary');
@@ -42,6 +43,29 @@ const createCloudinaryStorage = (folderName, allowedFormats) => {
     });
 };
 
+// Storage for agency registration (logo + verification documents).
+// - `logo`: image-only with a safe resize transformation.
+// - `rcDocument` + `nifNisDocument`: accept PDF/images without transformations.
+const registerStorage = new CloudinaryStorage({
+  cloudinary,
+  params: (req, file) => {
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
+    const isLogo = file.fieldname === 'logo';
+    const isVerificationDoc =
+      file.fieldname === 'rcDocument' || file.fieldname === 'nifNisDocument' || file.fieldname === 'otherDocument';
+
+    return {
+      folder: isLogo ? 'agency/logos' : 'agency/verification-documents',
+      allowed_formats: isLogo
+        ? ['jpg', 'jpeg', 'png', 'gif', 'webp']
+        : ['pdf', 'jpg', 'jpeg', 'png', 'webp'],
+      resource_type: isLogo ? 'image' : 'auto',
+      transformation: isLogo ? [{ width: 800, crop: 'limit' }] : undefined,
+      public_id: `${file.fieldname}-${uniqueSuffix}`,
+    };
+  },
+});
+
 // --- STORAGE CONFIGURATION FOR ALL FILES ---
 // NOTE: We define single-file upload instances only for simplicity and stability.
 const logoStorage = createCloudinaryStorage('logos', ['jpg', 'jpeg', 'png', 'gif', 'webp']);
@@ -49,6 +73,18 @@ const postImageStorage = createCloudinaryStorage('posts', ['jpg', 'jpeg', 'png',
 
 const uploadLogo = multer({ storage: logoStorage, limits: { fileSize: 5 * 1024 * 1024 } }).single('logo');
 const uploadPostImage = multer({ storage: postImageStorage, limits: { fileSize: 5 * 1024 * 1024 } }).single('image');
+
+const uploadAgencyRegister = multer({
+  storage: registerStorage,
+  limits: { fileSize: 10 * 1024 * 1024 },
+}).fields([
+  { name: 'logo', maxCount: 1 },
+  { name: 'rcDocument', maxCount: 1 },
+  // Preferred field name
+  { name: 'nifNisDocument', maxCount: 1 },
+  // Legacy field name (backward compat)
+  { name: 'otherDocument', maxCount: 1 },
+]);
 
 // --- END STORAGE CONFIGURATION ---
 
@@ -66,15 +102,87 @@ const authMiddleware = async (req, res, next) => {
   }
 };
 
+const TRIAL_DAYS = 30;
+
+const backfillTrialFieldsIfMissing = async (agencyDoc) => {
+  if (!agencyDoc) return null;
+
+  const now = new Date();
+  const patch = {};
+  const baseStart = agencyDoc.trialStartedAt || agencyDoc.dateCreated || now;
+
+  if (!agencyDoc.trialStartedAt) patch.trialStartedAt = baseStart;
+  if (!agencyDoc.trialEndsAt) patch.trialEndsAt = addDays(baseStart, TRIAL_DAYS);
+  if (!agencyDoc.subscriptionPlan) patch.subscriptionPlan = 'Trial';
+
+  if (Object.keys(patch).length > 0) {
+    // Use direct update to avoid legacy/invalid documents failing validation on save().
+    await Agency.updateOne(
+      { _id: agencyDoc._id },
+      { $set: { ...patch, updatedAt: now } }
+    );
+
+    // Mutate local doc so downstream logic sees the updated values.
+    Object.assign(agencyDoc, patch);
+  }
+
+  return agencyDoc;
+};
+
+const requireActiveTrialOrSubscription = async (req, res, next) => {
+  try {
+    const agency = await Agency.findById(req.agencyId).select(
+      'trialStartedAt trialEndsAt subscriptionEndsAt subscriptionPlan dateCreated'
+    );
+    if (!agency) return res.status(404).json({ error: 'Agency not found' });
+
+    ensureTrialFields(agency, { trialDays: TRIAL_DAYS });
+    await backfillTrialFieldsIfMissing(agency);
+
+    const subscription = getSubscriptionInfo(agency, { trialDays: TRIAL_DAYS });
+    if (subscription.status === 'expired') {
+      return res.status(402).json({
+        error: 'Trial expired. Subscription required.',
+        code: 'SUBSCRIPTION_EXPIRED',
+        subscription,
+      });
+    }
+
+    req.subscription = subscription;
+    next();
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
 // Helper to destroy Cloudinary resource
 const destroyCloudinaryResource = async (publicId) => {
     if (publicId) {
         try {
             await cloudinary.uploader.destroy(publicId);
         } catch (error) {
-            console.error(`Cloudinary deletion failed for ID ${publicId}:`, error);
+            // Cloudinary stores non-images under different resource types.
+            try {
+              await cloudinary.uploader.destroy(publicId, { resource_type: 'raw' });
+            } catch (rawError) {
+              try {
+                await cloudinary.uploader.destroy(publicId, { resource_type: 'video' });
+              } catch (videoError) {
+                console.error(`Cloudinary deletion failed for ID ${publicId}:`, error);
+              }
+            }
         }
     }
+};
+
+const destroyUploadedRegisterFiles = async (files) => {
+  if (!files) return;
+  const all = [];
+  if (files.logo?.[0]) all.push(files.logo[0]);
+  if (files.rcDocument?.[0]) all.push(files.rcDocument[0]);
+  if (files.nifNisDocument?.[0]) all.push(files.nifNisDocument[0]);
+  if (files.otherDocument?.[0]) all.push(files.otherDocument[0]);
+  await Promise.all(all.map((f) => destroyCloudinaryResource(f.filename)));
 };
 
 const sendVerificationEmail = async (agency, token) => {
@@ -100,8 +208,32 @@ const sendVerificationEmail = async (agency, token) => {
   });
 };
 
-// --- REGISTER ROUTE (SIMPLIFIED for single logo upload only) ---
-router.post('/register', uploadLogo, async (req, res) => {
+const sendPasswordResetEmail = async (agency, token) => {
+  const transporter = nodemailer.createTransport({
+    host: process.env.SMTP_HOST,
+    port: Number(process.env.SMTP_PORT),
+    secure: process.env.SMTP_SECURE === 'true',
+    auth: {
+      user: process.env.SMTP_USER,
+      pass: process.env.SMTP_PASS
+    }
+  });
+
+  const url = `${process.env.FRONTEND_URL}/reset-password?token=${token}&id=${agency._id}&userType=agency`;
+  await transporter.sendMail({
+    from: `"MarketingWeb" <${process.env.SMTP_USER}>`,
+    to: agency.email,
+    subject: "Reset Your Password",
+    html: `<p>Hi ${agency.agencyName},</p>
+           <p>You requested to reset your password. Click the link below to reset it:</p>
+           <a href="${url}">${url}</a>
+           <p>This link will expire in 1 hour.</p>
+           <p>If you didn't request this, please ignore this email.</p>`
+  });
+};
+
+// --- REGISTER ROUTE (logo + 2 verification docs) ---
+router.post('/register', uploadAgencyRegister, async (req, res) => {
     try {
         const { 
             agencyName, email, userType, password, phoneNumber, countryCode, websiteUrl, country, city, streetAddress, 
@@ -111,14 +243,23 @@ router.post('/register', uploadLogo, async (req, res) => {
 
         if (!agreeToTerms || agreeToTerms !== 'true' && agreeToTerms !== true) {
             // Clean up if agreement is missing
-            if (req.file) await destroyCloudinaryResource(req.file.filename);
+          await destroyUploadedRegisterFiles(req.files);
             return res.status(400).json({ error: 'You must agree to the Terms and Conditions' });
         }
 
         const existingAgency = await Agency.findOne({ email });
         if (existingAgency) {
-            if (req.file) await destroyCloudinaryResource(req.file.filename);
+            await destroyUploadedRegisterFiles(req.files);
             return res.status(400).json({ error: 'Email already exists' });
+        }
+
+        const logoFile = req.files?.logo?.[0];
+        const rcFile = req.files?.rcDocument?.[0];
+        const nifNisFile = req.files?.nifNisDocument?.[0] || req.files?.otherDocument?.[0];
+
+        if (!rcFile || !nifNisFile) {
+          await destroyUploadedRegisterFiles(req.files);
+          return res.status(400).json({ error: 'Both verification documents are required (RC + NIF/NIS).' });
         }
 
         const hashedPassword = await bcrypt.hash(password, 10);
@@ -127,19 +268,39 @@ router.post('/register', uploadLogo, async (req, res) => {
         let parsedServices = servicesOffered ? (typeof servicesOffered === 'string' ? JSON.parse(servicesOffered) : servicesOffered) : [];
 
         // Store Cloudinary URLs and Public IDs
-        const logoUrl = req.file ? req.file.path : undefined;
-        const logoPublicId = req.file ? req.file.filename : undefined;
-        // RC document fields will be null/undefined here, assuming it's done later/separately if needed
+        const logoUrl = logoFile ? logoFile.path : undefined;
+        const logoPublicId = logoFile ? logoFile.filename : undefined;
+
+        const rcDocumentUrl = rcFile.path;
+        const rcDocumentPublicId = rcFile.filename;
+        const nifNisDocumentUrl = nifNisFile.path;
+        const nifNisDocumentPublicId = nifNisFile.filename;
+
+        // If the legacy field name was used, also keep legacy fields populated.
+        const legacyOtherDocumentUrl = req.files?.otherDocument?.[0]?.path;
+        const legacyOtherDocumentPublicId = req.files?.otherDocument?.[0]?.filename;
 
         const agency = new Agency({
             agencyName, email, userType: userType || 'agency', password: hashedPassword,
             phoneNumber, countryCode, websiteUrl, country, city, streetAddress, postalCode, businessRegistrationNumber,
-            // rcDocument fields omitted for simplicity in this stable version
+            rcDocument: rcDocumentUrl,
+            rcDocumentPublicId,
+            nifNisDocument: nifNisDocumentUrl,
+            nifNisDocumentPublicId,
+
+            // Legacy fields (optional, for older clients / existing admin views)
+            otherDocument: legacyOtherDocumentUrl || undefined,
+            otherDocumentPublicId: legacyOtherDocumentPublicId || undefined,
             logo: logoUrl, logoPublicId,                      
             industry, companySize, yearEstablished: yearEstablished ? parseInt(yearEstablished) : undefined,
             fullName, jobTitle, servicesOffered: parsedServices, facebookUrl, linkedinUrl,
             agreeToTerms: agreeToTerms === 'true' || agreeToTerms === true, isVerified: false, verificationToken,
-            signUpMethod: 'local'
+          signUpMethod: 'local',
+
+          // Trial starts immediately on signup (verification still required for login).
+          trialStartedAt: new Date(),
+          trialEndsAt: addDays(new Date(), TRIAL_DAYS),
+          subscriptionPlan: 'Trial'
         });
 
         await agency.save();
@@ -147,14 +308,17 @@ router.post('/register', uploadLogo, async (req, res) => {
 
         const token = jwt.sign({ agencyId: agency._id }, process.env.JWT_SECRET, { expiresIn: '30d' });
 
+        const subscription = getSubscriptionInfo(agency, { trialDays: TRIAL_DAYS });
+
         res.status(201).json({
             message: 'Agency registered successfully. Please check your email to verify your account.',
             token,
-            agency: { id: agency._id, agencyName: agency.agencyName, email: agency.email, logo: agency.logo, servicesOffered: agency.servicesOffered }
+          agency: { id: agency._id, agencyName: agency.agencyName, email: agency.email, logo: agency.logo, servicesOffered: agency.servicesOffered },
+          subscription
         });
     } catch (error) {
         console.error('Registration error:', error);
-        if (req.file) await destroyCloudinaryResource(req.file.filename);
+        await destroyUploadedRegisterFiles(req.files);
         res.status(500).json({ error: error.message });
     }
 });
@@ -168,7 +332,7 @@ router.put('/profile', authMiddleware, uploadLogo, async (req, res) => {
         const { 
             agencyName, email, phoneNumber, websiteUrl, country, city, streetAddress, postalCode, 
             businessRegistrationNumber, industry, companySize, yearEstablished, fullName, 
-            jobTitle, servicesOffered, facebookUrl, linkedinUrl 
+      jobTitle, servicesOffered, facebookUrl, linkedinUrl, locationLat, locationLng 
         } = req.body;
 
         const updateData = { updatedAt: Date.now() };
@@ -183,6 +347,16 @@ router.put('/profile', authMiddleware, uploadLogo, async (req, res) => {
             fullName, jobTitle, facebookUrl, linkedinUrl,
             servicesOffered: servicesOffered ? JSON.parse(servicesOffered) : oldAgency.servicesOffered
         });
+
+        if (locationLat !== undefined && locationLat !== '') {
+          const lat = parseFloat(locationLat);
+          if (!Number.isNaN(lat)) updateData.locationLat = lat;
+        }
+
+        if (locationLng !== undefined && locationLng !== '') {
+          const lng = parseFloat(locationLng);
+          if (!Number.isNaN(lng)) updateData.locationLng = lng;
+        }
 
         // CRITICAL FIX: Handle Logo Update (If new file uploaded via uploadLogo middleware)
         if (req.file) {
@@ -213,7 +387,7 @@ router.put('/profile', authMiddleware, uploadLogo, async (req, res) => {
 
 
 // --- CREATE POST ROUTE (UPDATED for Cloudinary URL) ---
-router.post('/posts', authMiddleware, uploadPostImage, async (req, res) => {
+router.post('/posts', authMiddleware, requireActiveTrialOrSubscription, uploadPostImage, async (req, res) => {
     try {
         const { title, description, priceRange, category } = req.body;
         
@@ -250,7 +424,7 @@ router.post('/posts', authMiddleware, uploadPostImage, async (req, res) => {
 });
 
 // --- UPDATE POST ROUTE (UPDATED for Cloudinary Deletion) ---
-router.put('/posts/:id', authMiddleware, uploadPostImage, async (req, res) => {
+router.put('/posts/:id', authMiddleware, requireActiveTrialOrSubscription, uploadPostImage, async (req, res) => {
     try {
         const postId = req.params.id;
         const { title, description, priceRange, category } = req.body;
@@ -297,7 +471,7 @@ router.put('/posts/:id', authMiddleware, uploadPostImage, async (req, res) => {
 
 
 // 3. DELETE/INACTIVATE POST STATUS (UPDATED for Cloudinary Deletion)
-router.put('/posts/:id/status', authMiddleware, async (req, res) => {
+router.put('/posts/:id/status', authMiddleware, requireActiveTrialOrSubscription, async (req, res) => {
     try {
         const postId = req.params.id;
         const { isActive } = req.body; 
@@ -347,7 +521,7 @@ router.post('/google-auth', async (req, res) => {
     const payload = ticket.getPayload();
     const { email, sub: googleId } = payload;
     
-    let agency = await Agency.findOne({ email });
+    let agency = await Agency.findOne({ email: (email || '').trim().toLowerCase() });
     if (!agency) {
       return res.status(404).json({
         error: 'No account found with this email. Please register first.'
@@ -364,8 +538,13 @@ router.post('/google-auth', async (req, res) => {
       agency.isVerified = true;
       await agency.save();
     }
+
+    ensureTrialFields(agency, { trialDays: TRIAL_DAYS });
+    await backfillTrialFieldsIfMissing(agency);
     
     const token = jwt.sign({ agencyId: agency._id }, process.env.JWT_SECRET, { expiresIn: '30d' });
+
+    const subscription = getSubscriptionInfo(agency, { trialDays: TRIAL_DAYS });
 
     res.json({
       message: "Google login successful",
@@ -377,6 +556,8 @@ router.post('/google-auth', async (req, res) => {
         country: agency.country,
         phoneNumber: agency.phoneNumber,
       }
+      ,
+      subscription
     });
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -398,18 +579,28 @@ router.get('/new/:id', async (req, res) => {
 router.get('/verify-email', async (req, res) => {
   try {
     const { token, id } = req.query;
-    if (!token || !id) return res.status(400).send("Invalid request");
+    if (!token || !id) {
+      return res.status(400).json({ error: "Invalid request. Token and ID are required." });
+    }
 
     const agency = await Agency.findById(id);
-    if (!agency || agency.verificationToken !== token)
-      return res.status(400).send("Invalid or expired token");
+    if (!agency) {
+      return res.status(404).json({ error: "Agency not found." });
+    }
+    if (agency.verificationToken !== token) {
+      return res.status(400).json({ error: "Invalid or expired token." });
+    }
+    if (agency.isVerified) {
+      return res.status(400).json({ error: "Email already verified." });
+    }
 
     agency.isVerified = true;
     agency.verificationToken = undefined;
     await agency.save();
-    res.send("Email verified successfully! You can now log in.");
+    res.json({ message: "Email verified successfully! You can now log in." });
   } catch (err) {
-    res.status(500).send("Server error");
+    console.error('Verification error:', err);
+    res.status(500).json({ error: "Server error" });
   }
 });
 
@@ -436,18 +627,142 @@ router.post('/resend-verification', async (req, res) => {
   }
 });
 
+// Forgot Password - Request reset
+router.post('/forgot-password', async (req, res) => {
+  try {
+    const { email } = req.body;
+    const normalizedEmail = String(email || '').trim().toLowerCase();
+    if (!normalizedEmail) {
+      return res.status(400).json({ error: 'Email is required' });
+    }
+
+    const agency = await Agency.findOne({ email: normalizedEmail });
+    // Don't reveal if email exists for security
+    if (!agency) {
+      return res.json({ message: 'If that email exists, a password reset link has been sent.' });
+    }
+
+    // Generate reset token
+    const resetToken = crypto.randomBytes(32).toString('hex');
+    // Use direct update to avoid legacy documents failing validation on save().
+    await Agency.updateOne(
+      { _id: agency._id },
+      {
+        $set: {
+          resetPasswordToken: resetToken,
+          resetPasswordExpires: Date.now() + 3600000,
+          updatedAt: Date.now(),
+        },
+      }
+    );
+
+    // If SMTP isn't configured in dev, don't hard-fail the request.
+    const hasSmtp = Boolean(
+      process.env.SMTP_HOST &&
+      process.env.SMTP_PORT &&
+      process.env.SMTP_USER &&
+      process.env.SMTP_PASS &&
+      process.env.FRONTEND_URL
+    );
+
+    if (hasSmtp) {
+      await sendPasswordResetEmail(agency, resetToken);
+    } else {
+      console.warn('[agencies/forgot-password] SMTP not configured; skipping email send.');
+    }
+
+    res.json({ message: 'If that email exists, a password reset link has been sent.' });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Reset Password - Verify token and reset password
+router.post('/reset-password', async (req, res) => {
+  try {
+    const { token, id, password } = req.body;
+    
+    if (!token || !id || !password) {
+      return res.status(400).json({ error: 'Token, ID, and password are required' });
+    }
+
+    if (password.length < 6) {
+      return res.status(400).json({ error: 'Password must be at least 6 characters long' });
+    }
+
+    const agency = await Agency.findById(id);
+    if (!agency) {
+      return res.status(404).json({ error: 'Agency not found' });
+    }
+
+    if (agency.resetPasswordToken !== token) {
+      return res.status(400).json({ error: 'Invalid or expired reset token' });
+    }
+
+    if (!agency.resetPasswordExpires || agency.resetPasswordExpires < Date.now()) {
+      return res.status(400).json({ error: 'Reset token has expired' });
+    }
+
+    // Hash new password
+    const hashedPassword = await bcrypt.hash(password, 10);
+    agency.password = hashedPassword;
+    agency.resetPasswordToken = undefined;
+    agency.resetPasswordExpires = undefined;
+    await agency.save();
+
+    res.json({ message: 'Password has been reset successfully' });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Verify reset token
+router.get('/verify-reset-token', async (req, res) => {
+  try {
+    const { token, id } = req.query;
+    
+    if (!token || !id) {
+      return res.status(400).json({ error: 'Token and ID are required' });
+    }
+
+    const agency = await Agency.findById(id);
+    if (!agency) {
+      return res.status(404).json({ error: 'Agency not found' });
+    }
+
+    if (agency.resetPasswordToken !== token) {
+      return res.status(400).json({ error: 'Invalid reset token' });
+    }
+
+    if (!agency.resetPasswordExpires || agency.resetPasswordExpires < Date.now()) {
+      return res.status(400).json({ error: 'Reset token has expired' });
+    }
+
+    res.json({ message: 'Token is valid' });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 
 router.post('/login', async (req, res) => {
   try {
     const { email, password } = req.body;
-    const agency = await Agency.findOne({ email }).select('+password');
+    const normalizedEmail = (email || '').trim().toLowerCase();
+    const normalizedPassword = String(password || '').trim();
+    const agency = await Agency.findOne({ email: normalizedEmail }).select('+password');
     if (!agency) return res.status(401).json({ error: 'Invalid credentials' });
     if (!agency.isVerified) return res.status(401).json({ error: 'Email not verified. Please check your email.' });
     
-    const isValid = await bcrypt.compare(password, agency.password);
+    const isValid = await bcrypt.compare(normalizedPassword, agency.password);
     if (!isValid) return res.status(401).json({ error: 'Invalid credentials' });
+
+    ensureTrialFields(agency, { trialDays: TRIAL_DAYS });
+    await backfillTrialFieldsIfMissing(agency);
     
     const token = jwt.sign({ agencyId: agency._id }, process.env.JWT_SECRET, { expiresIn: '30d' });
+
+    const subscription = getSubscriptionInfo(agency, { trialDays: TRIAL_DAYS });
 
     res.json({
       message: 'Login successful',
@@ -458,8 +773,68 @@ router.post('/login', async (req, res) => {
         email: agency.email, 
         country: agency.country,
         logo: agency.logo 
-      }
+      },
+      subscription
     });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+
+router.get('/subscription', authMiddleware, async (req, res) => {
+  try {
+    const agency = await Agency.findById(req.agencyId).select(
+      'trialStartedAt trialEndsAt subscriptionEndsAt subscriptionPlan dateCreated'
+    );
+    if (!agency) return res.status(404).json({ error: 'Agency not found' });
+
+    ensureTrialFields(agency, { trialDays: TRIAL_DAYS });
+    await backfillTrialFieldsIfMissing(agency);
+
+    const subscription = getSubscriptionInfo(agency, { trialDays: TRIAL_DAYS });
+    res.json({ subscription });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+
+router.post('/subscription/activate', authMiddleware, async (req, res) => {
+  try {
+    const { planName } = req.body || {};
+    const agency = await Agency.findById(req.agencyId).select(
+      'trialStartedAt trialEndsAt subscriptionEndsAt subscriptionPlan dateCreated'
+    );
+    if (!agency) return res.status(404).json({ error: 'Agency not found' });
+
+    ensureTrialFields(agency, { trialDays: TRIAL_DAYS });
+    await backfillTrialFieldsIfMissing(agency);
+
+    const now = new Date();
+    const base = agency.subscriptionEndsAt && new Date(agency.subscriptionEndsAt).getTime() > now.getTime()
+      ? new Date(agency.subscriptionEndsAt)
+      : now;
+
+    const newSubscriptionEndsAt = addDays(base, TRIAL_DAYS);
+    const newPlanName = (planName || agency.subscriptionPlan || 'Standard').toString();
+
+    await Agency.updateOne(
+      { _id: agency._id },
+      {
+        $set: {
+          subscriptionEndsAt: newSubscriptionEndsAt,
+          subscriptionPlan: newPlanName,
+          updatedAt: now,
+        },
+      }
+    );
+
+    agency.subscriptionEndsAt = newSubscriptionEndsAt;
+    agency.subscriptionPlan = newPlanName;
+
+    const subscription = getSubscriptionInfo(agency, { trialDays: TRIAL_DAYS });
+    res.json({ message: 'Subscription activated (mock).', subscription });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -476,103 +851,6 @@ router.get('/profile', authMiddleware, async (req, res) => {
     if (!agency) return res.status(404).json({ error: 'Agency not found' });
 
     res.json(agency);
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-});
-
-
-router.put('/profile', authMiddleware, (req, res) => {
-  uploadFiles(req, res, async (err) => {
-    if (err) {
-      return res.status(400).json({ error: err.message });
-    }
-
-    try {
-      const { 
-        agencyName, email, phoneNumber, websiteUrl, country, city, streetAddress, postalCode, 
-        businessRegistrationNumber, industry, companySize, yearEstablished, fullName, 
-        jobTitle, servicesOffered, facebookUrl, linkedinUrl 
-      } = req.body;
-
-      const updateData = {
-        agencyName,
-        email,
-        phoneNumber,
-        websiteUrl,
-        country,
-        city,
-        streetAddress,
-        postalCode,
-        businessRegistrationNumber,
-        industry,
-        companySize,
-        yearEstablished: yearEstablished ? parseInt(yearEstablished) : undefined,
-        fullName,
-        jobTitle,
-        servicesOffered: servicesOffered ? JSON.parse(servicesOffered) : undefined,
-        facebookUrl,
-        linkedinUrl,
-        updatedAt: Date.now()
-      };
-
-      
-      if (req.files?.logo) {
-        updateData.logo = `/uploads/logos/${req.files.logo[0].filename}`;
-        
-        const oldAgency = await Agency.findById(req.agencyId);
-        if (oldAgency.logo) {
-          const oldLogoPath = path.join(__dirname, '..', oldAgency.logo);
-          if (fs.existsSync(oldLogoPath)) {
-            fs.unlinkSync(oldLogoPath);
-          }
-        }
-      }
-
-      
-      if (req.files?.rcDocument) {
-        updateData.rcDocument = `/uploads/documents/${req.files.rcDocument[0].filename}`;
-    
-        const oldAgency = await Agency.findById(req.agencyId);
-        if (oldAgency.rcDocument) {
-          const oldDocPath = path.join(__dirname, '..', oldAgency.rcDocument);
-          if (fs.existsSync(oldDocPath)) {
-            fs.unlinkSync(oldDocPath);
-          }
-        }
-      }
-
-      const agency = await Agency.findByIdAndUpdate(
-        req.agencyId,
-        updateData,
-        { new: true, runValidators: true }
-      ).select('-password').populate('servicesOffered');
-
-      res.json({ message: 'Profile updated', agency });
-    } catch (error) {
-      res.status(500).json({ error: error.message });
-    }
-  });
-});
-
-router.post('/posts', authMiddleware, async (req, res) => {
-  try {
-    const { title, description, priceRange, imageURL } = req.body;
-    
-    category =new mongoose.Types.ObjectId("692ae4e54f705d9a1336332d");
-    const post = new Post({
-      title,
-      description,
-      priceRange,
-      imageURL,
-      category,
-      agency: req.agencyId 
-    });
-
-    await post.save();
-    await Agency.findByIdAndUpdate(req.agencyId, { $push: { posts: post._id } });
-
-    res.status(201).json({ message: 'Post created successfully', post });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -623,63 +901,7 @@ router.put('/booking/:id/status', authMiddleware, async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 });
-
-router.put('/posts/:id', authMiddleware, (req, res) => {
-    uploadPostImage(req, res, async (err) => {
-        if (err) {
-            return res.status(400).json({ error: err.message });
-        }
-
-        try {
-            const postId = req.params.id;
-            const { title, description, priceRange, category } = req.body;
-            
-            const updateData = { updatedAt: Date.now() };
-
-            if (title) updateData.title = title;
-            if (description) updateData.description = description;
-            if (priceRange) updateData.priceRange = priceRange;
-            if (category) updateData.category = new mongoose.Types.ObjectId(category);
-
-            if (req.file) {
-                // If a new file is uploaded, update imageURL and delete the old file
-                updateData.imageURL = `/uploads/posts/${req.file.filename}`;
-                
-                const oldPost = await Post.findById(postId);
-                if (oldPost && oldPost.imageURL) {
-                    const oldImagePath = path.join(__dirname, '..', oldPost.imageURL);
-                    if (fs.existsSync(oldImagePath)) {
-                        fs.unlinkSync(oldImagePath);
-                    }
-                }
-            }
-
-            const post = await Post.findOneAndUpdate(
-                { _id: postId, agency: req.agencyId }, // Ensure agency owns the post
-                updateData,
-                { new: true, runValidators: true }
-            ).populate('category', 'name');
-
-            if (!post) {
-                // Clean up the newly uploaded file if the post wasn't found or agency didn't own it
-                if (req.file) fs.unlinkSync(req.file.path);
-                return res.status(404).json({ error: 'Post not found or unauthorized' });
-            }
-
-            res.json({ message: 'Post updated successfully', post });
-        } catch (error) {
-            if (req.file) {
-                try {
-                    fs.unlinkSync(req.file.path);
-                } catch (cleanupError) {
-                    console.error('Error cleaning up file:', cleanupError);
-                }
-            }
-            res.status(500).json({ error: error.message });
-        }
-    });
-});
-router.put('/posts/:id/status', authMiddleware, async (req, res) => {
+router.put('/posts/:id/status', authMiddleware, requireActiveTrialOrSubscription, async (req, res) => {
     try {
         const postId = req.params.id;
         const { isActive } = req.body; // Expecting boolean true/false

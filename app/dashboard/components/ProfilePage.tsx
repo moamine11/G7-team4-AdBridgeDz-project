@@ -24,7 +24,8 @@ interface ProfilePageProps {
   onBack: () => void;
 }
 
-const API_BASE_URL = 'http://localhost:5000/api';
+const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:5000';
+const API_BASE_URL = `${BACKEND_URL.replace(/\/$/, '')}/api`;
 
 // --- Helper Components (Enhanced Design) ---
 const ProfileDetailCard = ({
@@ -211,18 +212,30 @@ const ProfilePage = ({ agency: shallowAgency, onBack }: ProfilePageProps) => {
 
       if (!mapElement) return;
 
+      const rawLat = agency?.locationLat ?? agency?.agency?.locationLat;
+      const rawLng = agency?.locationLng ?? agency?.agency?.locationLng;
+      const hasCoords =
+        typeof rawLat === 'number' &&
+        typeof rawLng === 'number' &&
+        Number.isFinite(rawLat) &&
+        Number.isFinite(rawLng);
+
       const city = (agency?.city || agency?.agency?.city || 'algiers')
         .toLowerCase()
         .trim();
-      const coords = wilayaCoordinates[city] || { lat: 36.7538, lng: 3.0588 };
+
+      const coords = hasCoords
+        ? { lat: rawLat, lng: rawLng }
+        : wilayaCoordinates[city] || { lat: 36.7538, lng: 3.0588 };
 
       mapInstance = L.map('map', {
         zoomControl: true,
         attributionControl: false,
       }).setView([coords.lat, coords.lng], 13);
 
-      L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
         maxZoom: 19,
+        subdomains: 'abc'
       }).addTo(mapInstance);
 
       const customIcon = L.divIcon({

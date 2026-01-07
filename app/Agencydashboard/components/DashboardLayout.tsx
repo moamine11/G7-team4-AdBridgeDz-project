@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { Building2, LayoutGrid, FileText, Calendar, Settings, LogOut, Plus, Loader2, BarChart3 } from 'lucide-react';
+import { Building2, LayoutGrid, FileText, Calendar, Settings, LogOut, Plus, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { PostFormModal } from './PostFormModal'; 
 import OverviewSection from './OverviewSection';
@@ -10,7 +10,8 @@ import InventorySection from './InventorySection';
 import BookingSection from './BookingSection';
 import ProfileSection from './ProfileSection';
 // Assuming you have an AgencyEditProfileModal component (now defined above)
-import { AgencyEditProfileModal } from './AgencyEditProfileModal'; 
+import { AgencyEditProfileModal } from './AgencyEditProfileModal';
+import Logo from '@/components/ui/logo';
 
 const API_BASE_URL = 'http://localhost:5000/api';
 
@@ -61,7 +62,8 @@ const AgencyDashboardLayout = () => {
     const handleLogout = () => {
         localStorage.removeItem('token');
         localStorage.removeItem('userData');
-        router.push('/login');
+        localStorage.removeItem('userType');
+        router.push('/');
     };
     
     const handleOpenEditProfileModal = () => {
@@ -80,7 +82,6 @@ const AgencyDashboardLayout = () => {
         { id: 'inventory', label: 'Inventory', icon: FileText },
         { id: 'bookings', label: 'Bookings', icon: Calendar },
         { id: 'profile', label: 'Profile', icon: Settings },
-        { id: 'analytics', label: 'Analytics', icon: BarChart3, disabled: true },
     ];
 
     if (loading) {
@@ -94,41 +95,15 @@ const AgencyDashboardLayout = () => {
     return (
         <div className="min-h-screen bg-slate-900 text-white">
             {/* --- Top Navigation Header (Replaces Sidebar) --- */}
-          <header className="bg-[#0a1628] shadow-2xl sticky top-0 z-40 border-b border-cyan-500/20">
+          <header className="bg-[#0a1628] shadow-2xl sticky top-0 z-[1100] border-b border-cyan-500/20">
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
            {/* Logo Section */}
-<div className="flex items-center">
-  <div className="relative group cursor-pointer">
-    
-    {/* Logo Container */}
-    <div className="relative flex items-center space-x-2 bg-[#0f1a2e] px-4 py-2.5 rounded-xl border border-cyan-500/30">
-      
-      
-      {/* Text Logo — Enhanced */}
-      <div className="flex items-baseline space-x-1">
-        {/* Decorated 'A' */}
-        <span className="relative text-2xl font-bold">
-          <span className="absolute -rotate-6 -translate-y-0.5 text-cyan-400 opacity-90 scale-110 z-10">
-            A
-          </span>
-          <span className="text-transparent">A</span> {/* Invisible placeholder for spacing */}
-        </span>
-
-        {/* 'dBridge' — clean & modern */}
-        <span className="text-2xl font-bold tracking-tight">
-          <span className="text-gray-300">d</span>
-          <span className="bg-gradient-to-r from-cyan-400 via-blue-400 to-cyan-300 bg-clip-text text-transparent">
-            Bridge
-          </span>
-        </span>
-      </div>
-      
-      {/* Decorative Dot */}
-      <div className="w-2 h-2 bg-gradient-to-br from-cyan-400 to-blue-500 rounded-full animate-pulse"></div>
-    </div>
-  </div>
-</div>
+          <div className="flex items-center">
+            <div className="bg-[#0f1a2e] px-4 py-2.5 rounded-xl border border-cyan-500/30">
+              <Logo href="/" size="sm" showHoverEffects={false} />
+            </div>
+          </div>
 
             {/* Navigation Items */}
             <nav className="flex items-center space-x-2">
