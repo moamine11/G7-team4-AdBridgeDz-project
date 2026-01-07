@@ -10,7 +10,7 @@ interface ProfileSectionProps {
     onOpenEditModal: () => void;
 }
 
-const API_BASE_URL = 'http://localhost:5000/api';
+const API_BASE_URL = 'https://backend-se-7rkj.onrender.com/api';
 
 // --- Helper Components for Stability and Clean UI ---
 

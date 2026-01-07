@@ -22,7 +22,7 @@ export default function VerifyEmailPage() {
   const [verificationMessage, setVerificationMessage] = useState('');
 
   // FIX: Use NEXT_PUBLIC_BACKEND_URL for client-side access
-  const API_BASE_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:5000';
+  const API_BASE_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'https://backend-se-7rkj.onrender.com';
 
   // Auto-verify if token and id are present
   useEffect(() => {

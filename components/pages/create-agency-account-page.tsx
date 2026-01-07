@@ -178,7 +178,7 @@ export default function CreateAgencyAccount() {
     body.append('nifNisDocument', nifNisDocumentFile);
 
     try {
-      const res = await fetch('http://localhost:5000/api/agencies/register', {
+      const res = await fetch('https://backend-se-7rkj.onrender.com/api/agencies/register', {
         method: 'POST',
         body,
       });

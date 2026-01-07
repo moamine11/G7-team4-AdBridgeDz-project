@@ -34,7 +34,7 @@ export default function LoginPage() {
   const [subscriptionInfo, setSubscriptionInfo] = useState<SubscriptionInfo | null>(null);
   const [activatingSubscription, setActivatingSubscription] = useState(false);
 
-  const API_BASE_URL = 'http://localhost:5000/api';
+  const API_BASE_URL = 'https://backend-se-7rkj.onrender.com/api';
   const GOOGLE_CLIENT_ID = '847708558168-12ljci267ehd9eonebevvos968u1o6md.apps.googleusercontent.com';
 
   useEffect(() => {

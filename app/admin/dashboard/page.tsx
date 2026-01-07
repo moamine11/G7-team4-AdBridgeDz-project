@@ -6,7 +6,7 @@ import { LogOut } from 'lucide-react'
 import Logo from '@/components/ui/logo'
 import { Button } from '@/components/ui/button'
 
-const API_BASE_URL = 'http://localhost:5000/api'
+const API_BASE_URL = 'https://backend-se-7rkj.onrender.com/api'
 
 type AnalyticsOverview = {
   companiesTotal: number

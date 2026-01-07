@@ -2,7 +2,7 @@ const path = require('path');
 const fs = require('fs');
 const dotenv = require('dotenv');
 
-// Prefer .env.local for local/secret credentials (e.g., Atlas), fallback to .env
+
 const envPath = path.join(__dirname, '.env');
 const envLocalPath = path.join(__dirname, '.env.local');
 if (fs.existsSync(envPath)) {
@@ -29,9 +29,7 @@ app.use(cors());
 app.use(express.json());
 
 
-// ------------------
-// REQUEST LOGGING (for debugging)
-// ------------------
+
 app.use((req, res, next) => {
   console.log(`${new Date().toISOString()} - ${req.method} ${req.path}`);
   if (req.method === 'POST' || req.method === 'PUT') {
@@ -48,11 +46,11 @@ app.use('/api/services', serviceRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/geocode', geocodeRoutes);
-// Legacy mount (older clients)
+
 app.use('/admin', adminRoutes);
 mongoose.connect(process.env.MONGO_URI, {
-    serverSelectionTimeoutMS: 10000, // Timeout after 10s instead of 30s
-    socketTimeoutMS: 45000, // Close sockets after 45s of inactivity
+    serverSelectionTimeoutMS: 10000, 
+    socketTimeoutMS: 45000, 
 })
 .then(() => console.log('MongoDB connected'))
 .catch(err => console.error('MongoDB connection error:', err));

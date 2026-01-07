@@ -66,7 +66,7 @@ export default function CreateCompanyAccount() {
       submissionData.append('location', formData.location);
       submissionData.append('agreesToTerms', 'true');
 
-      const response = await fetch('http://localhost:5000/api/companies/register', {
+      const response = await fetch('https://backend-se-7rkj.onrender.com/api/companies/register', {
         method: 'POST',
         body: submissionData,
       });

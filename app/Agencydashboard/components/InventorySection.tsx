@@ -24,7 +24,7 @@ interface InventorySectionProps {
     onPostCreated: () => void;
 }
 
-const API_BASE_URL = 'http://localhost:5000/api';
+const API_BASE_URL = 'https://backend-se-7rkj.onrender.com/api';
 
 const InventorySection = ({ agencyData, services, onPostCreated }: InventorySectionProps) => {
     const [posts, setPosts] = useState<PostData[]>([]);

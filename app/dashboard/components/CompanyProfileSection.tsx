@@ -9,10 +9,10 @@ interface CompanyProfileSectionProps {
   onEditClick: () => void;
 }
 
-const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:5000';
+const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'https://backend-se-7rkj.onrender.com';
 const API_BASE_URL = `${BACKEND_URL.replace(/\/$/, '')}/api`;
 
-// Detail Card - Enhanced with dark blue theme
+
 const ProfileDetailCard = ({ Icon, label, value }: { Icon: any, label: string, value: string | number | undefined }) => (
   <div className="group relative bg-[#0f1a2e] p-5 rounded-xl border border-cyan-500/20 hover:border-cyan-400/40 transition-all duration-300 hover:shadow-lg hover:shadow-cyan-500/10 overflow-hidden">
     <div className="absolute inset-0 bg-gradient-to-br from-cyan-500/0 to-cyan-500/0 group-hover:from-cyan-500/5 group-hover:to-transparent transition-all duration-300"></div>

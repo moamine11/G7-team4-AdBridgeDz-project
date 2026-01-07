@@ -13,7 +13,7 @@ import ProfileSection from './ProfileSection';
 import { AgencyEditProfileModal } from './AgencyEditProfileModal';
 import Logo from '@/components/ui/logo';
 
-const API_BASE_URL = 'http://localhost:5000/api';
+const API_BASE_URL = 'https://backend-se-7rkj.onrender.com/api';
 
 const AgencyDashboardLayout = () => {
     const router = useRouter();
@@ -111,12 +111,11 @@ const AgencyDashboardLayout = () => {
                     <button
                         key={item.id}
                         onClick={() => setActiveView(item.id)}
-                        disabled={item.disabled}
                         className={`relative px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
                             activeView === item.id
                                 ? 'text-white bg-cyan-500/20 shadow-lg shadow-cyan-500/20'
                                 : 'text-gray-400 hover:text-white hover:bg-cyan-500/10'
-                        } ${item.disabled ? 'opacity-50 cursor-not-allowed' : ''}`}
+                        }`}
                     >
                         {activeView === item.id && (
                             <span className="absolute inset-x-0 bottom-0 h-0.5 bg-gradient-to-r from-cyan-500 to-blue-500"></span>

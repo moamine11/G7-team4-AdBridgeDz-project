@@ -24,7 +24,7 @@ interface ProfilePageProps {
   onBack: () => void;
 }
 
-const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:5000';
+const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'https://backend-se-7rkj.onrender.com';
 const API_BASE_URL = `${BACKEND_URL.replace(/\/$/, '')}/api`;
 
 // --- Helper Components (Enhanced Design) ---

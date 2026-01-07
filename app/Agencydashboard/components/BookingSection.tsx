@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { Calendar, User, CheckCircle, XCircle, AlertCircle, Loader2, DollarSign, Tag, MessageSquare } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
-const API_BASE_URL = 'http://localhost:5000/api';
+const API_BASE_URL = 'https://backend-se-7rkj.onrender.com/api';
 
 const BookingSection = ({ agencyData }: { agencyData: any }) => {
     // FIX: Explicitly type the state as an array of any type or use the detailed interface if available
