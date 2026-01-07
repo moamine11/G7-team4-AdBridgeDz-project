@@ -1,5 +1,5 @@
-// Replace with your actual backend URL
-const API_BASE_URL = 'http://localhost:5000/api';
+
+const API_BASE_URL = 'https://backend-se-7rkj.onrender.com/api';
 
 /**
  * Helper to fetch data with Authorization header if a token is present.
@@ -8,7 +8,7 @@ export async function authenticatedFetch(endpoint: string, options: RequestInit 
     const token = localStorage.getItem('token');
     const headers: Record<string, string> = {
         'Content-Type': 'application/json',
-        ...(options.headers as Record<string, string>), // <--- Add this type assertion
+        ...(options.headers as Record<string, string>), 
     };
 
     if (token) { 
@@ -26,3 +26,5 @@ export async function authenticatedFetch(endpoint: string, options: RequestInit 
 
     return response;
 }
+
+export default authenticatedFetch;
