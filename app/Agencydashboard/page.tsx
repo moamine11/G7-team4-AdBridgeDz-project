@@ -11,6 +11,7 @@ import AgencyDashboardLayout from './components/DashboardLayout'; // Update this
  * agency profile, managing the active view, and applying the global dark theme 
  * structure (sidebar + main content).
  */
+export const dynamic = 'force-dynamic';
 
 export default function AgencyDashboardPage() {
     return (
