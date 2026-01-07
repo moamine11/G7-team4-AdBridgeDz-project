@@ -10,28 +10,28 @@ const fs = require('fs'); // Added for local cleanup context/use
 const Company = require('../models/company');
 const Booking = require('../models/booking');
 const { OAuth2Client } = require('google-auth-library');
-// --- NEW CLOUDINARY IMPORTS ---
+// --- SECURE MEDIA INTEGRATION: INITIALIZING EXTERNAL CLOUDINARY STORAGE COMPONENTS ---
 const cloudinary = require('cloudinary').v2;
 const { CloudinaryStorage } = require('multer-storage-cloudinary');
-// --- END CLOUDINARY IMPORTS ---
+// --- TERMINATION OF EXTERNAL MEDIA SERVICE DEPENDENCIES ---
 
 const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
-// --- CLOUDINARY CONFIGURATION (NEW) ---
+// --- CONFIGURATION: SETTING UP GLOBAL CLOUDINARY API SECURITY CREDENTIALS ---
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
   api_key: process.env.CLOUDINARY_API_KEY,
   api_secret: process.env.CLOUDINARY_API_SECRET
 });
 
-// Configure Cloudinary storage for company logos
+// Specialized Multer storage configuration for managing company profile logo uploads via Cloudinary
 const storage = new CloudinaryStorage({
   cloudinary: cloudinary,
   params: {
     folder: 'company-logos',
     allowed_formats: ['jpg', 'jpeg', 'png', 'gif', 'webp'],
     transformation: [{ width: 500, height: 500, crop: 'limit' }],
-    // public_id is now dynamically generated, referencing company ID for easy cleanup
+    // The public_id is dynamically generated using a unique suffix and referencing the specific company ID for streamlined cleanup.
     public_id: (req, file) => {
       const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
       // Use companyId if available during update, otherwise use a generic prefix
@@ -54,7 +54,7 @@ const upload = multer({
   fileFilter,
   limits: { fileSize: 5 * 1024 * 1024 } // 5MB
 });
-// --- END CLOUDINARY CONFIGURATION ---
+// --- CONTEXTUAL FINALIZATION: ALL CLOUDINARY MIDDLEWARE CONFIGURATIONS ARE READY ---
 
 
 const authMiddleware = async (req, res, next) => {
@@ -116,7 +116,7 @@ const sendPasswordResetEmail = async (company, token) => {
   });
 };
 
-// --- REGISTER ROUTE (MODIFIED for Cloudinary URL/ID storage) ---
+// --- CORPORATE ONBOARDING ENDPOINT: SUPPORTS MULTI-PART DATA AND AUTOMATED CLOUDINARY ASSET STORAGE ---
 router.post('/register', upload.single('logo'), async (req, res) => {
   try {
     const {
@@ -131,15 +131,15 @@ router.post('/register', upload.single('logo'), async (req, res) => {
       industrySector,
       companySize,
       yearEstablished,
-      agreesToTerms 
+      agreesToTerms
     } = req.body;
 
-    
+
     if (!agreesToTerms || agreesToTerms !== 'true' && agreesToTerms !== true) {
       return res.status(400).json({ error: 'You must agree to the Terms and Conditions' });
     }
 
-    
+
     const existingCompany = await Company.findOne({ email });
     if (existingCompany) {
       // Clean up uploaded file if registration fails
@@ -148,8 +148,8 @@ router.post('/register', upload.single('logo'), async (req, res) => {
     }
 
     let imageURL = '';
-    let cloudinaryPublicId = ''; // New field for Cloudinary public ID
-    
+    let cloudinaryPublicId = ''; // Specialized identifier for managing Cloudinary asset lifecycle (deletion/updates)
+
     if (req.file) {
       // Cloudinary URL is req.file.path; Public ID is req.file.filename
       imageURL = req.file.path;
@@ -158,7 +158,7 @@ router.post('/register', upload.single('logo'), async (req, res) => {
       imageURL = req.body.imageURL;
     }
 
-  
+
     const hashedPassword = await bcrypt.hash(password, 10);
     const verificationToken = crypto.randomBytes(32).toString('hex');
 
@@ -167,7 +167,7 @@ router.post('/register', upload.single('logo'), async (req, res) => {
       try {
         parsedSocialMedia = typeof socialMedia === 'string' ? JSON.parse(socialMedia) : socialMedia;
       } catch (e) {
-        
+
       }
     }
 
@@ -206,11 +206,11 @@ router.post('/register', upload.single('logo'), async (req, res) => {
     console.error('Registration error:', error);
     // Clean up uploaded file if registration fails
     if (req.file && req.file.filename) {
-        try {
-            await cloudinary.uploader.destroy(req.file.filename);
-        } catch (deleteError) {
-            console.error('Error deleting Cloudinary file:', deleteError);
-        }
+      try {
+        await cloudinary.uploader.destroy(req.file.filename);
+      } catch (deleteError) {
+        console.error('Error deleting Cloudinary file:', deleteError);
+      }
     }
     res.status(500).json({ error: error.message });
   }
@@ -375,7 +375,7 @@ router.post('/forgot-password', async (req, res) => {
 router.post('/reset-password', async (req, res) => {
   try {
     const { token, id, password } = req.body;
-    
+
     if (!token || !id || !password) {
       return res.status(400).json({ error: 'Token, ID, and password are required' });
     }
@@ -414,7 +414,7 @@ router.post('/reset-password', async (req, res) => {
 router.get('/verify-reset-token', async (req, res) => {
   try {
     const { token, id } = req.query;
-    
+
     if (!token || !id) {
       return res.status(400).json({ error: 'Token and ID are required' });
     }
@@ -457,15 +457,15 @@ router.put('/profile', authMiddleware, upload.single('logo'), async (req, res) =
     // Fetch existing company data first to get the old public ID
     const company = await Company.findById(req.companyId);
     if (!company) return res.status(404).json({ error: 'Company not found' });
-    
+
     let oldPublicId = company.cloudinaryPublicId;
-    
+
     // Cloudinary Logo Handling
     if (req.file) {
       // req.file.path contains the absolute Cloudinary URL
-      updateData.imageURL = req.file.path; 
+      updateData.imageURL = req.file.path;
       // req.file.filename contains the Cloudinary public_id
-      updateData.cloudinaryPublicId = req.file.filename; 
+      updateData.cloudinaryPublicId = req.file.filename;
     }
 
     // Handle other fields from body
@@ -498,22 +498,22 @@ router.put('/profile', authMiddleware, upload.single('logo'), async (req, res) =
 
     // Delete old image from Cloudinary if a new one was uploaded and an old public ID exists
     if (req.file && oldPublicId) {
-        try {
-            await cloudinary.uploader.destroy(oldPublicId);
-        } catch (deleteError) {
-            console.error('Error deleting old Cloudinary image:', deleteError);
-        }
+      try {
+        await cloudinary.uploader.destroy(oldPublicId);
+      } catch (deleteError) {
+        console.error('Error deleting old Cloudinary image:', deleteError);
+      }
     }
 
     res.json({ message: 'Profile updated successfully', company: updatedCompany });
   } catch (error) {
     // If update failed, clean up the newly uploaded file from Cloudinary
     if (req.file && req.file.filename) {
-        try {
-            await cloudinary.uploader.destroy(req.file.filename);
-        } catch (deleteError) {
-            console.error('Error deleting failed Cloudinary upload:', deleteError);
-        }
+      try {
+        await cloudinary.uploader.destroy(req.file.filename);
+      } catch (deleteError) {
+        console.error('Error deleting failed Cloudinary upload:', deleteError);
+      }
     }
     res.status(500).json({ error: error.message });
   }
